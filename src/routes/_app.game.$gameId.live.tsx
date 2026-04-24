@@ -248,6 +248,35 @@ function LivePage() {
           </div>
         </div>
 
+        {isHost && (
+          <div className="mb-4 rounded-xl border border-border bg-[color:var(--surface)] p-3 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 mr-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--neon-orange)] animate-pulse" />
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Host Controls
+              </span>
+            </div>
+            <button
+              onClick={runDemoSequence}
+              disabled={demoRunning || resetting}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 text-[color:var(--neon-orange)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-orange)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Cycle through fake quarter scores to demo the overlay"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              {demoRunning ? "Demo running..." : "Demo Score Sequence"}
+            </button>
+            <button
+              onClick={resetGame}
+              disabled={resetting}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-blue)]/40 bg-[color:var(--neon-blue)]/10 text-[color:var(--neon-blue)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-blue)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Reset scores and return to the lobby"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              {resetting ? "Resetting..." : "Reset to Lobby"}
+            </button>
+          </div>
+        )}
+
         {/* Now winning */}
         <div className="rounded-2xl border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 p-4 mb-4 flex items-center gap-4 animate-scale-in">
           <div className="w-12 h-12 rounded-xl bg-[color:var(--neon-orange)]/20 flex items-center justify-center text-[color:var(--neon-orange)]">
