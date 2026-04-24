@@ -1,36 +1,40 @@
 import { Link } from "@tanstack/react-router";
-import type { GameState } from "@/lib/gameState";
+import type { Game } from "@/lib/types";
 
-export function TopBar({ state }: { state: GameState }) {
+export function TopBar({ game }: { game: Game }) {
   return (
     <div className="sticky top-0 z-30 backdrop-blur-xl bg-background/80 border-b border-border">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link to="/dashboard" className="flex items-center gap-2 group">
           <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">
             SQ
           </div>
-          <div className="font-display font-bold tracking-tight text-sm sm:text-base">
+          <div className="font-display font-bold tracking-tight text-sm sm:text-base hidden sm:block">
             SQUARES<span className="text-[color:var(--neon-green)]">.LIVE</span>
           </div>
         </Link>
 
         <div className="flex-1 flex items-center justify-center gap-3 text-xs sm:text-sm">
-          <TeamBadge abbr={state.awayTeam.abbr} color="var(--neon-blue)" score={state.awayScore} />
+          <TeamBadge abbr={shortTeam(game.away_team)} color="var(--neon-blue)" score={game.away_score} />
           <div className="font-mono text-muted-foreground">VS</div>
-          <TeamBadge abbr={state.homeTeam.abbr} color="var(--neon-green)" score={state.homeScore} />
+          <TeamBadge abbr={shortTeam(game.home_team)} color="var(--neon-green)" score={game.home_score} />
         </div>
 
         <div className="text-right">
           <div className="font-mono text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest">
-            {state.locked ? `Q${state.quarter === 5 ? "F" : state.quarter}` : "Pre-Game"}
+            {game.status === "lobby" ? "Lobby" : game.status === "completed" ? "Final" : `Q${game.quarter}`}
           </div>
           <div className="font-mono font-bold text-sm sm:text-base text-[color:var(--neon-orange)]">
-            {state.locked ? state.clock : "—:—"}
+            {game.status === "live" || game.status === "locked" ? game.clock : "—:—"}
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function shortTeam(name: string) {
+  return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
 }
 
 function TeamBadge({ abbr, color, score }: { abbr: string; color: string; score: number }) {
