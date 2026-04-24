@@ -12,8 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JoinInviteCodeRouteImport } from './routes/join.$inviteCode'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
+import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
+import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$gameId.lobby'
+import { Route as AppGameGameIdLiveRouteImport } from './routes/_app.game.$gameId.live'
+import { Route as AppGameGameIdInviteRouteImport } from './routes/_app.game.$gameId.invite'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -29,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JoinInviteCodeRoute = JoinInviteCodeRouteImport.update({
+  id: '/join/$inviteCode',
+  path: '/join/$inviteCode',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -39,18 +49,48 @@ const AppCreateRoute = AppCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGameGameIdResultsRoute = AppGameGameIdResultsRouteImport.update({
+  id: '/game/$gameId/results',
+  path: '/game/$gameId/results',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGameGameIdLobbyRoute = AppGameGameIdLobbyRouteImport.update({
+  id: '/game/$gameId/lobby',
+  path: '/game/$gameId/lobby',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGameGameIdLiveRoute = AppGameGameIdLiveRouteImport.update({
+  id: '/game/$gameId/live',
+  path: '/game/$gameId/live',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGameGameIdInviteRoute = AppGameGameIdInviteRouteImport.update({
+  id: '/game/$gameId/invite',
+  path: '/game/$gameId/invite',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
+  '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
+  '/game/$gameId/live': typeof AppGameGameIdLiveRoute
+  '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
+  '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
+  '/game/$gameId/live': typeof AppGameGameIdLiveRoute
+  '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,19 +99,54 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_app/create': typeof AppCreateRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/_app/game/$gameId/invite': typeof AppGameGameIdInviteRoute
+  '/_app/game/$gameId/live': typeof AppGameGameIdLiveRoute
+  '/_app/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/_app/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/create' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/create'
+    | '/dashboard'
+    | '/join/$inviteCode'
+    | '/game/$gameId/invite'
+    | '/game/$gameId/live'
+    | '/game/$gameId/lobby'
+    | '/game/$gameId/results'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/create' | '/dashboard'
-  id: '__root__' | '/' | '/_app' | '/auth' | '/_app/create' | '/_app/dashboard'
+  to:
+    | '/'
+    | '/auth'
+    | '/create'
+    | '/dashboard'
+    | '/join/$inviteCode'
+    | '/game/$gameId/invite'
+    | '/game/$gameId/live'
+    | '/game/$gameId/lobby'
+    | '/game/$gameId/results'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/auth'
+    | '/_app/create'
+    | '/_app/dashboard'
+    | '/join/$inviteCode'
+    | '/_app/game/$gameId/invite'
+    | '/_app/game/$gameId/live'
+    | '/_app/game/$gameId/lobby'
+    | '/_app/game/$gameId/results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  JoinInviteCodeRoute: typeof JoinInviteCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -97,6 +172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join/$inviteCode': {
+      id: '/join/$inviteCode'
+      path: '/join/$inviteCode'
+      fullPath: '/join/$inviteCode'
+      preLoaderRoute: typeof JoinInviteCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -111,17 +193,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCreateRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/game/$gameId/results': {
+      id: '/_app/game/$gameId/results'
+      path: '/game/$gameId/results'
+      fullPath: '/game/$gameId/results'
+      preLoaderRoute: typeof AppGameGameIdResultsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/lobby': {
+      id: '/_app/game/$gameId/lobby'
+      path: '/game/$gameId/lobby'
+      fullPath: '/game/$gameId/lobby'
+      preLoaderRoute: typeof AppGameGameIdLobbyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/live': {
+      id: '/_app/game/$gameId/live'
+      path: '/game/$gameId/live'
+      fullPath: '/game/$gameId/live'
+      preLoaderRoute: typeof AppGameGameIdLiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/invite': {
+      id: '/_app/game/$gameId/invite'
+      path: '/game/$gameId/invite'
+      fullPath: '/game/$gameId/invite'
+      preLoaderRoute: typeof AppGameGameIdInviteRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppCreateRoute: typeof AppCreateRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppGameGameIdInviteRoute: typeof AppGameGameIdInviteRoute
+  AppGameGameIdLiveRoute: typeof AppGameGameIdLiveRoute
+  AppGameGameIdLobbyRoute: typeof AppGameGameIdLobbyRoute
+  AppGameGameIdResultsRoute: typeof AppGameGameIdResultsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCreateRoute: AppCreateRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppGameGameIdInviteRoute: AppGameGameIdInviteRoute,
+  AppGameGameIdLiveRoute: AppGameGameIdLiveRoute,
+  AppGameGameIdLobbyRoute: AppGameGameIdLobbyRoute,
+  AppGameGameIdResultsRoute: AppGameGameIdResultsRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -130,6 +248,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  JoinInviteCodeRoute: JoinInviteCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
