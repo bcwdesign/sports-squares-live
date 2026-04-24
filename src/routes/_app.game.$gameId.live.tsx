@@ -559,6 +559,7 @@ function LivePage() {
                 value={draft.home}
                 onChange={(v) => updateActiveDraft({ home: v })}
                 inputMode="numeric"
+                error={draftErrors.home}
               />
               <ScoreInput
                 label={game.away_team || "Away"}
@@ -566,6 +567,7 @@ function LivePage() {
                 value={draft.away}
                 onChange={(v) => updateActiveDraft({ away: v })}
                 inputMode="numeric"
+                error={draftErrors.away}
               />
               <ScoreInput
                 label="Quarter"
@@ -580,22 +582,24 @@ function LivePage() {
                 value={draft.clock}
                 onChange={(v) => updateActiveDraft({ clock: v })}
                 placeholder="MM:SS"
+                error={draftErrors.clock}
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => saveScore()}
-                disabled={savingScore || finalizing}
+                disabled={savingScore || finalizing || !draftValid}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-blue)]/40 bg-[color:var(--neon-blue)]/10 text-[color:var(--neon-blue)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-blue)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!draftValid ? "Fix invalid score or clock first" : undefined}
               >
                 <Save className="w-3.5 h-3.5" />
                 {savingScore ? "Saving..." : "Update Score"}
               </button>
               <button
                 onClick={() => setConfirmFinalOpen(true)}
-                disabled={savingScore || finalizing}
+                disabled={savingScore || finalizing || !draftValid}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[color:var(--neon-green)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-green)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Mark game complete and lock the winner"
+                title={!draftValid ? "Fix invalid score or clock first" : "Mark game complete and lock the winner"}
               >
                 <Flag className="w-3.5 h-3.5" />
                 {finalizing ? "Finalizing..." : "Set Final Score"}
@@ -610,7 +614,9 @@ function LivePage() {
                 Sync from Live
               </button>
               <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground ml-auto">
-                Preview digits {parseScore().home % 10}-{parseScore().away % 10}
+                {draftValid
+                  ? `Preview digits ${parseScore().home % 10}-${parseScore().away % 10}`
+                  : "Invalid input — fix highlighted fields"}
               </span>
             </div>
           </div>
