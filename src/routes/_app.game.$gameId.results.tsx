@@ -1,11 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/TopBar";
 import { NeonButton } from "@/components/NeonButton";
-import { Trophy, Share2 } from "lucide-react";
+import { Trophy, Share2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { winningSquareIndex } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_app/game/$gameId/results")({
   head: () => ({ meta: [{ title: "Results — Clutch Squares" }] }),
@@ -16,6 +18,8 @@ function ResultsPage() {
   const { gameId } = Route.useParams();
   const { game, squares, loading } = useGame(gameId);
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [resetting, setResetting] = useState(false);
 
   if (loading || !game) {
     return <div className="min-h-screen flex items-center justify-center text-xs font-mono uppercase tracking-widest text-muted-foreground">Loading...</div>;
@@ -26,6 +30,36 @@ function ResultsPage() {
   const winCol = winIdx % 10;
   const winSq = squares.find((s) => s.row === winRow && s.col === winCol);
   const youWon = winSq?.owner_id === user?.id;
+  const isHost = !!user && game.host_id === user.id;
+
+  // Host-only: rewind a completed game back to a fresh tip-off so the demo
+  // (or a real game) can be re-run. Keeps claimed squares intact and routes
+  // the host back to the live page.
+  const resetGame = async () => {
+    if (!isHost || resetting) return;
+    const ok = window.confirm(
+      "Reset scores, quarter, and clock? Claimed squares stay. The game returns to a fresh tip-off so you can re-run the demo.",
+    );
+    if (!ok) return;
+    setResetting(true);
+    const { error } = await supabase
+      .from("games")
+      .update({
+        home_score: 0,
+        away_score: 0,
+        quarter: 1,
+        clock: "12:00",
+        status: "live",
+      })
+      .eq("id", game.id);
+    setResetting(false);
+    if (error) {
+      toast.error("Couldn't reset the game");
+      return;
+    }
+    toast.success("Game reset — back to live");
+    navigate({ to: "/game/$gameId/live", params: { gameId } });
+  };
 
   const share = async () => {
     const text = youWon
@@ -105,6 +139,15 @@ function ResultsPage() {
             <NeonButton variant="green" className="w-full">Play Again</NeonButton>
           </Link>
         </div>
+
+        {isHost && (
+          <button onClick={resetGame} disabled={resetting} className="block w-full mt-3">
+            <NeonButton variant="ghost" className="w-full">
+              <RotateCcw className="w-4 h-4 inline mr-2" />
+              {resetting ? "Resetting..." : "Reset Game (Re-run Demo)"}
+            </NeonButton>
+          </button>
+        )}
 
         <Link to="/dashboard" className="block text-center mt-6 text-xs text-muted-foreground font-mono uppercase tracking-widest hover:text-foreground">
           ← Back to dashboard

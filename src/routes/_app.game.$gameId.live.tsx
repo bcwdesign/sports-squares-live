@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/TopBar";
@@ -8,7 +8,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
-import { Maximize2, QrCode, Trophy, Tv, Zap, X } from "lucide-react";
+import { Maximize2, QrCode, RotateCcw, Trophy, Tv, Zap, X } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 
@@ -97,6 +97,8 @@ function LivePage() {
 
   const isHost = !!user && !!game && game.host_id === user.id;
   const [demoRunning, setDemoRunning] = useState(false);
+  const demoCancelRef = useRef(false);
+  const [resetting, setResetting] = useState(false);
 
   // Host-only "Demo Score Sequence": cycles through a deterministic set of
   // quarter scores so the overlay can be demonstrated end-to-end without a
@@ -104,6 +106,7 @@ function LivePage() {
   // same updates via the existing realtime subscriptions.
   const runDemoSequence = async () => {
     if (!isHost || !game || demoRunning) return;
+    demoCancelRef.current = false;
     setDemoRunning(true);
     toast.message("Demo sequence started");
     const steps: Array<{ q: number; clock: string; home: number; away: number }> = [
@@ -119,6 +122,7 @@ function LivePage() {
     ];
     try {
       for (const step of steps) {
+        if (demoCancelRef.current) break;
         const { error } = await supabase
           .from("games")
           .update({
@@ -132,11 +136,44 @@ function LivePage() {
         if (error) throw error;
         await new Promise((r) => setTimeout(r, 2200));
       }
-      toast.success("Demo sequence complete");
+      if (!demoCancelRef.current) toast.success("Demo sequence complete");
     } catch (e) {
       toast.error("Demo sequence failed");
     } finally {
       setDemoRunning(false);
+    }
+  };
+
+  // Host-only: reset scores, quarter, clock, and status back to a fresh live
+  // tip-off. Cancels any in-flight demo sequence and keeps the board (claimed
+  // squares + axis numbers) intact so the demo can be re-run cleanly without
+  // disturbing players' picks. Does NOT reshuffle axes — use the lobby flow
+  // for a brand-new game.
+  const resetGame = async () => {
+    if (!isHost || !game || resetting) return;
+    const ok = window.confirm(
+      "Reset scores, quarter, and clock? Claimed squares stay. The game returns to a fresh tip-off so you can re-run the demo.",
+    );
+    if (!ok) return;
+    demoCancelRef.current = true;
+    setResetting(true);
+    try {
+      const { error } = await supabase
+        .from("games")
+        .update({
+          home_score: 0,
+          away_score: 0,
+          quarter: 1,
+          clock: "12:00",
+          status: "live",
+        })
+        .eq("id", game.id);
+      if (error) throw error;
+      toast.success("Game reset — ready to re-run demo");
+    } catch (e) {
+      toast.error("Couldn't reset the game");
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -224,14 +261,24 @@ function LivePage() {
               <Tv className="w-3.5 h-3.5" /> {isHost ? "Open Overlay" : "View Live Overlay"}
             </Link>
             {isHost && (
-              <button
-                onClick={runDemoSequence}
-                disabled={demoRunning}
-                className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-orange)] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Cycle through fake quarter scores to demo the overlay"
-              >
-                <Zap className="w-3.5 h-3.5" /> {demoRunning ? "Demo running..." : "Demo Score Sequence"}
-              </button>
+              <>
+                <button
+                  onClick={runDemoSequence}
+                  disabled={demoRunning || resetting}
+                  className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-orange)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Cycle through fake quarter scores to demo the overlay"
+                >
+                  <Zap className="w-3.5 h-3.5" /> {demoRunning ? "Demo running..." : "Demo Score Sequence"}
+                </button>
+                <button
+                  onClick={resetGame}
+                  disabled={resetting}
+                  className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Reset scores, quarter, and clock so you can re-run the demo"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> {resetting ? "Resetting..." : "Reset Game"}
+                </button>
+              </>
             )}
             <button
               onClick={async () => {
