@@ -146,7 +146,7 @@ function LivePage() {
         )}
 
         {game.status === "completed" && (
-          <Link to="/_app/game/$gameId/results" params={{ gameId }} className="block mt-6">
+          <Link to="/game/$gameId/results" params={{ gameId }} className="block mt-6">
             <NeonButton variant="green" className="w-full">View Final Results →</NeonButton>
           </Link>
         )}
