@@ -177,44 +177,6 @@ function LivePage() {
     }
   };
 
-  // Host-driven simulated game ticks (writes to DB so all players see updates).
-  // In production, replace with real NBA scores API webhook.
-  useEffect(() => {
-    if (!isHost || !game || game.status === "completed" || demoRunning) return;
-    const id = setInterval(async () => {
-      const fresh = await supabase.from("games").select("*").eq("id", game.id).maybeSingle();
-      if (!fresh.data) return;
-      const g = fresh.data;
-      if (g.status === "completed") return;
-
-      const homeAdd = Math.random() < 0.55 ? (Math.random() < 0.3 ? 3 : 2) : 0;
-      const awayAdd = Math.random() < 0.55 ? (Math.random() < 0.3 ? 3 : 2) : 0;
-      const [mm, ss] = g.clock.split(":").map(Number);
-      let total = mm * 60 + ss - 24;
-      let quarter = g.quarter;
-      let status: "lobby" | "locked" | "live" | "completed" = g.status;
-      if (total <= 0) {
-        if (quarter >= 4) {
-          status = "completed";
-          total = 0;
-        } else {
-          quarter += 1;
-          total = 12 * 60;
-        }
-      }
-      const m = Math.floor(total / 60);
-      const sec = total % 60;
-      await supabase.from("games").update({
-        home_score: g.home_score + homeAdd,
-        away_score: g.away_score + awayAdd,
-        clock: `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`,
-        quarter,
-        status,
-      }).eq("id", g.id);
-    }, 2000);
-    return () => clearInterval(id);
-  }, [isHost, game, demoRunning]);
-
   // Notify when a winning square changes
   const winIdx = game ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
   const [lastWinIdx, setLastWinIdx] = useState<number>(-1);
