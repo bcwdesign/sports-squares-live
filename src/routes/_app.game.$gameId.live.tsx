@@ -147,6 +147,42 @@ function LivePage() {
     return () => { cancelled = true; };
   }, [game, user, isHost, draftsSeeded]);
 
+  // Debounced persistence: whenever drafts change after the initial load,
+  // upsert the affected quarter row(s) so the values follow the host across
+  // refreshes and devices. Per-quarter unique constraint dedupes on conflict.
+  const lastPersistedRef = useRef<Record<number, string>>({});
+  useEffect(() => {
+    if (!game || !user || !isHost || !draftsSeeded) return;
+    const handle = setTimeout(async () => {
+      const dirty: Array<{ q: number; d: QuarterDraft }> = [];
+      for (const [qStr, d] of Object.entries(scoreDrafts)) {
+        const q = parseInt(qStr, 10);
+        const sig = `${d.home}|${d.away}|${d.clock}`;
+        if (lastPersistedRef.current[q] !== sig) {
+          dirty.push({ q, d });
+        }
+      }
+      if (dirty.length === 0) return;
+      const rows = dirty.map(({ q, d }) => ({
+        game_id: game.id,
+        user_id: user.id,
+        quarter: q,
+        home: d.home,
+        away: d.away,
+        clock: d.clock,
+      }));
+      const { error } = await supabase
+        .from("score_drafts")
+        .upsert(rows, { onConflict: "game_id,user_id,quarter" });
+      if (!error) {
+        dirty.forEach(({ q, d }) => {
+          lastPersistedRef.current[q] = `${d.home}|${d.away}|${d.clock}`;
+        });
+      }
+    }, 600);
+    return () => clearTimeout(handle);
+  }, [scoreDrafts, game, user, isHost, draftsSeeded]);
+
   const activeQuarterNum = Math.max(1, Math.min(8, parseInt(activeQuarter || "1", 10) || 1));
   const draft: QuarterDraft = scoreDrafts[activeQuarterNum] ?? { home: "0", away: "0", clock: "12:00" };
 
