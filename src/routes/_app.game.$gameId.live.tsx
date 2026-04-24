@@ -115,19 +115,37 @@ function LivePage() {
   const [finalizing, setFinalizing] = useState(false);
   const [confirmFinalOpen, setConfirmFinalOpen] = useState(false);
 
-  // One-time seed from the live game so the host sees current values on load.
+  // One-time load of persisted drafts from the DB so the host's typed values
+  // survive refresh and follow them across devices. Falls back to seeding from
+  // the live game when no drafts exist for this host yet.
   useEffect(() => {
-    if (!game || draftsSeeded) return;
-    setScoreDrafts({
-      [game.quarter]: {
-        home: String(game.home_score),
-        away: String(game.away_score),
-        clock: game.clock,
-      },
-    });
-    setActiveQuarter(String(game.quarter));
-    setDraftsSeeded(true);
-  }, [game, draftsSeeded]);
+    if (!game || !user || !isHost || draftsSeeded) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("score_drafts")
+        .select("quarter,home,away,clock")
+        .eq("game_id", game.id)
+        .eq("user_id", user.id);
+      if (cancelled) return;
+      const map: Record<number, QuarterDraft> = {};
+      (data ?? []).forEach((d: { quarter: number; home: string; away: string; clock: string }) => {
+        map[d.quarter] = { home: d.home, away: d.away, clock: d.clock };
+      });
+      // Always make sure the current live quarter has a draft entry to edit.
+      if (!map[game.quarter]) {
+        map[game.quarter] = {
+          home: String(game.home_score),
+          away: String(game.away_score),
+          clock: game.clock,
+        };
+      }
+      setScoreDrafts(map);
+      setActiveQuarter(String(game.quarter));
+      setDraftsSeeded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [game, user, isHost, draftsSeeded]);
 
   const activeQuarterNum = Math.max(1, Math.min(8, parseInt(activeQuarter || "1", 10) || 1));
   const draft: QuarterDraft = scoreDrafts[activeQuarterNum] ?? { home: "0", away: "0", clock: "12:00" };
