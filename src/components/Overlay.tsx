@@ -206,7 +206,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
         </div>
       </div>
 
-      <div className="flex items-stretch flex-1 min-h-0">
+      <div className="flex items-stretch md:flex-1 md:min-h-0">
         <div className="w-5 md:w-8 grid grid-rows-10 gap-0.5 md:gap-1 mr-1 md:mr-1.5">
           {game.away_axis.map((d, i) => (
             <div
@@ -221,7 +221,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
           ))}
         </div>
 
-        <div className="flex-1 grid grid-cols-10 gap-0.5 md:gap-1 aspect-square max-h-full">
+        <div className="flex-1 grid grid-cols-10 gap-0.5 md:gap-1 aspect-square md:max-h-full">
           {grid.map((sq, idx) => {
             const isWin = winIdx === idx;
             const isClaimed = !!sq?.owner_id;
