@@ -180,7 +180,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
   const winCol = winIdx >= 0 ? winIdx % 10 : -1;
 
   return (
-    <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-2 md:p-4 shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+    <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-2 md:p-4 shadow-[var(--shadow-card)] md:flex-1 flex flex-col md:min-h-0">
       <div className="flex items-center justify-between mb-2 px-1">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Squares Board</div>
         <div className="flex items-center gap-2 md:gap-3 text-[10px] font-mono uppercase tracking-widest">
