@@ -2,34 +2,86 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import confetti from "canvas-confetti";
-import { useGame } from "@/hooks/useGame";
 import { supabase } from "@/integrations/supabase/client";
-import { winningSquareIndex, type Square, type Game } from "@/lib/types";
+import { winningSquareIndex, type Game, type Square } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Trophy } from "lucide-react";
 
-export const Route = createFileRoute("/_app/game/$gameId/overlay")({
+export const Route = createFileRoute("/overlay/$token")({
   head: () => ({ meta: [{ title: "Live Watch Party — Clutch Squares" }] }),
-  component: OverlayPage,
+  component: PublicOverlayPage,
 });
 
-function OverlayPage() {
-  const { gameId } = Route.useParams();
-  const { game, squares, loading } = useGame(gameId);
+type OverlayPayload = { game: Game; squares: Square[] } | null;
 
-  // Polling fallback: re-fetch every 3s even if realtime drops
-  const [, setTick] = useState(0);
+function PublicOverlayPage() {
+  const { token } = Route.useParams();
+  const [data, setData] = useState<OverlayPayload>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Initial + polling fetch via public RPC (auth-free)
   useEffect(() => {
-    const id = setInterval(async () => {
-      // touch the game row to trigger realtime if subscription is alive;
-      // otherwise force a re-render to encourage refetch
-      await supabase.from("games").select("id").eq("id", gameId).maybeSingle();
-      setTick((t) => t + 1);
-    }, 3000);
-    return () => clearInterval(id);
-  }, [gameId]);
+    let active = true;
 
-  if (loading || !game) {
+    const fetchOnce = async () => {
+      const { data: payload, error: err } = await supabase.rpc("get_overlay_by_token", {
+        _token: token,
+      });
+      if (!active) return;
+      if (err) {
+        setError(err.message);
+        setLoading(false);
+        return;
+      }
+      if (!payload) {
+        setError("This overlay link is invalid or has been revoked.");
+        setLoading(false);
+        return;
+      }
+      setData(payload as OverlayPayload);
+      setLoading(false);
+    };
+
+    fetchOnce();
+    const id = setInterval(fetchOnce, 3000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [token]);
+
+  // Best-effort realtime: subscribe by game id once we know it. RLS blocks
+  // anonymous access to rows, so subscriptions may not deliver payloads — the
+  // 3s polling above is the guaranteed fallback.
+  const gameId = data?.game.id;
+  useEffect(() => {
+    if (!gameId) return;
+    const channel = supabase
+      .channel(`overlay-public:${gameId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` },
+        async () => {
+          const { data: payload } = await supabase.rpc("get_overlay_by_token", { _token: token });
+          if (payload) setData(payload as OverlayPayload);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "squares", filter: `game_id=eq.${gameId}` },
+        async () => {
+          const { data: payload } = await supabase.rpc("get_overlay_by_token", { _token: token });
+          if (payload) setData(payload as OverlayPayload);
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameId, token]);
+
+  if (loading) {
     return (
       <div className="fixed inset-0 bg-background flex items-center justify-center text-sm font-mono uppercase tracking-widest text-muted-foreground">
         Loading watch party...
@@ -37,7 +89,18 @@ function OverlayPage() {
     );
   }
 
-  return <Overlay game={game} squares={squares} />;
+  if (error || !data) {
+    return (
+      <div className="fixed inset-0 bg-background flex flex-col items-center justify-center gap-2 text-center px-6">
+        <div className="font-display font-black text-3xl text-[color:var(--neon-orange)]">Overlay Unavailable</div>
+        <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          {error ?? "This link is invalid."}
+        </div>
+      </div>
+    );
+  }
+
+  return <Overlay game={data.game} squares={data.squares} />;
 }
 
 function Overlay({ game, squares }: { game: Game; squares: Square[] }) {
@@ -48,7 +111,6 @@ function Overlay({ game, squares }: { game: Game; squares: Square[] }) {
   const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
   const hasWinner = !!winSq?.owner_name;
 
-  // Confetti when winner identity changes
   const lastWinnerKey = useRef<string>("");
   useEffect(() => {
     const key = `${game.quarter}:${winSq?.owner_id ?? ""}`;
@@ -60,8 +122,7 @@ function Overlay({ game, squares }: { game: Game; squares: Square[] }) {
   }, [hasWinner, winSq?.owner_id, game.quarter]);
 
   return (
-    <div className="fixed inset-0 bg-background overflow-hidden flex flex-col" style={{ aspectRatio: "16 / 9" }}>
-      {/* Ambient backdrop */}
+    <div className="fixed inset-0 bg-background overflow-hidden flex flex-col">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -73,12 +134,9 @@ function Overlay({ game, squares }: { game: Game; squares: Square[] }) {
       <TopBranding game={game} />
 
       <div className="relative flex-1 grid grid-cols-12 gap-6 px-8 py-4 min-h-0">
-        {/* Center board */}
         <div className="col-span-8 flex flex-col min-h-0">
           <BoardArea game={game} squares={squares} winIdx={winIdx} />
         </div>
-
-        {/* Right winner panel */}
         <div className="col-span-4 flex flex-col min-h-0">
           <WinnerPanel game={game} winSq={winSq} scoresEntered={scoresEntered} />
         </div>
@@ -115,14 +173,8 @@ function TopBranding({ game }: { game: Game }) {
         <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{game.sport}</div>
       </div>
 
-      {/* Scoreboard */}
       <div className="absolute left-1/2 -translate-x-1/2 top-5 flex items-center gap-6">
-        <ScoreSide
-          team={game.away_team}
-          score={game.away_score}
-          color="var(--neon-blue)"
-          align="right"
-        />
+        <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
         <div className="flex flex-col items-center min-w-[120px]">
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
             {game.status === "completed" ? "Final" : `Quarter ${game.quarter}`}
@@ -131,12 +183,7 @@ function TopBranding({ game }: { game: Game }) {
             {game.status === "completed" ? "—" : game.clock}
           </div>
         </div>
-        <ScoreSide
-          team={game.home_team}
-          score={game.home_score}
-          color="var(--neon-green)"
-          align="left"
-        />
+        <ScoreSide team={game.home_team} score={game.home_score} color="var(--neon-green)" align="left" />
       </div>
     </div>
   );
@@ -172,36 +219,24 @@ function ScoreSide({
   );
 }
 
-function BoardArea({
-  game,
-  squares,
-  winIdx,
-}: {
-  game: Game;
-  squares: Square[];
-  winIdx: number;
-}) {
+function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; winIdx: number }) {
   const grid: (Square | null)[] = Array(100).fill(null);
   squares.forEach((s) => {
     grid[s.row * 10 + s.col] = s;
   });
-
   const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
   const winCol = winIdx >= 0 ? winIdx % 10 : -1;
 
   return (
     <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-4 shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
       <div className="flex items-center justify-between mb-2 px-1">
-        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-          Squares Board
-        </div>
+        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Squares Board</div>
         <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest">
           <LegendDot color="var(--neon-blue)" label="Claimed" />
           <LegendDot color="var(--neon-orange)" label="Winning" pulse />
         </div>
       </div>
 
-      {/* Top axis (home digits) */}
       <div className="flex items-center mb-1.5">
         <div className="w-8" />
         <div className="flex-1 grid grid-cols-10 gap-1">
@@ -220,7 +255,6 @@ function BoardArea({
       </div>
 
       <div className="flex items-stretch flex-1 min-h-0">
-        {/* Left axis (away digits) */}
         <div className="w-8 grid grid-rows-10 gap-1 mr-1.5">
           {game.away_axis.map((d, i) => (
             <div
@@ -235,7 +269,6 @@ function BoardArea({
           ))}
         </div>
 
-        {/* Grid */}
         <div className="flex-1 grid grid-cols-10 gap-1 aspect-square max-h-full">
           {grid.map((sq, idx) => {
             const isWin = winIdx === idx;
@@ -306,15 +339,11 @@ function WinnerPanel({
       )}
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-          Currently Winning
-        </div>
+        <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Currently Winning</div>
         <div
           className={cn(
             "px-2 py-1 rounded-md font-mono text-[10px] uppercase tracking-widest font-bold",
-            hasWinner
-              ? "bg-[color:var(--neon-orange)] text-background"
-              : "bg-muted text-muted-foreground",
+            hasWinner ? "bg-[color:var(--neon-orange)] text-background" : "bg-muted text-muted-foreground",
           )}
         >
           Q{game.quarter}
@@ -322,23 +351,13 @@ function WinnerPanel({
       </div>
 
       {!scoresEntered ? (
-        <EmptyState
-          title="No Winner Yet"
-          subtitle="Waiting for the first score..."
-          icon={<Trophy className="w-10 h-10" />}
-        />
+        <EmptyState title="No Winner Yet" subtitle="Waiting for the first score..." icon={<Trophy className="w-10 h-10" />} />
       ) : !hasWinner ? (
-        <EmptyState
-          title="Unclaimed Square"
-          subtitle="The winning square has no owner."
-          icon={<Trophy className="w-10 h-10" />}
-        />
+        <EmptyState title="Unclaimed Square" subtitle="The winning square has no owner." icon={<Trophy className="w-10 h-10" />} />
       ) : (
         <div key={winSq!.owner_id} className="flex-1 flex flex-col items-center justify-center text-center animate-bounce-in">
           <Avatar name={winSq!.owner_name!} />
-          <div className="font-display font-black text-3xl mt-4 leading-tight">
-            {winSq!.owner_name}
-          </div>
+          <div className="font-display font-black text-3xl mt-4 leading-tight">{winSq!.owner_name}</div>
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-2">
             Holds the winning square
           </div>
@@ -375,10 +394,7 @@ function Avatar({ name }: { name: string }) {
   return (
     <div
       className="w-24 h-24 rounded-full flex items-center justify-center font-display font-black text-3xl text-background"
-      style={{
-        backgroundImage: "var(--gradient-neon)",
-        boxShadow: "var(--shadow-neon-orange)",
-      }}
+      style={{ backgroundImage: "var(--gradient-neon)", boxShadow: "var(--shadow-neon-orange)" }}
     >
       {initials || "?"}
     </div>
@@ -399,9 +415,7 @@ function DigitChip({ digit, color, label }: { digit: number; color: string; labe
       >
         {digit}
       </div>
-      <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mt-1">
-        {label}
-      </div>
+      <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mt-1">{label}</div>
     </div>
   );
 }
@@ -426,52 +440,36 @@ function BottomBar({ game }: { game: Game }) {
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   useEffect(() => {
     if (!joinUrl) return;
-    QRCode.toDataURL(joinUrl, {
-      margin: 1,
-      width: 240,
-      color: { dark: "#0a0a0a", light: "#ffffff" },
-    }).then(setQrDataUrl).catch(() => {});
+    QRCode.toDataURL(joinUrl, { margin: 1, width: 240, color: { dark: "#0a0a0a", light: "#ffffff" } })
+      .then(setQrDataUrl)
+      .catch(() => {});
   }, [joinUrl]);
 
   return (
     <div className="relative px-8 py-4 border-t border-border/60 bg-[color:var(--surface)]/60 backdrop-blur-sm flex items-center justify-between gap-6">
       <div className="flex items-center gap-4">
         {qrDataUrl ? (
-          <img
-            src={qrDataUrl}
-            alt="Join QR code"
-            className="w-20 h-20 rounded-lg bg-white p-1.5"
-          />
+          <img src={qrDataUrl} alt="Join QR code" className="w-20 h-20 rounded-lg bg-white p-1.5" />
         ) : (
           <div className="w-20 h-20 rounded-lg bg-white/10" />
         )}
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Scan to Join
-          </div>
-          <div className="font-display font-black text-2xl text-foreground mt-1">
-            Join the Game
-          </div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Scan to Join</div>
+          <div className="font-display font-black text-2xl text-foreground mt-1">Join the Game</div>
         </div>
       </div>
 
       <div className="flex items-center gap-6">
         <div className="text-center">
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Invite Code
-          </div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Invite Code</div>
           <div className="font-display font-black text-4xl tracking-[0.2em] text-[color:var(--neon-blue)] mt-1">
             {game.invite_code}
           </div>
         </div>
         <div className="h-12 w-px bg-border" />
         <div className="text-center">
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Or Visit
-          </div>
-          <div className="font-mono font-bold text-lg text-[color:var(--neon-green)] mt-1">
-            {shortUrl}
-          </div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Or Visit</div>
+          <div className="font-mono font-bold text-lg text-[color:var(--neon-green)] mt-1">{shortUrl}</div>
         </div>
       </div>
     </div>
@@ -487,20 +485,8 @@ function fireConfetti() {
   const end = Date.now() + 8000;
   const colors = ["#3b9eff", "#5dffa1", "#ffb35a", "#ffffff"];
   (function frame() {
-    confetti({
-      particleCount: 4,
-      angle: 60,
-      spread: 75,
-      origin: { x: 0, y: 0.7 },
-      colors,
-    });
-    confetti({
-      particleCount: 4,
-      angle: 120,
-      spread: 75,
-      origin: { x: 1, y: 0.7 },
-      colors,
-    });
+    confetti({ particleCount: 4, angle: 60, spread: 75, origin: { x: 0, y: 0.7 }, colors });
+    confetti({ particleCount: 4, angle: 120, spread: 75, origin: { x: 1, y: 0.7 }, colors });
     if (Date.now() < end) requestAnimationFrame(frame);
   })();
 }

@@ -67,6 +67,7 @@ export type Database = {
           max_squares_per_user: number
           name: string
           quarter: number
+          share_token: string
           sport: string
           status: Database["public"]["Enums"]["game_status"]
         }
@@ -87,6 +88,7 @@ export type Database = {
           max_squares_per_user?: number
           name: string
           quarter?: number
+          share_token?: string
           sport?: string
           status?: Database["public"]["Enums"]["game_status"]
         }
@@ -107,6 +109,7 @@ export type Database = {
           max_squares_per_user?: number
           name?: string
           quarter?: number
+          share_token?: string
           sport?: string
           status?: Database["public"]["Enums"]["game_status"]
         }
@@ -218,6 +221,7 @@ export type Database = {
         Args: { _game_id: string; _user_id: string }
         Returns: boolean
       }
+      get_overlay_by_token: { Args: { _token: string }; Returns: Json }
       is_game_host: {
         Args: { _game_id: string; _user_id: string }
         Returns: boolean

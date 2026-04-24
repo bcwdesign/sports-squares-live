@@ -98,14 +98,29 @@ function LivePage() {
       <TopBar game={game} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-12">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 gap-2">
           <Link to="/game/$gameId/lobby" params={{ gameId }} className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Lobby</Link>
-          <button
-            onClick={() => setWatchMode((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition"
-          >
-            <Maximize2 className="w-3.5 h-3.5" /> Watch Mode
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={async () => {
+                const { data } = await supabase.from("games").select("share_token").eq("id", gameId).maybeSingle();
+                const token = (data as { share_token?: string } | null)?.share_token;
+                if (!token) { toast.error("No share token"); return; }
+                const url = `${window.location.origin}/overlay/${token}`;
+                try { await navigator.clipboard.writeText(url); toast.success("Public overlay link copied"); }
+                catch { toast.message(url); }
+              }}
+              className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-green)] transition"
+            >
+              <Trophy className="w-3.5 h-3.5" /> Share Overlay
+            </button>
+            <button
+              onClick={() => setWatchMode((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition"
+            >
+              <Maximize2 className="w-3.5 h-3.5" /> Watch Mode
+            </button>
+          </div>
         </div>
 
         {/* Now winning */}

@@ -12,11 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OverlayTokenRouteImport } from './routes/overlay.$token'
 import { Route as JoinInviteCodeRouteImport } from './routes/join.$inviteCode'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
 import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
-import { Route as AppGameGameIdOverlayRouteImport } from './routes/_app.game.$gameId.overlay'
 import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$gameId.lobby'
 import { Route as AppGameGameIdLiveRouteImport } from './routes/_app.game.$gameId.live'
 import { Route as AppGameGameIdInviteRouteImport } from './routes/_app.game.$gameId.invite'
@@ -33,6 +33,11 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OverlayTokenRoute = OverlayTokenRouteImport.update({
+  id: '/overlay/$token',
+  path: '/overlay/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JoinInviteCodeRoute = JoinInviteCodeRouteImport.update({
@@ -53,11 +58,6 @@ const AppCreateRoute = AppCreateRouteImport.update({
 const AppGameGameIdResultsRoute = AppGameGameIdResultsRouteImport.update({
   id: '/game/$gameId/results',
   path: '/game/$gameId/results',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppGameGameIdOverlayRoute = AppGameGameIdOverlayRouteImport.update({
-  id: '/game/$gameId/overlay',
-  path: '/game/$gameId/overlay',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGameGameIdLobbyRoute = AppGameGameIdLobbyRouteImport.update({
@@ -82,10 +82,10 @@ export interface FileRoutesByFullPath {
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/overlay/$token': typeof OverlayTokenRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
-  '/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRoutesByTo {
@@ -94,10 +94,10 @@ export interface FileRoutesByTo {
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/overlay/$token': typeof OverlayTokenRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
-  '/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRoutesById {
@@ -108,10 +108,10 @@ export interface FileRoutesById {
   '/_app/create': typeof AppCreateRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/overlay/$token': typeof OverlayTokenRoute
   '/_app/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/_app/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/_app/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
-  '/_app/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/_app/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRouteTypes {
@@ -122,10 +122,10 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/join/$inviteCode'
+    | '/overlay/$token'
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
     | '/game/$gameId/lobby'
-    | '/game/$gameId/overlay'
     | '/game/$gameId/results'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -134,10 +134,10 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/join/$inviteCode'
+    | '/overlay/$token'
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
     | '/game/$gameId/lobby'
-    | '/game/$gameId/overlay'
     | '/game/$gameId/results'
   id:
     | '__root__'
@@ -147,10 +147,10 @@ export interface FileRouteTypes {
     | '/_app/create'
     | '/_app/dashboard'
     | '/join/$inviteCode'
+    | '/overlay/$token'
     | '/_app/game/$gameId/invite'
     | '/_app/game/$gameId/live'
     | '/_app/game/$gameId/lobby'
-    | '/_app/game/$gameId/overlay'
     | '/_app/game/$gameId/results'
   fileRoutesById: FileRoutesById
 }
@@ -159,6 +159,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   JoinInviteCodeRoute: typeof JoinInviteCodeRoute
+  OverlayTokenRoute: typeof OverlayTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -182,6 +183,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/overlay/$token': {
+      id: '/overlay/$token'
+      path: '/overlay/$token'
+      fullPath: '/overlay/$token'
+      preLoaderRoute: typeof OverlayTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/join/$inviteCode': {
@@ -210,13 +218,6 @@ declare module '@tanstack/react-router' {
       path: '/game/$gameId/results'
       fullPath: '/game/$gameId/results'
       preLoaderRoute: typeof AppGameGameIdResultsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/game/$gameId/overlay': {
-      id: '/_app/game/$gameId/overlay'
-      path: '/game/$gameId/overlay'
-      fullPath: '/game/$gameId/overlay'
-      preLoaderRoute: typeof AppGameGameIdOverlayRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/game/$gameId/lobby': {
@@ -249,7 +250,6 @@ interface AppRouteChildren {
   AppGameGameIdInviteRoute: typeof AppGameGameIdInviteRoute
   AppGameGameIdLiveRoute: typeof AppGameGameIdLiveRoute
   AppGameGameIdLobbyRoute: typeof AppGameGameIdLobbyRoute
-  AppGameGameIdOverlayRoute: typeof AppGameGameIdOverlayRoute
   AppGameGameIdResultsRoute: typeof AppGameGameIdResultsRoute
 }
 
@@ -259,7 +259,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppGameGameIdInviteRoute: AppGameGameIdInviteRoute,
   AppGameGameIdLiveRoute: AppGameGameIdLiveRoute,
   AppGameGameIdLobbyRoute: AppGameGameIdLobbyRoute,
-  AppGameGameIdOverlayRoute: AppGameGameIdOverlayRoute,
   AppGameGameIdResultsRoute: AppGameGameIdResultsRoute,
 }
 
@@ -270,6 +269,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   JoinInviteCodeRoute: JoinInviteCodeRoute,
+  OverlayTokenRoute: OverlayTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
