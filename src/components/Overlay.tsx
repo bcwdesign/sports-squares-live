@@ -53,7 +53,10 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
   }, [replayKey, hasWinner]);
 
   return (
-    <div className="fixed inset-0 bg-background overflow-y-auto md:overflow-hidden flex flex-col">
+    <div
+      className="fixed inset-0 bg-background overflow-y-auto md:overflow-hidden flex flex-col [scroll-behavior:smooth] [overflow-anchor:auto] overscroll-contain"
+      style={{ WebkitOverflowScrolling: "touch" }}
+    >
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -64,11 +67,12 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
 
       <TopBranding game={game} />
 
-      <div className="relative flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 px-3 md:px-8 py-3 md:py-4 min-h-0">
-        <div className="md:col-span-8 flex flex-col min-h-0">
+      {/* On mobile: stack naturally, no min-h-0 clipping. On desktop: fixed grid. */}
+      <div className="relative md:flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 px-3 md:px-8 py-3 md:py-4 md:min-h-0">
+        <div className="md:col-span-8 flex flex-col md:min-h-0">
           <BoardArea game={game} squares={squares} winIdx={winIdx} />
         </div>
-        <div className="md:col-span-4 flex flex-col min-h-0">
+        <div className="md:col-span-4 flex flex-col md:min-h-0">
           <WinnerPanel game={game} winSq={winSq} scoresEntered={scoresEntered} />
         </div>
       </div>
@@ -176,7 +180,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
   const winCol = winIdx >= 0 ? winIdx % 10 : -1;
 
   return (
-    <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-2 md:p-4 shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+    <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-2 md:p-4 shadow-[var(--shadow-card)] md:flex-1 flex flex-col md:min-h-0">
       <div className="flex items-center justify-between mb-2 px-1">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Squares Board</div>
         <div className="flex items-center gap-2 md:gap-3 text-[10px] font-mono uppercase tracking-widest">
@@ -202,7 +206,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
         </div>
       </div>
 
-      <div className="flex items-stretch flex-1 min-h-0">
+      <div className="flex items-stretch md:flex-1 md:min-h-0">
         <div className="w-5 md:w-8 grid grid-rows-10 gap-0.5 md:gap-1 mr-1 md:mr-1.5">
           {game.away_axis.map((d, i) => (
             <div
@@ -217,7 +221,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
           ))}
         </div>
 
-        <div className="flex-1 grid grid-cols-10 gap-0.5 md:gap-1 aspect-square max-h-full">
+        <div className="flex-1 grid grid-cols-10 gap-0.5 md:gap-1 aspect-square md:max-h-full">
           {grid.map((sq, idx) => {
             const isWin = winIdx === idx;
             const isClaimed = !!sq?.owner_id;
@@ -280,7 +284,7 @@ function WinnerPanel({
   return (
     <div
       className={cn(
-        "rounded-2xl border-2 p-4 md:p-6 flex flex-col flex-1 min-h-0 transition-all",
+        "rounded-2xl border-2 p-4 md:p-6 flex flex-col md:flex-1 md:min-h-0 transition-all",
         hasWinner
           ? "border-[color:var(--neon-orange)]/60 bg-[color:var(--neon-orange)]/10 shadow-[var(--shadow-neon-orange)]"
           : "border-border bg-[color:var(--surface)]/80",
