@@ -30,6 +30,36 @@ function ResultsPage() {
   const winCol = winIdx % 10;
   const winSq = squares.find((s) => s.row === winRow && s.col === winCol);
   const youWon = winSq?.owner_id === user?.id;
+  const isHost = !!user && game.host_id === user.id;
+
+  // Host-only: rewind a completed game back to a fresh tip-off so the demo
+  // (or a real game) can be re-run. Keeps claimed squares intact and routes
+  // the host back to the live page.
+  const resetGame = async () => {
+    if (!isHost || resetting) return;
+    const ok = window.confirm(
+      "Reset scores, quarter, and clock? Claimed squares stay. The game returns to a fresh tip-off so you can re-run the demo.",
+    );
+    if (!ok) return;
+    setResetting(true);
+    const { error } = await supabase
+      .from("games")
+      .update({
+        home_score: 0,
+        away_score: 0,
+        quarter: 1,
+        clock: "12:00",
+        status: "live",
+      })
+      .eq("id", game.id);
+    setResetting(false);
+    if (error) {
+      toast.error("Couldn't reset the game");
+      return;
+    }
+    toast.success("Game reset — back to live");
+    navigate({ to: "/game/$gameId/live", params: { gameId } });
+  };
 
   const share = async () => {
     const text = youWon
