@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OverlayTokenRouteImport } from './routes/overlay.$token'
 import { Route as JoinInviteCodeRouteImport } from './routes/join.$inviteCode'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
 import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
@@ -45,6 +46,11 @@ const JoinInviteCodeRoute = JoinInviteCodeRouteImport.update({
   id: '/join/$inviteCode',
   path: '/join/$inviteCode',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
+  '/profile': typeof AppProfileRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
+  '/profile': typeof AppProfileRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_app/create': typeof AppCreateRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/profile': typeof AppProfileRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
   '/_app/game/$gameId/invite': typeof AppGameGameIdInviteRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/create'
     | '/dashboard'
+    | '/profile'
     | '/join/$inviteCode'
     | '/overlay/$token'
     | '/game/$gameId/invite'
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/create'
     | '/dashboard'
+    | '/profile'
     | '/join/$inviteCode'
     | '/overlay/$token'
     | '/game/$gameId/invite'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_app/create'
     | '/_app/dashboard'
+    | '/_app/profile'
     | '/join/$inviteCode'
     | '/overlay/$token'
     | '/_app/game/$gameId/invite'
@@ -210,6 +222,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/join/$inviteCode'
       preLoaderRoute: typeof JoinInviteCodeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
       id: '/_app/dashboard'
@@ -266,6 +285,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCreateRoute: typeof AppCreateRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppGameGameIdInviteRoute: typeof AppGameGameIdInviteRoute
   AppGameGameIdLiveRoute: typeof AppGameGameIdLiveRoute
   AppGameGameIdLobbyRoute: typeof AppGameGameIdLobbyRoute
@@ -276,6 +296,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCreateRoute: AppCreateRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppProfileRoute: AppProfileRoute,
   AppGameGameIdInviteRoute: AppGameGameIdInviteRoute,
   AppGameGameIdLiveRoute: AppGameGameIdLiveRoute,
   AppGameGameIdLobbyRoute: AppGameGameIdLobbyRoute,
