@@ -113,6 +113,7 @@ function LivePage() {
   const [draftsSeeded, setDraftsSeeded] = useState(false);
   const [savingScore, setSavingScore] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const [confirmFinalOpen, setConfirmFinalOpen] = useState(false);
 
   // One-time seed from the live game so the host sees current values on load.
   useEffect(() => {
