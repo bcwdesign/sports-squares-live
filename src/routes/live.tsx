@@ -42,7 +42,7 @@ function LivePage() {
         // Decrement clock
         const [mm, ss] = s.clock.split(":").map(Number);
         let total = mm * 60 + ss - 18;
-        let quarter = s.quarter;
+        let quarter: 1 | 2 | 3 | 4 | 5 = s.quarter;
         const winners = [...s.quarterWinners];
 
         if (total <= 0) {
