@@ -7,7 +7,7 @@ import { Trophy, Zap, Users } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Sports Squares Live — Watch Parties for NBA" },
+      { title: "Clutch Squares — Watch Parties for NBA" },
       { name: "description", content: "Create private NBA Squares games for live watch parties. Invite friends with a code, claim squares, win each quarter." },
     ],
   }),
