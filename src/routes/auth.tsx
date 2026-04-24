@@ -15,7 +15,7 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
-      { title: "Sign In — Sports Squares Live" },
+      { title: "Sign In — Clutch Squares" },
       { name: "description", content: "Sign in or continue as a guest." },
     ],
   }),
