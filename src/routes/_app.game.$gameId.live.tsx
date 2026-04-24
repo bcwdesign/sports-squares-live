@@ -261,6 +261,10 @@ function LivePage() {
 
   const saveScore = async (opts?: { final?: boolean }) => {
     if (!isHost || !game) return;
+    if (!draftValid) {
+      toast.error("Fix invalid score or clock before saving");
+      return;
+    }
     const { home, away, quarter, clock } = parseScore();
     const final = !!opts?.final;
     if (final) setFinalizing(true); else setSavingScore(true);
