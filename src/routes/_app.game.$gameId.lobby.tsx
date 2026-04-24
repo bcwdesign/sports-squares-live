@@ -267,6 +267,29 @@ function LobbyPage() {
           )}
         </div>
       </div>
+
+      {/* Host: Clear claimed square confirmation */}
+      <AlertDialog open={!!clearTarget} onOpenChange={(o) => { if (!o) setClearTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear this square?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove <span className="font-bold text-foreground">{clearTarget?.ownerName}</span> from square{" "}
+              <span className="font-mono text-[color:var(--neon-orange)]">#{(clearTarget?.index ?? 0) + 1}</span> and make it available again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={clearing}
+              onClick={(e) => { e.preventDefault(); confirmClear(); }}
+              className="bg-[color:var(--neon-orange)] text-background hover:bg-[color:var(--neon-orange)]/90"
+            >
+              {clearing ? "Clearing..." : "Clear Square"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
