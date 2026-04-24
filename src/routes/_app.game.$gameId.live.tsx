@@ -157,6 +157,9 @@ function LivePage() {
       const dirty: Array<{ q: number; d: QuarterDraft }> = [];
       for (const [qStr, d] of Object.entries(scoreDrafts)) {
         const q = parseInt(qStr, 10);
+        // Only persist drafts that pass validation — keep the DB clean even
+        // while the host is mid-typing. Invalid values stay local until fixed.
+        if (validateScore(d.home) || validateScore(d.away) || validateClock(d.clock)) continue;
         const sig = `${d.home}|${d.away}|${d.clock}`;
         if (lastPersistedRef.current[q] !== sig) {
           dirty.push({ q, d });
