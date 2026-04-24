@@ -436,6 +436,31 @@ function LivePage() {
                 Drafts saved per quarter
               </span>
             </div>
+            {/* Quarter chips: jump between drafted quarters without typing */}
+            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mr-1">Quarter:</span>
+              {[1, 2, 3, 4].map((q) => {
+                const has = !!scoreDrafts[q];
+                const active = q === activeQuarterNum;
+                return (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setQuarterInput(String(q))}
+                    className={`px-2 py-0.5 rounded-md font-mono text-[10px] uppercase tracking-widest border transition ${
+                      active
+                        ? "bg-[color:var(--neon-green)] text-background border-[color:var(--neon-green)]"
+                        : has
+                          ? "border-[color:var(--neon-green)]/40 text-[color:var(--neon-green)] hover:bg-[color:var(--neon-green)]/10"
+                          : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
+                    }`}
+                    title={has ? `Q${q} draft: ${scoreDrafts[q].home}-${scoreDrafts[q].away}` : `Start Q${q} draft`}
+                  >
+                    Q{q}{has && !active ? " •" : ""}
+                  </button>
+                );
+              })}
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
               <ScoreInput
                 label={game.home_team || "Home"}
