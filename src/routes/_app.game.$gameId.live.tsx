@@ -427,10 +427,10 @@ function LivePage() {
             <div className="flex items-center gap-2 mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--neon-green)] animate-pulse" />
               <span className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-green)]">
-                Manual Score Update
+                Manual Score Update · Q{activeQuarterNum}
               </span>
               <span className="text-[10px] text-muted-foreground font-mono ml-auto hidden sm:inline">
-                Winner = last digit of each score
+                Drafts saved per quarter
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
@@ -438,28 +438,28 @@ function LivePage() {
                 label={game.home_team || "Home"}
                 colorVar="--neon-blue"
                 value={draft.home}
-                onChange={(v) => setScoreDraft({ ...draft, home: v })}
+                onChange={(v) => updateActiveDraft({ home: v })}
                 inputMode="numeric"
               />
               <ScoreInput
                 label={game.away_team || "Away"}
                 colorVar="--neon-orange"
                 value={draft.away}
-                onChange={(v) => setScoreDraft({ ...draft, away: v })}
+                onChange={(v) => updateActiveDraft({ away: v })}
                 inputMode="numeric"
               />
               <ScoreInput
                 label="Quarter"
                 colorVar="--neon-green"
-                value={draft.quarter}
-                onChange={(v) => setScoreDraft({ ...draft, quarter: v })}
+                value={activeQuarter}
+                onChange={setQuarterInput}
                 inputMode="numeric"
               />
               <ScoreInput
                 label="Clock"
                 colorVar="--neon-blue"
                 value={draft.clock}
-                onChange={(v) => setScoreDraft({ ...draft, clock: v })}
+                onChange={(v) => updateActiveDraft({ clock: v })}
                 placeholder="MM:SS"
               />
             </div>
