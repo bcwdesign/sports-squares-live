@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/join/$inviteCode")({
-  head: () => ({ meta: [{ title: "Join Game — Sports Squares Live" }] }),
+  head: () => ({ meta: [{ title: "Join Game — Clutch Squares" }] }),
   component: JoinByCode,
 });
 

@@ -12,7 +12,7 @@ import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass } from "lucide-r
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/game/$gameId/lobby")({
-  head: () => ({ meta: [{ title: "Game Lobby — Sports Squares Live" }] }),
+  head: () => ({ meta: [{ title: "Game Lobby — Clutch Squares" }] }),
   component: LobbyPage,
 });
 

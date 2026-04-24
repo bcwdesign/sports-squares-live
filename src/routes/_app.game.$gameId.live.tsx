@@ -12,7 +12,7 @@ import { Maximize2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/game/$gameId/live")({
-  head: () => ({ meta: [{ title: "Live — Sports Squares Live" }] }),
+  head: () => ({ meta: [{ title: "Live — Clutch Squares" }] }),
   component: LivePage,
 });
 
