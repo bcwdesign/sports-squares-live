@@ -9,6 +9,7 @@ import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { shuffle10 } from "@/lib/types";
 import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv } from "lucide-react";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/game/$gameId/lobby")({
@@ -184,7 +185,8 @@ function LobbyPage() {
                 const count = squares.filter((s) => s.owner_id === p.user_id).length;
                 const isHostP = p.user_id === game.host_id;
                 return (
-                  <div key={p.id} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${isHostP ? "border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10" : "border-border bg-background/50"}`}>
+                  <div key={p.id} className={`flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-lg border ${isHostP ? "border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10" : "border-border bg-background/50"}`}>
+                    <PlayerAvatar name={p.display_name} src={p.avatar_url} size="sm" />
                     <span className="font-bold text-sm">{p.display_name}</span>
                     {isHostP && <Crown className="w-3 h-3 text-[color:var(--neon-green)]" />}
                     <span className="font-mono text-[10px] text-muted-foreground">{count}</span>
