@@ -8,9 +8,19 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { shuffle10 } from "@/lib/types";
-import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv } from "lucide-react";
+import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv, X } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/game/$gameId/lobby")({
   head: () => ({ meta: [{ title: "Game Lobby — Clutch Squares" }] }),
