@@ -176,7 +176,7 @@ function LivePage() {
       }).eq("id", g.id);
     }, 2000);
     return () => clearInterval(id);
-  }, [isHost, game]);
+  }, [isHost, game, demoRunning]);
 
   // Notify when a winning square changes
   const winIdx = game ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
