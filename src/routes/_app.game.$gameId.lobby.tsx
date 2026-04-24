@@ -36,6 +36,8 @@ function LobbyPage() {
   const [watchMode, setWatchMode] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [clearTarget, setClearTarget] = useState<{ id: string; ownerName: string; index: number } | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   // Auto-route if game is past lobby
   useEffect(() => {
