@@ -53,7 +53,7 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
   }, [replayKey, hasWinner]);
 
   return (
-    <div className="fixed inset-0 bg-background overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-background overflow-y-auto md:overflow-hidden flex flex-col">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -64,11 +64,11 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
 
       <TopBranding game={game} />
 
-      <div className="relative flex-1 grid grid-cols-12 gap-6 px-8 py-4 min-h-0">
-        <div className="col-span-8 flex flex-col min-h-0">
+      <div className="relative flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 px-3 md:px-8 py-3 md:py-4 min-h-0">
+        <div className="md:col-span-8 flex flex-col min-h-0">
           <BoardArea game={game} squares={squares} winIdx={winIdx} />
         </div>
-        <div className="col-span-4 flex flex-col min-h-0">
+        <div className="md:col-span-4 flex flex-col min-h-0">
           <WinnerPanel game={game} winSq={winSq} scoresEntered={scoresEntered} />
         </div>
       </div>
@@ -80,31 +80,48 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
 
 function TopBranding({ game }: { game: Game }) {
   return (
-    <div className="relative px-8 pt-6 pb-3 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-black text-background text-base">
-          CS
+    <div className="relative px-4 md:px-8 pt-4 md:pt-6 pb-3 flex flex-col md:block gap-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-black text-background text-sm md:text-base">
+            CS
+          </div>
+          <div>
+            <div className="font-display font-black tracking-tight text-lg md:text-2xl leading-none">
+              <span className="text-[color:var(--neon-blue)]">CLUTCH</span>{" "}
+              <span className="text-[color:var(--neon-green)]">SQUARES</span>
+            </div>
+            <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground mt-1">
+              Live Watch Party
+            </div>
+          </div>
         </div>
-        <div>
-          <div className="font-display font-black tracking-tight text-2xl leading-none">
-            <span className="text-[color:var(--neon-blue)]">CLUTCH</span>{" "}
-            <span className="text-[color:var(--neon-green)]">SQUARES</span>
+
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-destructive/40 bg-destructive/10">
+            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-destructive animate-pulse" />
+            <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest text-destructive font-bold">Live</span>
           </div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-1">
-            Live Watch Party
-          </div>
+          <div className="hidden sm:block font-mono text-xs uppercase tracking-widest text-muted-foreground">{game.sport}</div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-destructive/40 bg-destructive/10">
-          <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-          <span className="font-mono text-[11px] uppercase tracking-widest text-destructive font-bold">Live</span>
+      {/* Mobile scoreboard — inline below logo row */}
+      <div className="flex md:hidden items-center justify-center gap-3">
+        <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
+        <div className="flex flex-col items-center min-w-[80px]">
+          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+            {game.status === "completed" ? "Final" : `Q${game.quarter}`}
+          </div>
+          <div className="font-mono font-black text-xl text-[color:var(--neon-orange)] tabular-nums">
+            {game.status === "completed" ? "—" : game.clock}
+          </div>
         </div>
-        <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{game.sport}</div>
+        <ScoreSide team={game.home_team} score={game.home_score} color="var(--neon-green)" align="left" />
       </div>
 
-      <div className="absolute left-1/2 -translate-x-1/2 top-5 flex items-center gap-6">
+      {/* Desktop scoreboard — absolutely positioned center */}
+      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 top-5 items-center gap-6">
         <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
         <div className="flex flex-col items-center min-w-[120px]">
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
@@ -132,9 +149,9 @@ function ScoreSide({
   align: "left" | "right";
 }) {
   return (
-    <div className={cn("flex items-center gap-3", align === "right" && "flex-row-reverse")}>
+    <div className={cn("flex items-center gap-2 md:gap-3", align === "right" && "flex-row-reverse")}>
       <div
-        className="px-3 py-1.5 rounded-lg font-display font-black text-xl tracking-wide"
+        className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-display font-black text-base md:text-xl tracking-wide"
         style={{
           backgroundColor: `color-mix(in oklab, ${color} 18%, transparent)`,
           color,
@@ -143,7 +160,7 @@ function ScoreSide({
       >
         {shortTeam(team)}
       </div>
-      <div className="font-mono font-black text-5xl tabular-nums" style={{ color }}>
+      <div className="font-mono font-black text-3xl md:text-5xl tabular-nums" style={{ color }}>
         {score}
       </div>
     </div>
@@ -159,23 +176,23 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
   const winCol = winIdx >= 0 ? winIdx % 10 : -1;
 
   return (
-    <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-4 shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+    <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-2 md:p-4 shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
       <div className="flex items-center justify-between mb-2 px-1">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Squares Board</div>
-        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest">
+        <div className="flex items-center gap-2 md:gap-3 text-[10px] font-mono uppercase tracking-widest">
           <LegendDot color="var(--neon-blue)" label="Claimed" />
           <LegendDot color="var(--neon-orange)" label="Winning" pulse />
         </div>
       </div>
 
-      <div className="flex items-center mb-1.5">
-        <div className="w-8" />
-        <div className="flex-1 grid grid-cols-10 gap-1">
+      <div className="flex items-center mb-1 md:mb-1.5">
+        <div className="w-5 md:w-8" />
+        <div className="flex-1 grid grid-cols-10 gap-0.5 md:gap-1">
           {game.home_axis.map((d, i) => (
             <div
               key={i}
               className={cn(
-                "text-center font-mono font-black text-base tabular-nums transition-colors",
+                "text-center font-mono font-black text-[11px] md:text-base tabular-nums transition-colors",
                 i === winCol ? "text-[color:var(--neon-orange)]" : "text-[color:var(--neon-green)]",
               )}
             >
@@ -186,12 +203,12 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
       </div>
 
       <div className="flex items-stretch flex-1 min-h-0">
-        <div className="w-8 grid grid-rows-10 gap-1 mr-1.5">
+        <div className="w-5 md:w-8 grid grid-rows-10 gap-0.5 md:gap-1 mr-1 md:mr-1.5">
           {game.away_axis.map((d, i) => (
             <div
               key={i}
               className={cn(
-                "flex items-center justify-center font-mono font-black text-base tabular-nums transition-colors",
+                "flex items-center justify-center font-mono font-black text-[11px] md:text-base tabular-nums transition-colors",
                 i === winRow ? "text-[color:var(--neon-orange)]" : "text-[color:var(--neon-blue)]",
               )}
             >
@@ -200,7 +217,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
           ))}
         </div>
 
-        <div className="flex-1 grid grid-cols-10 gap-1 aspect-square max-h-full">
+        <div className="flex-1 grid grid-cols-10 gap-0.5 md:gap-1 aspect-square max-h-full">
           {grid.map((sq, idx) => {
             const isWin = winIdx === idx;
             const isClaimed = !!sq?.owner_id;
@@ -208,7 +225,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
               <div
                 key={idx}
                 className={cn(
-                  "relative rounded-md flex items-center justify-center overflow-hidden text-[10px] font-mono leading-none p-1 border transition-all",
+                  "relative rounded md:rounded-md flex items-center justify-center overflow-hidden text-[8px] md:text-[10px] font-mono leading-none p-0.5 md:p-1 border transition-all",
                   !isClaimed && !isWin && "bg-muted/30 border-border/40",
                   isClaimed && !isWin && "bg-[color:var(--neon-blue)]/20 border-[color:var(--neon-blue)]/50",
                   isWin && "!bg-[color:var(--neon-orange)] !border-[color:var(--neon-orange)] animate-winner-pulse z-10",
@@ -218,7 +235,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
                   <span
                     className={cn(
                       "truncate w-full text-center font-bold",
-                      isWin ? "text-background text-xs" : "text-[color:var(--neon-blue)]",
+                      isWin ? "text-background text-[9px] md:text-xs" : "text-[color:var(--neon-blue)]",
                     )}
                   >
                     {sq.owner_name.slice(0, 6)}
@@ -263,13 +280,13 @@ function WinnerPanel({
   return (
     <div
       className={cn(
-        "rounded-2xl border-2 p-6 flex flex-col flex-1 min-h-0 transition-all",
+        "rounded-2xl border-2 p-4 md:p-6 flex flex-col flex-1 min-h-0 transition-all",
         hasWinner
           ? "border-[color:var(--neon-orange)]/60 bg-[color:var(--neon-orange)]/10 shadow-[var(--shadow-neon-orange)]"
           : "border-border bg-[color:var(--surface)]/80",
       )}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Currently Winning</div>
         <div
           className={cn(
@@ -286,14 +303,14 @@ function WinnerPanel({
       ) : !hasWinner ? (
         <EmptyState title="Unclaimed Square" subtitle="The winning square has no owner." icon={<Trophy className="w-10 h-10" />} />
       ) : (
-        <div key={winSq!.owner_id} className="flex-1 flex flex-col items-center justify-center text-center animate-bounce-in">
+        <div key={winSq!.owner_id} className="flex-1 flex flex-col items-center justify-center text-center animate-bounce-in py-2">
           <Avatar name={winSq!.owner_name!} />
-          <div className="font-display font-black text-3xl mt-4 leading-tight">{winSq!.owner_name}</div>
+          <div className="font-display font-black text-2xl md:text-3xl mt-3 md:mt-4 leading-tight">{winSq!.owner_name}</div>
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-2">
             Holds the winning square
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-4 md:mt-6 flex items-center gap-3">
             <DigitChip digit={awayDigit} color="var(--neon-blue)" label={shortTeam(game.away_team)} />
             <div className="font-mono text-2xl font-black text-muted-foreground">×</div>
             <DigitChip digit={homeDigit} color="var(--neon-green)" label={shortTeam(game.home_team)} />
@@ -301,7 +318,7 @@ function WinnerPanel({
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t border-border/60">
+      <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-border/60">
         <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground text-center">
           {game.status === "completed"
             ? "Game complete"
@@ -324,7 +341,7 @@ function Avatar({ name }: { name: string }) {
     .toUpperCase();
   return (
     <div
-      className="w-24 h-24 rounded-full flex items-center justify-center font-display font-black text-3xl text-background"
+      className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center font-display font-black text-2xl md:text-3xl text-background"
       style={{ backgroundImage: "var(--gradient-neon)", boxShadow: "var(--shadow-neon-orange)" }}
     >
       {initials || "?"}
@@ -377,30 +394,30 @@ function BottomBar({ game }: { game: Game }) {
   }, [joinUrl]);
 
   return (
-    <div className="relative px-8 py-4 border-t border-border/60 bg-[color:var(--surface)]/60 backdrop-blur-sm flex items-center justify-between gap-6">
-      <div className="flex items-center gap-4">
+    <div className="relative px-4 md:px-8 py-3 md:py-4 border-t border-border/60 bg-[color:var(--surface)]/60 backdrop-blur-sm flex flex-col md:flex-row items-center md:items-center justify-between gap-3 md:gap-6">
+      <div className="flex items-center gap-3 md:gap-4">
         {qrDataUrl ? (
-          <img src={qrDataUrl} alt="Join QR code" className="w-20 h-20 rounded-lg bg-white p-1.5" />
+          <img src={qrDataUrl} alt="Join QR code" className="w-14 h-14 md:w-20 md:h-20 rounded-lg bg-white p-1 md:p-1.5" />
         ) : (
-          <div className="w-20 h-20 rounded-lg bg-white/10" />
+          <div className="w-14 h-14 md:w-20 md:h-20 rounded-lg bg-white/10" />
         )}
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Scan to Join</div>
-          <div className="font-display font-black text-2xl text-foreground mt-1">Join the Game</div>
+          <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground">Scan to Join</div>
+          <div className="font-display font-black text-lg md:text-2xl text-foreground mt-0.5 md:mt-1">Join the Game</div>
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 md:gap-6">
         <div className="text-center">
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Invite Code</div>
-          <div className="font-display font-black text-4xl tracking-[0.2em] text-[color:var(--neon-blue)] mt-1">
+          <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground">Invite Code</div>
+          <div className="font-display font-black text-2xl md:text-4xl tracking-[0.15em] md:tracking-[0.2em] text-[color:var(--neon-blue)] mt-0.5 md:mt-1">
             {game.invite_code}
           </div>
         </div>
-        <div className="h-12 w-px bg-border" />
-        <div className="text-center">
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Or Visit</div>
-          <div className="font-mono font-bold text-lg text-[color:var(--neon-green)] mt-1">{shortUrl}</div>
+        <div className="hidden sm:block h-10 md:h-12 w-px bg-border" />
+        <div className="hidden sm:block text-center">
+          <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground">Or Visit</div>
+          <div className="font-mono font-bold text-sm md:text-lg text-[color:var(--neon-green)] mt-0.5 md:mt-1 truncate max-w-[180px] md:max-w-none">{shortUrl}</div>
         </div>
       </div>
     </div>
