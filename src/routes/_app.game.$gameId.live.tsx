@@ -8,7 +8,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
-import { Maximize2, QrCode, Trophy, Tv, Zap, X } from "lucide-react";
+import { Maximize2, QrCode, RotateCcw, Trophy, Tv, Zap, X } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 
