@@ -152,7 +152,7 @@ function LivePage() {
   const resetGame = async () => {
     if (!isHost || !game || resetting) return;
     const ok = window.confirm(
-      "Reset scores, quarter, and clock? Claimed squares stay. The game returns to a fresh tip-off so you can re-run the demo.",
+      "Reset the game back to the lobby? Scores, quarter, and clock will clear. Claimed squares stay so players can keep their picks or claim more.",
     );
     if (!ok) return;
     demoCancelRef.current = true;
@@ -165,11 +165,12 @@ function LivePage() {
           away_score: 0,
           quarter: 1,
           clock: "12:00",
-          status: "live",
+          status: "lobby",
         })
         .eq("id", game.id);
       if (error) throw error;
-      toast.success("Game reset — ready to re-run demo");
+      toast.success("Game reset — back in the lobby");
+      navigate({ to: "/game/$gameId/lobby", params: { gameId } });
     } catch (e) {
       toast.error("Couldn't reset the game");
     } finally {
