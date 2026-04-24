@@ -24,28 +24,75 @@ function LivePage() {
   const navigate = useNavigate();
   const [watchMode, setWatchMode] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
 
-  const showQr = async () => {
-    setQrOpen(true);
-    if (qrDataUrl && overlayUrl) return;
-    setQrLoading(true);
-    try {
-      const { data } = await supabase.from("games").select("share_token").eq("id", gameId).maybeSingle();
-      const token = (data as { share_token?: string } | null)?.share_token;
-      if (!token) { toast.error("No share token"); setQrOpen(false); return; }
-      const url = `${window.location.origin}/overlay/${token}`;
-      const png = await QRCode.toDataURL(url, { width: 512, margin: 1, color: { dark: "#000000", light: "#ffffff" } });
-      setOverlayUrl(url);
-      setQrDataUrl(png);
-    } catch (e) {
-      toast.error("Failed to generate QR");
-      setQrOpen(false);
-    } finally {
-      setQrLoading(false);
+  // Fetch the share token for this game and keep it in sync. The `games` table
+  // is already subscribed via useGame; we re-poll when the row changes so a
+  // rotated token (e.g. host re-issued the link) is picked up automatically.
+  useEffect(() => {
+    let cancelled = false;
+    const loadToken = async () => {
+      const { data } = await supabase
+        .from("games")
+        .select("share_token")
+        .eq("id", gameId)
+        .maybeSingle();
+      if (cancelled) return;
+      const token = (data as { share_token?: string } | null)?.share_token ?? null;
+      setShareToken((prev) => (prev === token ? prev : token));
+    };
+    loadToken();
+    const channel = supabase
+      .channel(`game-share-token:${gameId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "games", filter: `id=eq.${gameId}` },
+        (payload) => {
+          const next = (payload.new as { share_token?: string } | null)?.share_token ?? null;
+          if (next) setShareToken((prev) => (prev === next ? prev : next));
+        },
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [gameId]);
+
+  // Regenerate the QR whenever the token changes so it never goes stale.
+  useEffect(() => {
+    if (!shareToken) {
+      setQrDataUrl(null);
+      setOverlayUrl(null);
+      return;
     }
+    let cancelled = false;
+    setQrLoading(true);
+    const url = `${window.location.origin}/overlay/${shareToken}`;
+    QRCode.toDataURL(url, { width: 512, margin: 1, color: { dark: "#000000", light: "#ffffff" } })
+      .then((png) => {
+        if (cancelled) return;
+        setOverlayUrl(url);
+        setQrDataUrl(png);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to generate QR");
+      })
+      .finally(() => {
+        if (!cancelled) setQrLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [shareToken]);
+
+  const showQr = () => {
+    if (!shareToken) {
+      toast.error("Share link not ready yet");
+      return;
+    }
+    setQrOpen(true);
   };
 
   const isHost = !!user && !!game && game.host_id === user.id;
