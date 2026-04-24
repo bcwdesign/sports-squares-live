@@ -60,7 +60,7 @@ function LivePage() {
             quarter = 5;
             total = 0;
           } else {
-            quarter = (quarter + 1) as 1 | 2 | 3 | 4;
+            quarter = ((quarter as number) + 1) as 1 | 2 | 3 | 4;
             total = 12 * 60;
           }
         }
