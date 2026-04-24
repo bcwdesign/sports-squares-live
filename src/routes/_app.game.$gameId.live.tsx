@@ -405,33 +405,29 @@ function LivePage() {
               <ScoreInput
                 label={game.home_team || "Home"}
                 colorVar="--neon-blue"
-                value={scoreDraft.home}
-                onChange={(v) => { setScoreEditing(true); setScoreDraft((s) => ({ ...s, home: v })); }}
-                onBlur={() => setScoreEditing(false)}
+                value={draft.home}
+                onChange={(v) => setScoreDraft({ ...draft, home: v })}
                 inputMode="numeric"
               />
               <ScoreInput
                 label={game.away_team || "Away"}
                 colorVar="--neon-orange"
-                value={scoreDraft.away}
-                onChange={(v) => { setScoreEditing(true); setScoreDraft((s) => ({ ...s, away: v })); }}
-                onBlur={() => setScoreEditing(false)}
+                value={draft.away}
+                onChange={(v) => setScoreDraft({ ...draft, away: v })}
                 inputMode="numeric"
               />
               <ScoreInput
                 label="Quarter"
                 colorVar="--neon-green"
-                value={scoreDraft.quarter}
-                onChange={(v) => { setScoreEditing(true); setScoreDraft((s) => ({ ...s, quarter: v })); }}
-                onBlur={() => setScoreEditing(false)}
+                value={draft.quarter}
+                onChange={(v) => setScoreDraft({ ...draft, quarter: v })}
                 inputMode="numeric"
               />
               <ScoreInput
                 label="Clock"
                 colorVar="--neon-blue"
-                value={scoreDraft.clock}
-                onChange={(v) => { setScoreEditing(true); setScoreDraft((s) => ({ ...s, clock: v })); }}
-                onBlur={() => setScoreEditing(false)}
+                value={draft.clock}
+                onChange={(v) => setScoreDraft({ ...draft, clock: v })}
                 placeholder="MM:SS"
               />
             </div>
@@ -459,11 +455,18 @@ function LivePage() {
                 <Flag className="w-3.5 h-3.5" />
                 {finalizing ? "Finalizing..." : "Set Final Score"}
               </button>
-              {scoreEditing && (
-                <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Editing — winning digits {parseScore().home % 10}-{parseScore().away % 10}
-                </span>
-              )}
+              <button
+                onClick={syncDraftFromGame}
+                disabled={savingScore || finalizing}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-muted-foreground text-[11px] font-mono uppercase tracking-widest hover:text-foreground hover:border-foreground/40 transition disabled:opacity-40"
+                title="Reset the inputs to match the current live score"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Sync from Live
+              </button>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground ml-auto">
+                Preview digits {parseScore().home % 10}-{parseScore().away % 10}
+              </span>
             </div>
           </div>
         )}
