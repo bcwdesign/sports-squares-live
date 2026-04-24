@@ -394,30 +394,30 @@ function BottomBar({ game }: { game: Game }) {
   }, [joinUrl]);
 
   return (
-    <div className="relative px-8 py-4 border-t border-border/60 bg-[color:var(--surface)]/60 backdrop-blur-sm flex items-center justify-between gap-6">
-      <div className="flex items-center gap-4">
+    <div className="relative px-4 md:px-8 py-3 md:py-4 border-t border-border/60 bg-[color:var(--surface)]/60 backdrop-blur-sm flex flex-col md:flex-row items-center md:items-center justify-between gap-3 md:gap-6">
+      <div className="flex items-center gap-3 md:gap-4">
         {qrDataUrl ? (
-          <img src={qrDataUrl} alt="Join QR code" className="w-20 h-20 rounded-lg bg-white p-1.5" />
+          <img src={qrDataUrl} alt="Join QR code" className="w-14 h-14 md:w-20 md:h-20 rounded-lg bg-white p-1 md:p-1.5" />
         ) : (
-          <div className="w-20 h-20 rounded-lg bg-white/10" />
+          <div className="w-14 h-14 md:w-20 md:h-20 rounded-lg bg-white/10" />
         )}
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Scan to Join</div>
-          <div className="font-display font-black text-2xl text-foreground mt-1">Join the Game</div>
+          <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground">Scan to Join</div>
+          <div className="font-display font-black text-lg md:text-2xl text-foreground mt-0.5 md:mt-1">Join the Game</div>
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 md:gap-6">
         <div className="text-center">
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Invite Code</div>
-          <div className="font-display font-black text-4xl tracking-[0.2em] text-[color:var(--neon-blue)] mt-1">
+          <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground">Invite Code</div>
+          <div className="font-display font-black text-2xl md:text-4xl tracking-[0.15em] md:tracking-[0.2em] text-[color:var(--neon-blue)] mt-0.5 md:mt-1">
             {game.invite_code}
           </div>
         </div>
-        <div className="h-12 w-px bg-border" />
-        <div className="text-center">
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Or Visit</div>
-          <div className="font-mono font-bold text-lg text-[color:var(--neon-green)] mt-1">{shortUrl}</div>
+        <div className="hidden sm:block h-10 md:h-12 w-px bg-border" />
+        <div className="hidden sm:block text-center">
+          <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground">Or Visit</div>
+          <div className="font-mono font-bold text-sm md:text-lg text-[color:var(--neon-green)] mt-0.5 md:mt-1 truncate max-w-[180px] md:max-w-none">{shortUrl}</div>
         </div>
       </div>
     </div>
