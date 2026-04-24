@@ -7,10 +7,10 @@ export function TopBar({ game }: { game: Game }) {
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <Link to="/dashboard" className="flex items-center gap-2 group">
           <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">
-            SQ
+            CS
           </div>
           <div className="font-display font-bold tracking-tight text-sm sm:text-base hidden sm:block">
-            SQUARES<span className="text-[color:var(--neon-green)]">.LIVE</span>
+            <span className="text-[color:var(--neon-blue)]">CLUTCH</span> <span className="text-[color:var(--neon-green)]">SQUARES</span>
           </div>
         </Link>
 

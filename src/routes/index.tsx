@@ -7,7 +7,7 @@ import { Trophy, Zap, Users } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Sports Squares Live — Watch Parties for NBA" },
+      { title: "Clutch Squares — Watch Parties for NBA" },
       { name: "description", content: "Create private NBA Squares games for live watch parties. Invite friends with a code, claim squares, win each quarter." },
     ],
   }),
@@ -31,9 +31,8 @@ function Landing() {
             NBA · Live
           </div>
           <h1 className="font-display font-bold text-5xl sm:text-6xl tracking-tight leading-[0.95]">
-            SPORTS<br />
-            <span className="text-[color:var(--neon-blue)]">SQUARES</span>
-            <span className="text-[color:var(--neon-green)]">.LIVE</span>
+            <span className="text-[color:var(--neon-blue)]">CLUTCH</span><br />
+            <span className="text-[color:var(--neon-green)]">SQUARES</span>
           </h1>
           <p className="text-muted-foreground mt-5 text-base sm:text-lg max-w-md mx-auto">
             Create private squares games for live NBA watch parties.

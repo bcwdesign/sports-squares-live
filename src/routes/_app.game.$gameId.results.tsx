@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { winningSquareIndex } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/game/$gameId/results")({
-  head: () => ({ meta: [{ title: "Results — Sports Squares Live" }] }),
+  head: () => ({ meta: [{ title: "Results — Clutch Squares" }] }),
   component: ResultsPage,
 });
 
@@ -29,11 +29,11 @@ function ResultsPage() {
 
   const share = async () => {
     const text = youWon
-      ? `🏆 I just won on Squares.Live! ${game.away_team} ${game.away_score} - ${game.home_score} ${game.home_team}`
-      : `Played Squares on Squares.Live: ${game.away_team} ${game.away_score} - ${game.home_score} ${game.home_team}`;
+      ? `🏆 I just won on Clutch Squares! ${game.away_team} ${game.away_score} - ${game.home_score} ${game.home_team}`
+      : `Played Squares on Clutch Squares: ${game.away_team} ${game.away_score} - ${game.home_score} ${game.home_team}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Squares.Live", text, url: window.location.origin });
+        await navigator.share({ title: "Clutch Squares", text, url: window.location.origin });
       } else {
         await navigator.clipboard.writeText(text);
         toast.success("Copied to clipboard");

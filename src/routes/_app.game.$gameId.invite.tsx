@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_app/game/$gameId/invite")({
-  head: () => ({ meta: [{ title: "Invite Friends — Sports Squares Live" }] }),
+  head: () => ({ meta: [{ title: "Invite Friends — Clutch Squares" }] }),
   component: InvitePage,
 });
 
