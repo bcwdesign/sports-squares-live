@@ -105,6 +105,23 @@ function LobbyPage() {
     navigate({ to: "/game/$gameId/live", params: { gameId } });
   };
 
+  const confirmClear = async () => {
+    if (!clearTarget || !isHost) return;
+    setClearing(true);
+    const { error } = await supabase
+      .from("squares")
+      .update({ owner_id: null, owner_name: null })
+      .eq("id", clearTarget.id);
+    setClearing(false);
+    if (error) {
+      toast.error("Couldn't clear square");
+    } else {
+      toast.success("Square cleared");
+      setClearTarget(null);
+      if (selected === clearTarget.index) setSelected(null);
+    }
+  };
+
   const share = async () => {
     const url = `${window.location.origin}/join/${game.invite_code}`;
     try {
