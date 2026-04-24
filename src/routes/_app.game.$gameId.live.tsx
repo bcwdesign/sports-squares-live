@@ -23,6 +23,30 @@ function LivePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [watchMode, setWatchMode] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+
+  const showQr = async () => {
+    setQrOpen(true);
+    if (qrDataUrl && overlayUrl) return;
+    setQrLoading(true);
+    try {
+      const { data } = await supabase.from("games").select("share_token").eq("id", gameId).maybeSingle();
+      const token = (data as { share_token?: string } | null)?.share_token;
+      if (!token) { toast.error("No share token"); setQrOpen(false); return; }
+      const url = `${window.location.origin}/overlay/${token}`;
+      const png = await QRCode.toDataURL(url, { width: 512, margin: 1, color: { dark: "#000000", light: "#ffffff" } });
+      setOverlayUrl(url);
+      setQrDataUrl(png);
+    } catch (e) {
+      toast.error("Failed to generate QR");
+      setQrOpen(false);
+    } finally {
+      setQrLoading(false);
+    }
+  };
 
   const isHost = !!user && !!game && game.host_id === user.id;
 
