@@ -280,13 +280,13 @@ function WinnerPanel({
   return (
     <div
       className={cn(
-        "rounded-2xl border-2 p-6 flex flex-col flex-1 min-h-0 transition-all",
+        "rounded-2xl border-2 p-4 md:p-6 flex flex-col flex-1 min-h-0 transition-all",
         hasWinner
           ? "border-[color:var(--neon-orange)]/60 bg-[color:var(--neon-orange)]/10 shadow-[var(--shadow-neon-orange)]"
           : "border-border bg-[color:var(--surface)]/80",
       )}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Currently Winning</div>
         <div
           className={cn(
@@ -303,14 +303,14 @@ function WinnerPanel({
       ) : !hasWinner ? (
         <EmptyState title="Unclaimed Square" subtitle="The winning square has no owner." icon={<Trophy className="w-10 h-10" />} />
       ) : (
-        <div key={winSq!.owner_id} className="flex-1 flex flex-col items-center justify-center text-center animate-bounce-in">
+        <div key={winSq!.owner_id} className="flex-1 flex flex-col items-center justify-center text-center animate-bounce-in py-2">
           <Avatar name={winSq!.owner_name!} />
-          <div className="font-display font-black text-3xl mt-4 leading-tight">{winSq!.owner_name}</div>
+          <div className="font-display font-black text-2xl md:text-3xl mt-3 md:mt-4 leading-tight">{winSq!.owner_name}</div>
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-2">
             Holds the winning square
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-4 md:mt-6 flex items-center gap-3">
             <DigitChip digit={awayDigit} color="var(--neon-blue)" label={shortTeam(game.away_team)} />
             <div className="font-mono text-2xl font-black text-muted-foreground">×</div>
             <DigitChip digit={homeDigit} color="var(--neon-green)" label={shortTeam(game.home_team)} />
@@ -318,7 +318,7 @@ function WinnerPanel({
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t border-border/60">
+      <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-border/60">
         <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground text-center">
           {game.status === "completed"
             ? "Game complete"
