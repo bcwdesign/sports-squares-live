@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_app/game/$gameId/overlay")({
 
 function AuthenticatedOverlayPage() {
   const { gameId } = Route.useParams();
-  const { game, squares, loading } = useGame(gameId);
+  const { game, squares, players, loading } = useGame(gameId);
   const { user } = useAuth();
   const [replayKey, setReplayKey] = useState(0);
   const [showHud, setShowHud] = useState(true);
