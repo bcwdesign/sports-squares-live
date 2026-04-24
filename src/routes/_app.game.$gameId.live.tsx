@@ -113,6 +113,7 @@ function LivePage() {
   const [draftsSeeded, setDraftsSeeded] = useState(false);
   const [savingScore, setSavingScore] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const [confirmFinalOpen, setConfirmFinalOpen] = useState(false);
 
   // One-time seed from the live game so the host sees current values on load.
   useEffect(() => {
@@ -501,13 +502,7 @@ function LivePage() {
                 {savingScore ? "Saving..." : "Update Score"}
               </button>
               <button
-                onClick={() => {
-                  const ok = window.confirm(
-                    "Set this as the FINAL score? The game will be marked completed and the winning square will be locked in.",
-                  );
-                  if (!ok) return;
-                  saveScore({ final: true });
-                }}
+                onClick={() => setConfirmFinalOpen(true)}
                 disabled={savingScore || finalizing}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[color:var(--neon-green)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-green)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Mark game complete and lock the winner"
@@ -653,6 +648,124 @@ function LivePage() {
           </div>
         </div>
       )}
+
+      {confirmFinalOpen && game && (() => {
+        const p = parseScore();
+        const previewIdx = winningSquareIndex(game, p.home, p.away);
+        const previewRow = Math.floor(previewIdx / 10);
+        const previewCol = previewIdx % 10;
+        const previewSq = squares.find((s) => s.row === previewRow && s.col === previewCol);
+        const previewOwner = previewSq?.owner_name ?? null;
+        const previewAvatar = previewSq?.owner_id
+          ? players.find((pl) => pl.user_id === previewSq.owner_id)?.avatar_url ?? null
+          : null;
+        const homeDigit = p.home % 10;
+        const awayDigit = p.away % 10;
+        return (
+          <div
+            className="fixed inset-0 z-[70] bg-background/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+            onClick={() => !finalizing && setConfirmFinalOpen(false)}
+          >
+            <div
+              className="relative w-full max-w-md rounded-2xl border border-[color:var(--neon-green)]/40 bg-[color:var(--surface)] p-6 shadow-[var(--shadow-card)] animate-scale-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => !finalizing && setConfirmFinalOpen(false)}
+                className="absolute top-3 right-3 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition disabled:opacity-40"
+                disabled={finalizing}
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[color:var(--neon-green)] font-mono text-[10px] uppercase tracking-widest mb-3">
+                  <Flag className="w-3 h-3" /> Final Score
+                </div>
+                <div className="font-display font-bold text-xl">Lock in the winner?</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This marks the game completed. The winning square below will be locked.
+                </p>
+              </div>
+
+              {/* Drafted score */}
+              <div className="rounded-xl border border-border bg-background/40 p-3 mb-3">
+                <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-2">
+                  Drafted · Q{p.quarter} · {p.clock || "00:00"}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-md border border-[color:var(--neon-blue)]/30 bg-[color:var(--neon-blue)]/5 p-2 text-center">
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground truncate">
+                      {game.home_team || "Home"}
+                    </div>
+                    <div className="font-mono font-bold text-2xl tabular-nums text-[color:var(--neon-blue)]">
+                      {p.home}
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-[color:var(--neon-orange)]/30 bg-[color:var(--neon-orange)]/5 p-2 text-center">
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground truncate">
+                      {game.away_team || "Away"}
+                    </div>
+                    <div className="font-mono font-bold text-2xl tabular-nums text-[color:var(--neon-orange)]">
+                      {p.away}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Computed winning square */}
+              <div className="rounded-xl border border-[color:var(--neon-green)]/30 bg-[color:var(--neon-green)]/5 p-3 mb-4 flex items-center gap-3">
+                <div className="shrink-0 rounded-lg border border-[color:var(--neon-green)]/40 bg-background px-3 py-2 text-center">
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Digits</div>
+                  <div className="font-mono font-bold text-xl tabular-nums text-[color:var(--neon-green)]">
+                    {homeDigit}-{awayDigit}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--neon-green)]">
+                    Winning Square
+                  </div>
+                  {previewOwner ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <PlayerAvatar name={previewOwner} src={previewAvatar} size="sm" />
+                      <div className="font-display font-bold text-base truncate">{previewOwner}</div>
+                    </div>
+                  ) : (
+                    <div className="font-display font-bold text-base text-muted-foreground mt-1">
+                      Unclaimed square
+                    </div>
+                  )}
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5">
+                    Row {previewRow + 1} · Col {previewCol + 1}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setConfirmFinalOpen(false)}
+                  disabled={finalizing}
+                  className="flex-1 px-3 py-2 rounded-md border border-border text-[11px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-foreground/40 transition disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    await saveScore({ final: true });
+                    setConfirmFinalOpen(false);
+                  }}
+                  disabled={finalizing || savingScore}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-[color:var(--neon-green)]/60 bg-[color:var(--neon-green)]/15 text-[color:var(--neon-green)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-green)]/25 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  {finalizing ? "Locking..." : "Lock Winner"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
