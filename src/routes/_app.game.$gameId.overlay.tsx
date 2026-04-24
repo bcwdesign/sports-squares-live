@@ -49,6 +49,18 @@ function AuthenticatedOverlayPage() {
     };
   }, []);
 
+  // Compute winner for the TV-sized celebration card. Hoisted above any early
+  // returns so hook order stays stable across renders.
+  const scoresEntered = !!game && (game.home_score > 0 || game.away_score > 0);
+  const winIdx = game && scoresEntered ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
+  const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
+  const winCol = winIdx >= 0 ? winIdx % 10 : -1;
+  const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
+  const winnerAvatar = useMemo(() => {
+    if (!winSq?.owner_id) return null;
+    return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
+  }, [players, winSq?.owner_id]);
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-background flex items-center justify-center text-sm font-mono uppercase tracking-widest text-muted-foreground">
@@ -75,18 +87,7 @@ function AuthenticatedOverlayPage() {
   }
 
   const isHost = !!user && game.host_id === user.id;
-
-  // Compute winner for the TV-sized celebration card.
-  const scoresEntered = game.home_score > 0 || game.away_score > 0;
-  const winIdx = scoresEntered ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
-  const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
-  const winCol = winIdx >= 0 ? winIdx % 10 : -1;
-  const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
   const hasWinner = !!winSq?.owner_id;
-  const winnerAvatar = useMemo(() => {
-    if (!winSq?.owner_id) return null;
-    return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
-  }, [players, winSq?.owner_id]);
   const winnerInfo = hasWinner
     ? {
         ownerName: winSq!.owner_name ?? "Player",
