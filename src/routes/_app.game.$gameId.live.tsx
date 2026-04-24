@@ -102,42 +102,76 @@ function LivePage() {
   const demoCancelRef = useRef(false);
   const [resetting, setResetting] = useState(false);
 
-  // Manual score editor (host only). Local draft state — only seeded from the
-  // live game on first load (or after the host explicitly resets the draft via
-  // "Sync from Live"). Typing in any field never gets clobbered by realtime
-  // updates, so the host can build up a score across quarters at their own
-  // pace and then save when ready.
-  const [scoreDraft, setScoreDraft] = useState<{ home: string; away: string; quarter: string; clock: string } | null>(null);
+  // Manual score editor (host only). Per-quarter draft so switching the
+  // Quarter input doesn't wipe values you've typed for another quarter.
+  // - `scoreDrafts` maps quarter # -> { home, away, clock }
+  // - `activeQuarter` is the currently-edited quarter (separate input)
+  // Drafts persist for the lifetime of the page; "Reset to Lobby" clears them.
+  type QuarterDraft = { home: string; away: string; clock: string };
+  const [scoreDrafts, setScoreDrafts] = useState<Record<number, QuarterDraft>>({});
+  const [activeQuarter, setActiveQuarter] = useState<string>("1");
+  const [draftsSeeded, setDraftsSeeded] = useState(false);
   const [savingScore, setSavingScore] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
-  // Seed once when the game first loads.
-  useEffect(() => {
-    if (!game || scoreDraft !== null) return;
-    setScoreDraft({
-      home: String(game.home_score),
-      away: String(game.away_score),
-      quarter: String(game.quarter),
-      clock: game.clock,
-    });
-  }, [game, scoreDraft]);
 
-  const draft = scoreDraft ?? { home: "0", away: "0", quarter: "1", clock: "12:00" };
+  // One-time seed from the live game so the host sees current values on load.
+  useEffect(() => {
+    if (!game || draftsSeeded) return;
+    setScoreDrafts({
+      [game.quarter]: {
+        home: String(game.home_score),
+        away: String(game.away_score),
+        clock: game.clock,
+      },
+    });
+    setActiveQuarter(String(game.quarter));
+    setDraftsSeeded(true);
+  }, [game, draftsSeeded]);
+
+  const activeQuarterNum = Math.max(1, Math.min(8, parseInt(activeQuarter || "1", 10) || 1));
+  const draft: QuarterDraft = scoreDrafts[activeQuarterNum] ?? { home: "0", away: "0", clock: "12:00" };
+
+  const updateActiveDraft = (patch: Partial<QuarterDraft>) => {
+    setScoreDrafts((prev) => ({
+      ...prev,
+      [activeQuarterNum]: { ...(prev[activeQuarterNum] ?? { home: "0", away: "0", clock: "12:00" }), ...patch },
+    }));
+  };
+
+  // Switching Quarter loads (or initializes) that quarter's draft.
+  const setQuarterInput = (v: string) => {
+    setActiveQuarter(v);
+    const q = Math.max(1, Math.min(8, parseInt(v || "1", 10) || 1));
+    setScoreDrafts((prev) => {
+      if (prev[q]) return prev;
+      // Seed new quarter from the current live score so the host doesn't start from 0.
+      return {
+        ...prev,
+        [q]: game
+          ? { home: String(game.home_score), away: String(game.away_score), clock: "12:00" }
+          : { home: "0", away: "0", clock: "12:00" },
+      };
+    });
+  };
 
   const syncDraftFromGame = () => {
     if (!game) return;
-    setScoreDraft({
-      home: String(game.home_score),
-      away: String(game.away_score),
-      quarter: String(game.quarter),
-      clock: game.clock,
-    });
+    setActiveQuarter(String(game.quarter));
+    setScoreDrafts((prev) => ({
+      ...prev,
+      [game.quarter]: {
+        home: String(game.home_score),
+        away: String(game.away_score),
+        clock: game.clock,
+      },
+    }));
     toast.message("Synced from live score");
   };
 
   const parseScore = () => {
     const home = Math.max(0, Math.min(999, parseInt(draft.home || "0", 10) || 0));
     const away = Math.max(0, Math.min(999, parseInt(draft.away || "0", 10) || 0));
-    const quarter = Math.max(1, Math.min(8, parseInt(draft.quarter || "1", 10) || 1));
+    const quarter = activeQuarterNum;
     const clock = draft.clock.trim() || "00:00";
     return { home, away, quarter, clock };
   };
@@ -159,14 +193,12 @@ function LivePage() {
         })
         .eq("id", game.id);
       if (error) throw error;
-      // Reflect the saved values back into the draft so the inputs match.
-      setScoreDraft({
-        home: String(home),
-        away: String(away),
-        quarter: String(quarter),
-        clock: final ? "00:00" : clock,
-      });
-      toast.success(final ? "Final score set — winner locked" : "Score updated");
+      // Reflect saved values back into this quarter's draft.
+      setScoreDrafts((prev) => ({
+        ...prev,
+        [quarter]: { home: String(home), away: String(away), clock: final ? "00:00" : clock },
+      }));
+      toast.success(final ? "Final score set — winner locked" : `Q${quarter} score updated`);
     } catch (e) {
       toast.error(final ? "Couldn't set final score" : "Couldn't update score");
     } finally {
@@ -244,6 +276,9 @@ function LivePage() {
         })
         .eq("id", game.id);
       if (error) throw error;
+      // Clear all per-quarter drafts so the next round starts fresh.
+      setScoreDrafts({ 1: { home: "0", away: "0", clock: "12:00" } });
+      setActiveQuarter("1");
       toast.success("Game reset — back in the lobby");
       navigate({ to: "/game/$gameId/lobby", params: { gameId } });
     } catch (e) {
@@ -395,39 +430,64 @@ function LivePage() {
             <div className="flex items-center gap-2 mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--neon-green)] animate-pulse" />
               <span className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-green)]">
-                Manual Score Update
+                Manual Score Update · Q{activeQuarterNum}
               </span>
               <span className="text-[10px] text-muted-foreground font-mono ml-auto hidden sm:inline">
-                Winner = last digit of each score
+                Drafts saved per quarter
               </span>
+            </div>
+            {/* Quarter chips: jump between drafted quarters without typing */}
+            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mr-1">Quarter:</span>
+              {[1, 2, 3, 4].map((q) => {
+                const has = !!scoreDrafts[q];
+                const active = q === activeQuarterNum;
+                return (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setQuarterInput(String(q))}
+                    className={`px-2 py-0.5 rounded-md font-mono text-[10px] uppercase tracking-widest border transition ${
+                      active
+                        ? "bg-[color:var(--neon-green)] text-background border-[color:var(--neon-green)]"
+                        : has
+                          ? "border-[color:var(--neon-green)]/40 text-[color:var(--neon-green)] hover:bg-[color:var(--neon-green)]/10"
+                          : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
+                    }`}
+                    title={has ? `Q${q} draft: ${scoreDrafts[q].home}-${scoreDrafts[q].away}` : `Start Q${q} draft`}
+                  >
+                    Q{q}{has && !active ? " •" : ""}
+                  </button>
+                );
+              })}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
               <ScoreInput
                 label={game.home_team || "Home"}
                 colorVar="--neon-blue"
                 value={draft.home}
-                onChange={(v) => setScoreDraft({ ...draft, home: v })}
+                onChange={(v) => updateActiveDraft({ home: v })}
                 inputMode="numeric"
               />
               <ScoreInput
                 label={game.away_team || "Away"}
                 colorVar="--neon-orange"
                 value={draft.away}
-                onChange={(v) => setScoreDraft({ ...draft, away: v })}
+                onChange={(v) => updateActiveDraft({ away: v })}
                 inputMode="numeric"
               />
               <ScoreInput
                 label="Quarter"
                 colorVar="--neon-green"
-                value={draft.quarter}
-                onChange={(v) => setScoreDraft({ ...draft, quarter: v })}
+                value={activeQuarter}
+                onChange={setQuarterInput}
                 inputMode="numeric"
               />
               <ScoreInput
                 label="Clock"
                 colorVar="--neon-blue"
                 value={draft.clock}
-                onChange={(v) => setScoreDraft({ ...draft, clock: v })}
+                onChange={(v) => updateActiveDraft({ clock: v })}
                 placeholder="MM:SS"
               />
             </div>
