@@ -18,6 +18,8 @@ function ResultsPage() {
   const { gameId } = Route.useParams();
   const { game, squares, loading } = useGame(gameId);
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [resetting, setResetting] = useState(false);
 
   if (loading || !game) {
     return <div className="min-h-screen flex items-center justify-center text-xs font-mono uppercase tracking-widest text-muted-foreground">Loading...</div>;
