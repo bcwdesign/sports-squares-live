@@ -276,6 +276,9 @@ function LivePage() {
         })
         .eq("id", game.id);
       if (error) throw error;
+      // Clear all per-quarter drafts so the next round starts fresh.
+      setScoreDrafts({ 1: { home: "0", away: "0", clock: "12:00" } });
+      setActiveQuarter("1");
       toast.success("Game reset — back in the lobby");
       navigate({ to: "/game/$gameId/lobby", params: { gameId } });
     } catch (e) {
