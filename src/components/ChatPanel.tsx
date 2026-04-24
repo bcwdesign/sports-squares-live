@@ -1,26 +1,41 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Message } from "@/lib/types";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
+import type { GamePlayer, Message } from "@/lib/types";
 
 export function ChatPanel({ gameId }: { gameId: string }) {
   const { user, profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Map of user_id -> avatar_url for quick lookup when rendering chat rows.
+  const avatarMap = useMemo(() => {
+    const m = new Map<string, string | null>();
+    players.forEach((p) => m.set(p.user_id, p.avatar_url));
+    return m;
+  }, [players]);
+
   useEffect(() => {
     let active = true;
-    supabase
-      .from("messages")
-      .select("*")
-      .eq("game_id", gameId)
-      .order("created_at", { ascending: true })
-      .limit(100)
-      .then(({ data }) => {
-        if (active && data) setMessages(data as Message[]);
-      });
+
+    // Load messages + players in parallel.
+    Promise.all([
+      supabase
+        .from("messages")
+        .select("*")
+        .eq("game_id", gameId)
+        .order("created_at", { ascending: true })
+        .limit(100),
+      supabase.from("game_players").select("*").eq("game_id", gameId),
+    ]).then(([msgRes, playerRes]) => {
+      if (!active) return;
+      if (msgRes.data) setMessages(msgRes.data as Message[]);
+      if (playerRes.data) setPlayers(playerRes.data as GamePlayer[]);
+    });
 
     const channel = supabase
       .channel(`messages:${gameId}`)
@@ -29,6 +44,24 @@ export function ChatPanel({ gameId }: { gameId: string }) {
         { event: "INSERT", schema: "public", table: "messages", filter: `game_id=eq.${gameId}` },
         (payload) => {
           setMessages((prev) => [...prev, payload.new as Message].slice(-100));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${gameId}` },
+        (payload) => {
+          setPlayers((prev) => {
+            if (payload.eventType === "DELETE")
+              return prev.filter((p) => p.id !== (payload.old as GamePlayer).id);
+            const next = payload.new as GamePlayer;
+            const idx = prev.findIndex((p) => p.id === next.id);
+            if (idx >= 0) {
+              const copy = [...prev];
+              copy[idx] = next;
+              return copy;
+            }
+            return [...prev, next];
+          });
         },
       )
       .subscribe();
@@ -68,17 +101,24 @@ export function ChatPanel({ gameId }: { gameId: string }) {
         {messages.length === 0 && (
           <div className="text-xs text-muted-foreground italic">No messages yet. Say hi 👋</div>
         )}
-        {messages.map((m) => (
-          <div key={m.id} className="text-sm animate-fade-in">
-            <span
-              className="font-bold mr-2"
-              style={{ color: m.user_id === user?.id ? "var(--neon-blue)" : "var(--neon-green)" }}
-            >
-              {m.display_name}
-            </span>
-            <span className="text-foreground/90">{m.text}</span>
-          </div>
-        ))}
+        {messages.map((m) => {
+          const isMe = m.user_id === user?.id;
+          const src = isMe ? profile?.avatar_url ?? null : avatarMap.get(m.user_id) ?? null;
+          return (
+            <div key={m.id} className="flex items-start gap-2 text-sm animate-fade-in">
+              <PlayerAvatar name={m.display_name} src={src} size="xs" />
+              <div className="min-w-0 flex-1">
+                <span
+                  className="font-bold mr-2"
+                  style={{ color: isMe ? "var(--neon-blue)" : "var(--neon-green)" }}
+                >
+                  {m.display_name}
+                </span>
+                <span className="text-foreground/90 break-words">{m.text}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
       <div className="p-2 border-t border-border flex gap-2">
         <input
