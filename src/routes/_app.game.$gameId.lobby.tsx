@@ -190,12 +190,20 @@ function LobbyPage() {
               squares={squares}
               userId={user?.id ?? null}
               selectedIndex={selected}
+              allowClickTaken={isHost}
               onSelect={(i) => {
                 if (game.status !== "lobby") return;
                 const row = Math.floor(i / 10);
                 const col = i % 10;
                 const sq = squares.find((s) => s.row === row && s.col === col);
-                if (!sq || sq.owner_id) return;
+                if (!sq) return;
+                if (sq.owner_id) {
+                  // Host can clear claimed squares
+                  if (isHost) {
+                    setClearTarget({ id: sq.id, ownerName: sq.owner_name ?? "Player", index: i });
+                  }
+                  return;
+                }
                 setSelected(selected === i ? null : i);
               }}
               showAxes
