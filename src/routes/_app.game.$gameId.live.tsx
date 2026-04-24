@@ -157,6 +157,9 @@ function LivePage() {
       const dirty: Array<{ q: number; d: QuarterDraft }> = [];
       for (const [qStr, d] of Object.entries(scoreDrafts)) {
         const q = parseInt(qStr, 10);
+        // Only persist drafts that pass validation — keep the DB clean even
+        // while the host is mid-typing. Invalid values stay local until fixed.
+        if (validateScore(d.home) || validateScore(d.away) || validateClock(d.clock)) continue;
         const sig = `${d.home}|${d.away}|${d.clock}`;
         if (lastPersistedRef.current[q] !== sig) {
           dirty.push({ q, d });
@@ -185,6 +188,31 @@ function LivePage() {
 
   const activeQuarterNum = Math.max(1, Math.min(8, parseInt(activeQuarter || "1", 10) || 1));
   const draft: QuarterDraft = scoreDrafts[activeQuarterNum] ?? { home: "0", away: "0", clock: "12:00" };
+
+  // ---- Validation helpers --------------------------------------------------
+  // Score: required, non-negative integer 0-999. Empty / non-numeric / negative
+  // / decimals are all invalid. Clock: required MM:SS where M is 0-99 and
+  // S is 00-59. We reject anything else so we never persist garbage to the DB.
+  const SCORE_RE = /^\d{1,3}$/;
+  const CLOCK_RE = /^([0-9]{1,2}):([0-5][0-9])$/;
+  const validateScore = (v: string): string | null => {
+    const t = v.trim();
+    if (!t) return "Required";
+    if (!SCORE_RE.test(t)) return "0-999 only";
+    return null;
+  };
+  const validateClock = (v: string): string | null => {
+    const t = v.trim();
+    if (!t) return "Required";
+    if (!CLOCK_RE.test(t)) return "Use MM:SS";
+    return null;
+  };
+  const draftErrors = {
+    home: validateScore(draft.home),
+    away: validateScore(draft.away),
+    clock: validateClock(draft.clock),
+  };
+  const draftValid = !draftErrors.home && !draftErrors.away && !draftErrors.clock;
 
   const updateActiveDraft = (patch: Partial<QuarterDraft>) => {
     setScoreDrafts((prev) => ({
@@ -233,6 +261,10 @@ function LivePage() {
 
   const saveScore = async (opts?: { final?: boolean }) => {
     if (!isHost || !game) return;
+    if (!draftValid) {
+      toast.error("Fix invalid score or clock before saving");
+      return;
+    }
     const { home, away, quarter, clock } = parseScore();
     const final = !!opts?.final;
     if (final) setFinalizing(true); else setSavingScore(true);
@@ -527,6 +559,7 @@ function LivePage() {
                 value={draft.home}
                 onChange={(v) => updateActiveDraft({ home: v })}
                 inputMode="numeric"
+                error={draftErrors.home}
               />
               <ScoreInput
                 label={game.away_team || "Away"}
@@ -534,6 +567,7 @@ function LivePage() {
                 value={draft.away}
                 onChange={(v) => updateActiveDraft({ away: v })}
                 inputMode="numeric"
+                error={draftErrors.away}
               />
               <ScoreInput
                 label="Quarter"
@@ -548,22 +582,24 @@ function LivePage() {
                 value={draft.clock}
                 onChange={(v) => updateActiveDraft({ clock: v })}
                 placeholder="MM:SS"
+                error={draftErrors.clock}
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => saveScore()}
-                disabled={savingScore || finalizing}
+                disabled={savingScore || finalizing || !draftValid}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-blue)]/40 bg-[color:var(--neon-blue)]/10 text-[color:var(--neon-blue)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-blue)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!draftValid ? "Fix invalid score or clock first" : undefined}
               >
                 <Save className="w-3.5 h-3.5" />
                 {savingScore ? "Saving..." : "Update Score"}
               </button>
               <button
                 onClick={() => setConfirmFinalOpen(true)}
-                disabled={savingScore || finalizing}
+                disabled={savingScore || finalizing || !draftValid}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[color:var(--neon-green)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-green)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Mark game complete and lock the winner"
+                title={!draftValid ? "Fix invalid score or clock first" : "Mark game complete and lock the winner"}
               >
                 <Flag className="w-3.5 h-3.5" />
                 {finalizing ? "Finalizing..." : "Set Final Score"}
@@ -578,7 +614,9 @@ function LivePage() {
                 Sync from Live
               </button>
               <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground ml-auto">
-                Preview digits {parseScore().home % 10}-{parseScore().away % 10}
+                {draftValid
+                  ? `Preview digits ${parseScore().home % 10}-${parseScore().away % 10}`
+                  : "Invalid input — fix highlighted fields"}
               </span>
             </div>
           </div>
@@ -836,6 +874,7 @@ function ScoreInput({
   colorVar,
   placeholder,
   inputMode,
+  error,
 }: {
   label: string;
   value: string;
@@ -844,7 +883,9 @@ function ScoreInput({
   colorVar: string;
   placeholder?: string;
   inputMode?: "numeric" | "text";
+  error?: string | null;
 }) {
+  const hasError = !!error;
   return (
     <label className="block">
       <span className="block font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1 truncate">
@@ -857,12 +898,22 @@ function ScoreInput({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-base font-mono font-bold tabular-nums text-foreground focus:outline-none focus:ring-1 transition"
-        style={{
-          borderColor: `color-mix(in oklab, var(${colorVar}) 30%, transparent)`,
-          color: `var(${colorVar})`,
-        }}
+        aria-invalid={hasError || undefined}
+        className="w-full rounded-md border bg-background px-2 py-1.5 text-base font-mono font-bold tabular-nums text-foreground focus:outline-none focus:ring-1 transition"
+        style={
+          hasError
+            ? { borderColor: "hsl(var(--destructive))", color: "hsl(var(--destructive))" }
+            : {
+                borderColor: `color-mix(in oklab, var(${colorVar}) 30%, transparent)`,
+                color: `var(${colorVar})`,
+              }
+        }
       />
+      {hasError && (
+        <span className="block mt-1 font-mono text-[9px] uppercase tracking-widest text-destructive">
+          {error}
+        </span>
+      )}
     </label>
   );
 }
