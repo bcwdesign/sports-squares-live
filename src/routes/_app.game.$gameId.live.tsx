@@ -874,6 +874,7 @@ function ScoreInput({
   colorVar,
   placeholder,
   inputMode,
+  error,
 }: {
   label: string;
   value: string;
@@ -882,7 +883,9 @@ function ScoreInput({
   colorVar: string;
   placeholder?: string;
   inputMode?: "numeric" | "text";
+  error?: string | null;
 }) {
+  const hasError = !!error;
   return (
     <label className="block">
       <span className="block font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1 truncate">
@@ -895,12 +898,22 @@ function ScoreInput({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-base font-mono font-bold tabular-nums text-foreground focus:outline-none focus:ring-1 transition"
-        style={{
-          borderColor: `color-mix(in oklab, var(${colorVar}) 30%, transparent)`,
-          color: `var(${colorVar})`,
-        }}
+        aria-invalid={hasError || undefined}
+        className="w-full rounded-md border bg-background px-2 py-1.5 text-base font-mono font-bold tabular-nums text-foreground focus:outline-none focus:ring-1 transition"
+        style={
+          hasError
+            ? { borderColor: "hsl(var(--destructive))", color: "hsl(var(--destructive))" }
+            : {
+                borderColor: `color-mix(in oklab, var(${colorVar}) 30%, transparent)`,
+                color: `var(${colorVar})`,
+              }
+        }
       />
+      {hasError && (
+        <span className="block mt-1 font-mono text-[9px] uppercase tracking-widest text-destructive">
+          {error}
+        </span>
+      )}
     </label>
   );
 }
