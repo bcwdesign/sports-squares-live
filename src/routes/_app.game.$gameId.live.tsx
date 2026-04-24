@@ -8,8 +8,9 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
-import { Maximize2, Trophy } from "lucide-react";
+import { Maximize2, QrCode, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
+import QRCode from "qrcode";
 
 export const Route = createFileRoute("/_app/game/$gameId/live")({
   head: () => ({ meta: [{ title: "Live — Clutch Squares" }] }),
