@@ -261,14 +261,24 @@ function LivePage() {
               <Tv className="w-3.5 h-3.5" /> {isHost ? "Open Overlay" : "View Live Overlay"}
             </Link>
             {isHost && (
-              <button
-                onClick={runDemoSequence}
-                disabled={demoRunning}
-                className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-orange)] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Cycle through fake quarter scores to demo the overlay"
-              >
-                <Zap className="w-3.5 h-3.5" /> {demoRunning ? "Demo running..." : "Demo Score Sequence"}
-              </button>
+              <>
+                <button
+                  onClick={runDemoSequence}
+                  disabled={demoRunning || resetting}
+                  className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-orange)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Cycle through fake quarter scores to demo the overlay"
+                >
+                  <Zap className="w-3.5 h-3.5" /> {demoRunning ? "Demo running..." : "Demo Score Sequence"}
+                </button>
+                <button
+                  onClick={resetGame}
+                  disabled={resetting}
+                  className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Reset scores, quarter, and clock so you can re-run the demo"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> {resetting ? "Resetting..." : "Reset Game"}
+                </button>
+              </>
             )}
             <button
               onClick={async () => {
