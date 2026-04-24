@@ -175,12 +175,9 @@ function LivePage() {
           <div className="flex items-center gap-3">
             <button
               onClick={async () => {
-                const { data } = await supabase.from("games").select("share_token").eq("id", gameId).maybeSingle();
-                const token = (data as { share_token?: string } | null)?.share_token;
-                if (!token) { toast.error("No share token"); return; }
-                const url = `${window.location.origin}/overlay/${token}`;
-                try { await navigator.clipboard.writeText(url); toast.success("Public overlay link copied"); }
-                catch { toast.message(url); }
+                if (!overlayUrl) { toast.error("Share link not ready yet"); return; }
+                try { await navigator.clipboard.writeText(overlayUrl); toast.success("Public overlay link copied"); }
+                catch { toast.message(overlayUrl); }
               }}
               className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-green)] transition"
             >
