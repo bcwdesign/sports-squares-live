@@ -331,7 +331,11 @@ function LivePage() {
         })
         .eq("id", game.id);
       if (error) throw error;
-      // Clear all per-quarter drafts so the next round starts fresh.
+      // Clear all per-quarter drafts (DB + local) so the next round starts fresh.
+      if (user) {
+        await supabase.from("score_drafts").delete().eq("game_id", game.id).eq("user_id", user.id);
+      }
+      lastPersistedRef.current = {};
       setScoreDrafts({ 1: { home: "0", away: "0", clock: "12:00" } });
       setActiveQuarter("1");
       toast.success("Game reset — back in the lobby");
