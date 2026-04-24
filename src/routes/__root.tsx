@@ -1,4 +1,6 @@
 import { Outlet, createRootRoute, HeadContent, Scripts, Link } from "@tanstack/react-router";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 
@@ -8,15 +10,10 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-display font-bold text-[color:var(--neon-orange)]">404</h1>
         <h2 className="mt-4 text-xl font-bold">Out of bounds</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          That play doesn't exist on the court.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">That play doesn't exist on the court.</p>
         <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-[color:var(--neon-blue)] px-4 py-2 text-sm font-bold text-background"
-          >
-            Back to lobby
+          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-[color:var(--neon-blue)] px-4 py-2 text-sm font-bold text-background">
+            Back to home
           </Link>
         </div>
       </div>
@@ -30,7 +27,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1" },
       { title: "Sports Squares Live — Real-time NBA Squares" },
-      { name: "description", content: "Play NBA Squares live with friends. Real-time score updates, neon UI, second-screen ready." },
+      { name: "description", content: "Create private NBA Squares games for live watch parties. Real-time scoring, neon UI, second-screen ready." },
       { name: "theme-color", content: "#0a0a0f" },
       { property: "og:title", content: "Sports Squares Live" },
       { property: "og:description", content: "Real-time NBA squares for second-screen play." },
@@ -67,5 +64,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <AuthProvider>
+      <Outlet />
+      <Toaster theme="dark" position="top-center" />
+    </AuthProvider>
+  );
 }

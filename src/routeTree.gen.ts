@@ -9,24 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SquaresRouteImport } from './routes/squares'
-import { Route as ResultsRouteImport } from './routes/results'
-import { Route as LiveRouteImport } from './routes/live'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JoinInviteCodeRouteImport } from './routes/join.$inviteCode'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCreateRouteImport } from './routes/_app.create'
+import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
+import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$gameId.lobby'
+import { Route as AppGameGameIdLiveRouteImport } from './routes/_app.game.$gameId.live'
+import { Route as AppGameGameIdInviteRouteImport } from './routes/_app.game.$gameId.invite'
 
-const SquaresRoute = SquaresRouteImport.update({
-  id: '/squares',
-  path: '/squares',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResultsRoute = ResultsRouteImport.update({
-  id: '/results',
-  path: '/results',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LiveRoute = LiveRouteImport.update({
-  id: '/live',
-  path: '/live',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -34,62 +34,135 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JoinInviteCodeRoute = JoinInviteCodeRouteImport.update({
+  id: '/join/$inviteCode',
+  path: '/join/$inviteCode',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCreateRoute = AppCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGameGameIdResultsRoute = AppGameGameIdResultsRouteImport.update({
+  id: '/game/$gameId/results',
+  path: '/game/$gameId/results',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGameGameIdLobbyRoute = AppGameGameIdLobbyRouteImport.update({
+  id: '/game/$gameId/lobby',
+  path: '/game/$gameId/lobby',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGameGameIdLiveRoute = AppGameGameIdLiveRouteImport.update({
+  id: '/game/$gameId/live',
+  path: '/game/$gameId/live',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGameGameIdInviteRoute = AppGameGameIdInviteRouteImport.update({
+  id: '/game/$gameId/invite',
+  path: '/game/$gameId/invite',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/live': typeof LiveRoute
-  '/results': typeof ResultsRoute
-  '/squares': typeof SquaresRoute
+  '/auth': typeof AuthRoute
+  '/create': typeof AppCreateRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
+  '/game/$gameId/live': typeof AppGameGameIdLiveRoute
+  '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/live': typeof LiveRoute
-  '/results': typeof ResultsRoute
-  '/squares': typeof SquaresRoute
+  '/auth': typeof AuthRoute
+  '/create': typeof AppCreateRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
+  '/game/$gameId/live': typeof AppGameGameIdLiveRoute
+  '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/live': typeof LiveRoute
-  '/results': typeof ResultsRoute
-  '/squares': typeof SquaresRoute
+  '/_app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_app/create': typeof AppCreateRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/_app/game/$gameId/invite': typeof AppGameGameIdInviteRoute
+  '/_app/game/$gameId/live': typeof AppGameGameIdLiveRoute
+  '/_app/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/_app/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/live' | '/results' | '/squares'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/create'
+    | '/dashboard'
+    | '/join/$inviteCode'
+    | '/game/$gameId/invite'
+    | '/game/$gameId/live'
+    | '/game/$gameId/lobby'
+    | '/game/$gameId/results'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/live' | '/results' | '/squares'
-  id: '__root__' | '/' | '/live' | '/results' | '/squares'
+  to:
+    | '/'
+    | '/auth'
+    | '/create'
+    | '/dashboard'
+    | '/join/$inviteCode'
+    | '/game/$gameId/invite'
+    | '/game/$gameId/live'
+    | '/game/$gameId/lobby'
+    | '/game/$gameId/results'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/auth'
+    | '/_app/create'
+    | '/_app/dashboard'
+    | '/join/$inviteCode'
+    | '/_app/game/$gameId/invite'
+    | '/_app/game/$gameId/live'
+    | '/_app/game/$gameId/lobby'
+    | '/_app/game/$gameId/results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  LiveRoute: typeof LiveRoute
-  ResultsRoute: typeof ResultsRoute
-  SquaresRoute: typeof SquaresRoute
+  AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  JoinInviteCodeRoute: typeof JoinInviteCodeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/squares': {
-      id: '/squares'
-      path: '/squares'
-      fullPath: '/squares'
-      preLoaderRoute: typeof SquaresRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/results': {
-      id: '/results'
-      path: '/results'
-      fullPath: '/results'
-      preLoaderRoute: typeof ResultsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/live': {
-      id: '/live'
-      path: '/live'
-      fullPath: '/live'
-      preLoaderRoute: typeof LiveRouteImport
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -99,24 +172,84 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join/$inviteCode': {
+      id: '/join/$inviteCode'
+      path: '/join/$inviteCode'
+      fullPath: '/join/$inviteCode'
+      preLoaderRoute: typeof JoinInviteCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/create': {
+      id: '/_app/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof AppCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/results': {
+      id: '/_app/game/$gameId/results'
+      path: '/game/$gameId/results'
+      fullPath: '/game/$gameId/results'
+      preLoaderRoute: typeof AppGameGameIdResultsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/lobby': {
+      id: '/_app/game/$gameId/lobby'
+      path: '/game/$gameId/lobby'
+      fullPath: '/game/$gameId/lobby'
+      preLoaderRoute: typeof AppGameGameIdLobbyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/live': {
+      id: '/_app/game/$gameId/live'
+      path: '/game/$gameId/live'
+      fullPath: '/game/$gameId/live'
+      preLoaderRoute: typeof AppGameGameIdLiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/invite': {
+      id: '/_app/game/$gameId/invite'
+      path: '/game/$gameId/invite'
+      fullPath: '/game/$gameId/invite'
+      preLoaderRoute: typeof AppGameGameIdInviteRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppCreateRoute: typeof AppCreateRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppGameGameIdInviteRoute: typeof AppGameGameIdInviteRoute
+  AppGameGameIdLiveRoute: typeof AppGameGameIdLiveRoute
+  AppGameGameIdLobbyRoute: typeof AppGameGameIdLobbyRoute
+  AppGameGameIdResultsRoute: typeof AppGameGameIdResultsRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCreateRoute: AppCreateRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppGameGameIdInviteRoute: AppGameGameIdInviteRoute,
+  AppGameGameIdLiveRoute: AppGameGameIdLiveRoute,
+  AppGameGameIdLobbyRoute: AppGameGameIdLobbyRoute,
+  AppGameGameIdResultsRoute: AppGameGameIdResultsRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  LiveRoute: LiveRoute,
-  ResultsRoute: ResultsRoute,
-  SquaresRoute: SquaresRoute,
+  AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
+  JoinInviteCodeRoute: JoinInviteCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
