@@ -296,21 +296,52 @@ function LivePage() {
               <RotateCcw className="w-3.5 h-3.5" />
               {resetting ? "Resetting..." : "Reset to Lobby"}
             </button>
+            <button
+              onClick={() => {
+                if (!hasWinner) { toast.message("No winner yet to celebrate"); return; }
+                setReplayKey((k) => k + 1);
+              }}
+              disabled={!hasWinner}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[color:var(--neon-green)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-green)]/20 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Re-fire the winner celebration"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Replay Celebration
+            </button>
           </div>
         )}
 
-        {/* Now winning */}
+        {/* Now winning panel — adapts to no-winner / unclaimed / has-winner. */}
         <div className="rounded-2xl border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 p-4 mb-4 flex items-center gap-4 animate-scale-in">
-          <div className="w-12 h-12 rounded-xl bg-[color:var(--neon-orange)]/20 flex items-center justify-center text-[color:var(--neon-orange)]">
-            <Trophy className="w-6 h-6" />
-          </div>
+          {hasWinner ? (
+            <PlayerAvatar name={winSq!.owner_name} src={winnerAvatar} size="md" glow />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-[color:var(--neon-orange)]/20 flex items-center justify-center text-[color:var(--neon-orange)] shrink-0">
+              <Trophy className="w-6 h-6" />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-orange)]">Currently winning</div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-orange)]">
+              {!scoresEntered
+                ? "No winner yet"
+                : hasWinner
+                  ? "Currently winning"
+                  : "Unclaimed square"}
+            </div>
             <div className="font-display font-bold text-xl truncate">
-              {winSq?.owner_name ?? <span className="text-muted-foreground">Unclaimed square</span>}
+              {!scoresEntered ? (
+                <span className="text-muted-foreground">Waiting for first score...</span>
+              ) : hasWinner ? (
+                winSq!.owner_name
+              ) : (
+                <span className="text-muted-foreground">No owner on the winning square</span>
+              )}
+            </div>
+            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5">
+              {hasWinner ? "Waiting for next score update" : scoresEntered ? "Hang tight — next score may flip it" : "Scores appear once the game starts"}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <div className="font-mono text-[10px] uppercase text-muted-foreground">Digits</div>
             <div className="font-mono font-bold text-2xl text-[color:var(--neon-orange)] tabular-nums">
               {game.home_score % 10}-{game.away_score % 10}
