@@ -341,7 +341,7 @@ function Avatar({ name }: { name: string }) {
     .toUpperCase();
   return (
     <div
-      className="w-24 h-24 rounded-full flex items-center justify-center font-display font-black text-3xl text-background"
+      className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center font-display font-black text-2xl md:text-3xl text-background"
       style={{ backgroundImage: "var(--gradient-neon)", boxShadow: "var(--shadow-neon-orange)" }}
     >
       {initials || "?"}
