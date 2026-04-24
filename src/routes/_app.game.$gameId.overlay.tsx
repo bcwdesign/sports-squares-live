@@ -10,10 +10,12 @@
 // with a link back to the dashboard.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { Overlay, fireConfetti } from "@/components/Overlay";
+import { WinnerCelebration } from "@/components/WinnerCelebration";
 import { useAuth } from "@/contexts/AuthContext";
+import { winningSquareIndex } from "@/lib/types";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_app/game/$gameId/overlay")({
@@ -23,7 +25,7 @@ export const Route = createFileRoute("/_app/game/$gameId/overlay")({
 
 function AuthenticatedOverlayPage() {
   const { gameId } = Route.useParams();
-  const { game, squares, loading } = useGame(gameId);
+  const { game, squares, players, loading } = useGame(gameId);
   const { user } = useAuth();
   const [replayKey, setReplayKey] = useState(0);
   const [showHud, setShowHud] = useState(true);
@@ -46,6 +48,19 @@ function AuthenticatedOverlayPage() {
       window.removeEventListener("touchstart", reveal);
     };
   }, []);
+
+  // Compute winner for the TV-sized celebration card. Hoisted above any early
+  // returns so hook order stays stable across renders.
+  const winIdx = game && (game.home_score > 0 || game.away_score > 0)
+    ? winningSquareIndex(game, game.home_score, game.away_score)
+    : -1;
+  const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
+  const winCol = winIdx >= 0 ? winIdx % 10 : -1;
+  const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
+  const winnerAvatar = useMemo(() => {
+    if (!winSq?.owner_id) return null;
+    return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
+  }, [players, winSq?.owner_id]);
 
   if (loading) {
     return (
@@ -73,10 +88,29 @@ function AuthenticatedOverlayPage() {
   }
 
   const isHost = !!user && game.host_id === user.id;
+  const hasWinner = !!winSq?.owner_id;
+  const winnerInfo = hasWinner
+    ? {
+        ownerName: winSq!.owner_name ?? "Player",
+        ownerAvatarUrl: winnerAvatar,
+        homeDigit: game.home_score % 10,
+        awayDigit: game.away_score % 10,
+        homeTeam: game.home_team,
+        awayTeam: game.away_team,
+        quarter: game.quarter,
+      }
+    : null;
+  const winnerKey = `${game.quarter}:${winSq?.owner_id ?? "none"}`;
 
   return (
     <>
       <Overlay game={game} squares={squares} replayKey={replayKey} />
+      <WinnerCelebration
+        winner={winnerInfo}
+        winnerKey={winnerKey}
+        replayKey={replayKey}
+        variant="tv"
+      />
 
       {/* Floating, auto-hiding HUD. Read-only navigation + host-only replay.
           Positioned to avoid the QR/footer area. */}

@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { NeonButton } from "@/components/NeonButton";
-import { Plus, KeyRound, LogOut, Trophy } from "lucide-react";
+import { Plus, KeyRound, LogOut, Trophy, UserCog } from "lucide-react";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
 import type { Game } from "@/lib/types";
 
@@ -109,16 +110,26 @@ function Dashboard() {
             <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">CS</div>
             <div className="font-display font-bold text-sm"><span className="text-[color:var(--neon-blue)]">CLUTCH</span> <span className="text-[color:var(--neon-green)]">SQUARES</span></div>
           </Link>
-          <button
-            onClick={async () => {
-              await signOut();
-              toast.success("Signed out");
-              navigate({ to: "/auth" });
-            }}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-[color:var(--surface)] px-3 py-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-[color:var(--neon-orange)]/60 transition"
-          >
-            <LogOut className="w-3.5 h-3.5" /> Logout
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/profile"
+              className="inline-flex items-center gap-2 rounded-md border border-border bg-[color:var(--surface)] pl-1.5 pr-3 py-1 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-[color:var(--neon-blue)]/60 transition"
+              title="Edit profile"
+            >
+              <PlayerAvatar name={profile?.display_name} src={profile?.avatar_url} size="sm" />
+              <UserCog className="w-3.5 h-3.5" /> Profile
+            </Link>
+            <button
+              onClick={async () => {
+                await signOut();
+                toast.success("Signed out");
+                navigate({ to: "/auth" });
+              }}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-[color:var(--surface)] px-3 py-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-[color:var(--neon-orange)]/60 transition"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Logout
+            </button>
+          </div>
         </div>
       </header>
 

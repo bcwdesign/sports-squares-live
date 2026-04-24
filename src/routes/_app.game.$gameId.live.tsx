@@ -1,14 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/TopBar";
 import { SquaresGrid } from "@/components/SquaresGrid";
 import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { WinnerCelebration } from "@/components/WinnerCelebration";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
-import { Maximize2, QrCode, RotateCcw, Trophy, Tv, Zap, X } from "lucide-react";
+import { Maximize2, QrCode, RotateCcw, Sparkles, Trophy, Tv, Zap, X } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 
@@ -19,7 +21,7 @@ export const Route = createFileRoute("/_app/game/$gameId/live")({
 
 function LivePage() {
   const { gameId } = Route.useParams();
-  const { game, squares, loading } = useGame(gameId);
+  const { game, squares, players, loading } = useGame(gameId);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [watchMode, setWatchMode] = useState(false);
@@ -178,19 +180,43 @@ function LivePage() {
     }
   };
 
-  // Notify when a winning square changes
+  // Track winning square + drive WinnerCelebration via a stable key.
   const winIdx = game ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
-  const [lastWinIdx, setLastWinIdx] = useState<number>(-1);
+  const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
+  const winCol = winIdx >= 0 ? winIdx % 10 : -1;
+  const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
+  const scoresEntered = !!game && (game.home_score > 0 || game.away_score > 0);
+  const hasWinner = !!winSq?.owner_id;
+
+  const winnerAvatar = useMemo(() => {
+    if (!winSq?.owner_id) return null;
+    return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
+  }, [players, winSq?.owner_id]);
+
+  const winnerInfo = hasWinner && game
+    ? {
+        ownerName: winSq!.owner_name ?? "Player",
+        ownerAvatarUrl: winnerAvatar,
+        homeDigit: game.home_score % 10,
+        awayDigit: game.away_score % 10,
+        homeTeam: game.home_team,
+        awayTeam: game.away_team,
+        quarter: game.quarter,
+      }
+    : null;
+
+  const winnerKey = `${game?.quarter ?? 0}:${winSq?.owner_id ?? "none"}`;
+  const [replayKey, setReplayKey] = useState(0);
+
+  // Friendly toast when the winning player changes (in addition to celebration).
+  const lastWinIdxRef = useRef<number>(-1);
   useEffect(() => {
-    if (!game || winIdx === lastWinIdx) return;
-    if (lastWinIdx !== -1 && winIdx >= 0) {
-      const row = Math.floor(winIdx / 10);
-      const col = winIdx % 10;
-      const sq = squares.find((s) => s.row === row && s.col === col);
-      if (sq?.owner_name) toast.success(`🔥 ${sq.owner_name} now winning!`);
+    if (!game || winIdx === lastWinIdxRef.current) return;
+    if (lastWinIdxRef.current !== -1 && winIdx >= 0 && winSq?.owner_name) {
+      toast.success(`🔥 ${winSq.owner_name} now winning!`);
     }
-    setLastWinIdx(winIdx);
-  }, [winIdx, lastWinIdx, game, squares]);
+    lastWinIdxRef.current = winIdx;
+  }, [winIdx, game, winSq]);
 
   // Route to results when complete
   useEffect(() => {
@@ -204,12 +230,14 @@ function LivePage() {
     return <div className="min-h-screen flex items-center justify-center text-xs font-mono uppercase tracking-widest text-muted-foreground">Loading...</div>;
   }
 
-  const winRow = Math.floor(winIdx / 10);
-  const winCol = winIdx % 10;
-  const winSq = squares.find((s) => s.row === winRow && s.col === winCol);
-
   return (
     <div className={watchMode ? "fixed inset-0 z-50 bg-background overflow-auto" : "min-h-screen"}>
+      <WinnerCelebration
+        winner={winnerInfo}
+        winnerKey={winnerKey}
+        replayKey={replayKey}
+        variant="compact"
+      />
       <TopBar game={game} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-12">
@@ -274,21 +302,52 @@ function LivePage() {
               <RotateCcw className="w-3.5 h-3.5" />
               {resetting ? "Resetting..." : "Reset to Lobby"}
             </button>
+            <button
+              onClick={() => {
+                if (!hasWinner) { toast.message("No winner yet to celebrate"); return; }
+                setReplayKey((k) => k + 1);
+              }}
+              disabled={!hasWinner}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[color:var(--neon-green)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-green)]/20 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Re-fire the winner celebration"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Replay Celebration
+            </button>
           </div>
         )}
 
-        {/* Now winning */}
+        {/* Now winning panel — adapts to no-winner / unclaimed / has-winner. */}
         <div className="rounded-2xl border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 p-4 mb-4 flex items-center gap-4 animate-scale-in">
-          <div className="w-12 h-12 rounded-xl bg-[color:var(--neon-orange)]/20 flex items-center justify-center text-[color:var(--neon-orange)]">
-            <Trophy className="w-6 h-6" />
-          </div>
+          {hasWinner ? (
+            <PlayerAvatar name={winSq!.owner_name} src={winnerAvatar} size="md" glow />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-[color:var(--neon-orange)]/20 flex items-center justify-center text-[color:var(--neon-orange)] shrink-0">
+              <Trophy className="w-6 h-6" />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-orange)]">Currently winning</div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-orange)]">
+              {!scoresEntered
+                ? "No winner yet"
+                : hasWinner
+                  ? "Currently winning"
+                  : "Unclaimed square"}
+            </div>
             <div className="font-display font-bold text-xl truncate">
-              {winSq?.owner_name ?? <span className="text-muted-foreground">Unclaimed square</span>}
+              {!scoresEntered ? (
+                <span className="text-muted-foreground">Waiting for first score...</span>
+              ) : hasWinner ? (
+                winSq!.owner_name
+              ) : (
+                <span className="text-muted-foreground">No owner on the winning square</span>
+              )}
+            </div>
+            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5">
+              {hasWinner ? "Waiting for next score update" : scoresEntered ? "Hang tight — next score may flip it" : "Scores appear once the game starts"}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <div className="font-mono text-[10px] uppercase text-muted-foreground">Digits</div>
             <div className="font-mono font-bold text-2xl text-[color:var(--neon-orange)] tabular-nums">
               {game.home_score % 10}-{game.away_score % 10}
