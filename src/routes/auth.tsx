@@ -82,8 +82,8 @@ function AuthPage() {
 
         <div className="text-center mb-8">
           <h1 className="font-display font-bold text-3xl tracking-tight">
-            <span className="text-[color:var(--neon-blue)]">SQUARES</span>
-            <span className="text-[color:var(--neon-green)]">.LIVE</span>
+            <span className="text-[color:var(--neon-blue)]">CLUTCH</span>{" "}
+            <span className="text-[color:var(--neon-green)]">SQUARES</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
             {mode === "guest" ? "Quick join — just pick a name" : mode === "signup" ? "Create your account" : "Sign in to your account"}
