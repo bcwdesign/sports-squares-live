@@ -40,7 +40,7 @@ function LivePage() {
       const [mm, ss] = g.clock.split(":").map(Number);
       let total = mm * 60 + ss - 24;
       let quarter = g.quarter;
-      let status = g.status;
+      let status: "lobby" | "locked" | "live" | "completed" = g.status;
       if (total <= 0) {
         if (quarter >= 4) {
           status = "completed";
