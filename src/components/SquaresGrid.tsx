@@ -58,7 +58,8 @@ export function SquaresGrid({ game, squares, userId, selectedIndex, winningIndex
                   isOpen && !isSelected && "bg-muted/40 border-border/40 hover:bg-muted hover:border-[color:var(--neon-blue)]/60 hover:scale-105",
                   isSelected && "bg-[color:var(--neon-blue)] border-[color:var(--neon-blue)] text-background shadow-[var(--shadow-neon-blue)] scale-105",
                   isMine && !isSelected && "bg-[color:var(--neon-blue)]/30 border-[color:var(--neon-blue)] text-[color:var(--neon-blue)]",
-                  isTaken && "bg-secondary/60 border-border text-muted-foreground cursor-not-allowed",
+                  isTaken && !allowClickTaken && "bg-secondary/60 border-border text-muted-foreground cursor-not-allowed",
+                  isTaken && allowClickTaken && "bg-secondary/60 border-border text-muted-foreground hover:!border-[color:var(--neon-orange)] hover:!text-[color:var(--neon-orange)] cursor-pointer",
                   isWin && "animate-pulse-glow !bg-[color:var(--neon-orange)] !border-[color:var(--neon-orange)] !text-background z-10",
                 )}
               >
