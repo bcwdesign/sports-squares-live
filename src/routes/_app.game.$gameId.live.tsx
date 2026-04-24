@@ -102,30 +102,43 @@ function LivePage() {
   const demoCancelRef = useRef(false);
   const [resetting, setResetting] = useState(false);
 
-  // Manual score editor (host only). Local draft state so the host can type
-  // freely without each keystroke writing to the DB. We seed/sync from the
-  // live game whenever the user isn't actively editing (tracked via focus).
-  const [scoreDraft, setScoreDraft] = useState<{ home: string; away: string; quarter: string; clock: string }>({
-    home: "0", away: "0", quarter: "1", clock: "12:00",
-  });
-  const [scoreEditing, setScoreEditing] = useState(false);
+  // Manual score editor (host only). Local draft state — only seeded from the
+  // live game on first load (or after the host explicitly resets the draft via
+  // "Sync from Live"). Typing in any field never gets clobbered by realtime
+  // updates, so the host can build up a score across quarters at their own
+  // pace and then save when ready.
+  const [scoreDraft, setScoreDraft] = useState<{ home: string; away: string; quarter: string; clock: string } | null>(null);
   const [savingScore, setSavingScore] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  // Seed once when the game first loads.
   useEffect(() => {
-    if (scoreEditing || !game) return;
+    if (!game || scoreDraft !== null) return;
     setScoreDraft({
       home: String(game.home_score),
       away: String(game.away_score),
       quarter: String(game.quarter),
       clock: game.clock,
     });
-  }, [game, scoreEditing]);
+  }, [game, scoreDraft]);
+
+  const draft = scoreDraft ?? { home: "0", away: "0", quarter: "1", clock: "12:00" };
+
+  const syncDraftFromGame = () => {
+    if (!game) return;
+    setScoreDraft({
+      home: String(game.home_score),
+      away: String(game.away_score),
+      quarter: String(game.quarter),
+      clock: game.clock,
+    });
+    toast.message("Synced from live score");
+  };
 
   const parseScore = () => {
-    const home = Math.max(0, Math.min(999, parseInt(scoreDraft.home || "0", 10) || 0));
-    const away = Math.max(0, Math.min(999, parseInt(scoreDraft.away || "0", 10) || 0));
-    const quarter = Math.max(1, Math.min(8, parseInt(scoreDraft.quarter || "1", 10) || 1));
-    const clock = scoreDraft.clock.trim() || "00:00";
+    const home = Math.max(0, Math.min(999, parseInt(draft.home || "0", 10) || 0));
+    const away = Math.max(0, Math.min(999, parseInt(draft.away || "0", 10) || 0));
+    const quarter = Math.max(1, Math.min(8, parseInt(draft.quarter || "1", 10) || 1));
+    const clock = draft.clock.trim() || "00:00";
     return { home, away, quarter, clock };
   };
 
@@ -146,7 +159,13 @@ function LivePage() {
         })
         .eq("id", game.id);
       if (error) throw error;
-      setScoreEditing(false);
+      // Reflect the saved values back into the draft so the inputs match.
+      setScoreDraft({
+        home: String(home),
+        away: String(away),
+        quarter: String(quarter),
+        clock: final ? "00:00" : clock,
+      });
       toast.success(final ? "Final score set — winner locked" : "Score updated");
     } catch (e) {
       toast.error(final ? "Couldn't set final score" : "Couldn't update score");
