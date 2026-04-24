@@ -143,7 +143,7 @@ function LivePage() {
   // Host-driven simulated game ticks (writes to DB so all players see updates).
   // In production, replace with real NBA scores API webhook.
   useEffect(() => {
-    if (!isHost || !game || game.status === "completed") return;
+    if (!isHost || !game || game.status === "completed" || demoRunning) return;
     const id = setInterval(async () => {
       const fresh = await supabase.from("games").select("*").eq("id", game.id).maybeSingle();
       if (!fresh.data) return;
