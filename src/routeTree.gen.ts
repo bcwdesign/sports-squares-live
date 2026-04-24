@@ -17,6 +17,7 @@ import { Route as JoinInviteCodeRouteImport } from './routes/join.$inviteCode'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
 import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
+import { Route as AppGameGameIdOverlayRouteImport } from './routes/_app.game.$gameId.overlay'
 import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$gameId.lobby'
 import { Route as AppGameGameIdLiveRouteImport } from './routes/_app.game.$gameId.live'
 import { Route as AppGameGameIdInviteRouteImport } from './routes/_app.game.$gameId.invite'
@@ -60,6 +61,11 @@ const AppGameGameIdResultsRoute = AppGameGameIdResultsRouteImport.update({
   path: '/game/$gameId/results',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGameGameIdOverlayRoute = AppGameGameIdOverlayRouteImport.update({
+  id: '/game/$gameId/overlay',
+  path: '/game/$gameId/overlay',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppGameGameIdLobbyRoute = AppGameGameIdLobbyRouteImport.update({
   id: '/game/$gameId/lobby',
   path: '/game/$gameId/lobby',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRoutesByTo {
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRoutesById {
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_app/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/_app/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/_app/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
+  '/_app/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/_app/game/$gameId/results': typeof AppGameGameIdResultsRoute
 }
 export interface FileRouteTypes {
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
     | '/game/$gameId/lobby'
+    | '/game/$gameId/overlay'
     | '/game/$gameId/results'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
     | '/game/$gameId/lobby'
+    | '/game/$gameId/overlay'
     | '/game/$gameId/results'
   id:
     | '__root__'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_app/game/$gameId/invite'
     | '/_app/game/$gameId/live'
     | '/_app/game/$gameId/lobby'
+    | '/_app/game/$gameId/overlay'
     | '/_app/game/$gameId/results'
   fileRoutesById: FileRoutesById
 }
@@ -220,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGameGameIdResultsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/game/$gameId/overlay': {
+      id: '/_app/game/$gameId/overlay'
+      path: '/game/$gameId/overlay'
+      fullPath: '/game/$gameId/overlay'
+      preLoaderRoute: typeof AppGameGameIdOverlayRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/game/$gameId/lobby': {
       id: '/_app/game/$gameId/lobby'
       path: '/game/$gameId/lobby'
@@ -250,6 +269,7 @@ interface AppRouteChildren {
   AppGameGameIdInviteRoute: typeof AppGameGameIdInviteRoute
   AppGameGameIdLiveRoute: typeof AppGameGameIdLiveRoute
   AppGameGameIdLobbyRoute: typeof AppGameGameIdLobbyRoute
+  AppGameGameIdOverlayRoute: typeof AppGameGameIdOverlayRoute
   AppGameGameIdResultsRoute: typeof AppGameGameIdResultsRoute
 }
 
@@ -259,6 +279,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppGameGameIdInviteRoute: AppGameGameIdInviteRoute,
   AppGameGameIdLiveRoute: AppGameGameIdLiveRoute,
   AppGameGameIdLobbyRoute: AppGameGameIdLobbyRoute,
+  AppGameGameIdOverlayRoute: AppGameGameIdOverlayRoute,
   AppGameGameIdResultsRoute: AppGameGameIdResultsRoute,
 }
 

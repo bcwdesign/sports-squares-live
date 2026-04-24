@@ -8,7 +8,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { shuffle10 } from "@/lib/types";
-import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass } from "lucide-react";
+import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/game/$gameId/lobby")({
@@ -112,12 +112,21 @@ function LobbyPage() {
         {/* Header strip */}
         <div className="flex items-center justify-between mb-3 gap-2">
           <Link to="/dashboard" className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Dashboard</Link>
-          <button
-            onClick={() => setWatchMode((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition"
-          >
-            <Maximize2 className="w-3.5 h-3.5" /> Watch Mode
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/game/$gameId/overlay"
+              params={{ gameId }}
+              className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-orange)] transition"
+            >
+              <Tv className="w-3.5 h-3.5" /> View Live Overlay
+            </Link>
+            <button
+              onClick={() => setWatchMode((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition"
+            >
+              <Maximize2 className="w-3.5 h-3.5" /> Watch Mode
+            </button>
+          </div>
         </div>
 
         <div className={watchMode ? "max-w-3xl mx-auto" : ""}>
