@@ -43,6 +43,8 @@
   --animate-ticker: ticker 1s ease-out;
   --animate-bounce-in: bounce-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-winner-pulse: winner-pulse 1.2s ease-in-out infinite;
+  --animate-celebration-slide-in: celebration-slide-in 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-celebration-avatar: celebration-avatar 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :root {
@@ -128,6 +130,29 @@
 @keyframes winner-pulse {
   0%, 100% { box-shadow: 0 0 30px var(--neon-orange), 0 0 80px oklch(0.78 0.2 55 / 0.6), inset 0 0 20px oklch(0.78 0.2 55 / 0.3); transform: scale(1); }
   50% { box-shadow: 0 0 50px var(--neon-orange), 0 0 120px oklch(0.78 0.2 55 / 0.8), inset 0 0 30px oklch(0.78 0.2 55 / 0.5); transform: scale(1.06); }
+}
+
+@keyframes celebration-slide-in {
+  0% { opacity: 0; transform: translateX(120%) scale(0.9); }
+  60% { opacity: 1; transform: translateX(-8px) scale(1.02); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes celebration-avatar {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.2); }
+  75% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-celebration-slide-in,
+  .animate-celebration-avatar,
+  .animate-winner-pulse,
+  .animate-pulse-glow,
+  .animate-bounce-in {
+    animation: none !important;
+  }
 }
 
 @layer base {
