@@ -96,6 +96,49 @@ function LivePage() {
   };
 
   const isHost = !!user && !!game && game.host_id === user.id;
+  const [demoRunning, setDemoRunning] = useState(false);
+
+  // Host-only "Demo Score Sequence": cycles through a deterministic set of
+  // quarter scores so the overlay can be demonstrated end-to-end without a
+  // real live feed. Pure DB writes — every player and the overlay see the
+  // same updates via the existing realtime subscriptions.
+  const runDemoSequence = async () => {
+    if (!isHost || !game || demoRunning) return;
+    setDemoRunning(true);
+    toast.message("Demo sequence started");
+    const steps: Array<{ q: number; clock: string; home: number; away: number }> = [
+      { q: 1, clock: "10:00", home: 7, away: 5 },
+      { q: 1, clock: "06:00", home: 14, away: 11 },
+      { q: 1, clock: "00:00", home: 24, away: 22 },
+      { q: 2, clock: "08:00", home: 33, away: 30 },
+      { q: 2, clock: "00:00", home: 49, away: 47 },
+      { q: 3, clock: "07:00", home: 60, away: 58 },
+      { q: 3, clock: "00:00", home: 73, away: 75 },
+      { q: 4, clock: "05:00", home: 88, away: 86 },
+      { q: 4, clock: "00:00", home: 102, away: 99 },
+    ];
+    try {
+      for (const step of steps) {
+        const { error } = await supabase
+          .from("games")
+          .update({
+            home_score: step.home,
+            away_score: step.away,
+            quarter: step.q,
+            clock: step.clock,
+            status: "live",
+          })
+          .eq("id", game.id);
+        if (error) throw error;
+        await new Promise((r) => setTimeout(r, 2200));
+      }
+      toast.success("Demo sequence complete");
+    } catch (e) {
+      toast.error("Demo sequence failed");
+    } finally {
+      setDemoRunning(false);
+    }
+  };
 
   // Host-driven simulated game ticks (writes to DB so all players see updates).
   // In production, replace with real NBA scores API webhook.
