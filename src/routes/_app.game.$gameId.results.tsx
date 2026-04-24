@@ -140,6 +140,15 @@ function ResultsPage() {
           </Link>
         </div>
 
+        {isHost && (
+          <button onClick={resetGame} disabled={resetting} className="block w-full mt-3">
+            <NeonButton variant="ghost" className="w-full">
+              <RotateCcw className="w-4 h-4 inline mr-2" />
+              {resetting ? "Resetting..." : "Reset Game (Re-run Demo)"}
+            </NeonButton>
+          </button>
+        )}
+
         <Link to="/dashboard" className="block text-center mt-6 text-xs text-muted-foreground font-mono uppercase tracking-widest hover:text-foreground">
           ← Back to dashboard
         </Link>
