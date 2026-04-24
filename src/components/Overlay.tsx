@@ -284,7 +284,7 @@ function WinnerPanel({
   return (
     <div
       className={cn(
-        "rounded-2xl border-2 p-4 md:p-6 flex flex-col flex-1 min-h-0 transition-all",
+        "rounded-2xl border-2 p-4 md:p-6 flex flex-col md:flex-1 md:min-h-0 transition-all",
         hasWinner
           ? "border-[color:var(--neon-orange)]/60 bg-[color:var(--neon-orange)]/10 shadow-[var(--shadow-neon-orange)]"
           : "border-border bg-[color:var(--surface)]/80",
