@@ -176,23 +176,23 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
   const winCol = winIdx >= 0 ? winIdx % 10 : -1;
 
   return (
-    <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-4 shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
+    <div className="rounded-2xl border border-border bg-[color:var(--surface)]/80 backdrop-blur-sm p-2 md:p-4 shadow-[var(--shadow-card)] flex-1 flex flex-col min-h-0">
       <div className="flex items-center justify-between mb-2 px-1">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Squares Board</div>
-        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest">
+        <div className="flex items-center gap-2 md:gap-3 text-[10px] font-mono uppercase tracking-widest">
           <LegendDot color="var(--neon-blue)" label="Claimed" />
           <LegendDot color="var(--neon-orange)" label="Winning" pulse />
         </div>
       </div>
 
-      <div className="flex items-center mb-1.5">
-        <div className="w-8" />
-        <div className="flex-1 grid grid-cols-10 gap-1">
+      <div className="flex items-center mb-1 md:mb-1.5">
+        <div className="w-5 md:w-8" />
+        <div className="flex-1 grid grid-cols-10 gap-0.5 md:gap-1">
           {game.home_axis.map((d, i) => (
             <div
               key={i}
               className={cn(
-                "text-center font-mono font-black text-base tabular-nums transition-colors",
+                "text-center font-mono font-black text-[11px] md:text-base tabular-nums transition-colors",
                 i === winCol ? "text-[color:var(--neon-orange)]" : "text-[color:var(--neon-green)]",
               )}
             >
@@ -203,12 +203,12 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
       </div>
 
       <div className="flex items-stretch flex-1 min-h-0">
-        <div className="w-8 grid grid-rows-10 gap-1 mr-1.5">
+        <div className="w-5 md:w-8 grid grid-rows-10 gap-0.5 md:gap-1 mr-1 md:mr-1.5">
           {game.away_axis.map((d, i) => (
             <div
               key={i}
               className={cn(
-                "flex items-center justify-center font-mono font-black text-base tabular-nums transition-colors",
+                "flex items-center justify-center font-mono font-black text-[11px] md:text-base tabular-nums transition-colors",
                 i === winRow ? "text-[color:var(--neon-orange)]" : "text-[color:var(--neon-blue)]",
               )}
             >
@@ -217,7 +217,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
           ))}
         </div>
 
-        <div className="flex-1 grid grid-cols-10 gap-1 aspect-square max-h-full">
+        <div className="flex-1 grid grid-cols-10 gap-0.5 md:gap-1 aspect-square max-h-full">
           {grid.map((sq, idx) => {
             const isWin = winIdx === idx;
             const isClaimed = !!sq?.owner_id;
