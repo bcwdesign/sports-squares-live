@@ -186,6 +186,31 @@ function LivePage() {
   const activeQuarterNum = Math.max(1, Math.min(8, parseInt(activeQuarter || "1", 10) || 1));
   const draft: QuarterDraft = scoreDrafts[activeQuarterNum] ?? { home: "0", away: "0", clock: "12:00" };
 
+  // ---- Validation helpers --------------------------------------------------
+  // Score: required, non-negative integer 0-999. Empty / non-numeric / negative
+  // / decimals are all invalid. Clock: required MM:SS where M is 0-99 and
+  // S is 00-59. We reject anything else so we never persist garbage to the DB.
+  const SCORE_RE = /^\d{1,3}$/;
+  const CLOCK_RE = /^([0-9]{1,2}):([0-5][0-9])$/;
+  const validateScore = (v: string): string | null => {
+    const t = v.trim();
+    if (!t) return "Required";
+    if (!SCORE_RE.test(t)) return "0-999 only";
+    return null;
+  };
+  const validateClock = (v: string): string | null => {
+    const t = v.trim();
+    if (!t) return "Required";
+    if (!CLOCK_RE.test(t)) return "Use MM:SS";
+    return null;
+  };
+  const draftErrors = {
+    home: validateScore(draft.home),
+    away: validateScore(draft.away),
+    clock: validateClock(draft.clock),
+  };
+  const draftValid = !draftErrors.home && !draftErrors.away && !draftErrors.clock;
+
   const updateActiveDraft = (patch: Partial<QuarterDraft>) => {
     setScoreDrafts((prev) => ({
       ...prev,
