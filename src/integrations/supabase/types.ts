@@ -174,6 +174,47 @@ export type Database = {
         }
         Relationships: []
       }
+      score_drafts: {
+        Row: {
+          away: string
+          clock: string
+          game_id: string
+          home: string
+          id: string
+          quarter: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          away?: string
+          clock?: string
+          game_id: string
+          home?: string
+          id?: string
+          quarter: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          away?: string
+          clock?: string
+          game_id?: string
+          home?: string
+          id?: string
+          quarter?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_drafts_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squares: {
         Row: {
           col: number
