@@ -10,7 +10,7 @@ import { generateInviteCode } from "@/lib/types";
 export const Route = createFileRoute("/_app/create")({
   head: () => ({
     meta: [
-      { title: "Create Game — Sports Squares Live" },
+      { title: "Create Game — Clutch Squares" },
       { name: "description", content: "Set up a new private squares game." },
     ],
   }),
