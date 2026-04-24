@@ -101,12 +101,12 @@ function ResultsPage() {
               <Share2 className="w-4 h-4 inline mr-2" />Share
             </NeonButton>
           </button>
-          <Link to="/_app/dashboard">
+          <Link to="/dashboard">
             <NeonButton variant="green" className="w-full">Play Again</NeonButton>
           </Link>
         </div>
 
-        <Link to="/_app/dashboard" className="block text-center mt-6 text-xs text-muted-foreground font-mono uppercase tracking-widest hover:text-foreground">
+        <Link to="/dashboard" className="block text-center mt-6 text-xs text-muted-foreground font-mono uppercase tracking-widest hover:text-foreground">
           ← Back to dashboard
         </Link>
       </main>

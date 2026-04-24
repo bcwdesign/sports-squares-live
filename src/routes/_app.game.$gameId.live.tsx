@@ -99,7 +99,7 @@ function LivePage() {
 
       <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-12">
         <div className="flex items-center justify-between mb-3">
-          <Link to="/_app/game/$gameId/lobby" params={{ gameId }} className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Lobby</Link>
+          <Link to="/game/$gameId/lobby" params={{ gameId }} className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Lobby</Link>
           <button
             onClick={() => setWatchMode((v) => !v)}
             className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition"
@@ -146,7 +146,7 @@ function LivePage() {
         )}
 
         {game.status === "completed" && (
-          <Link to="/_app/game/$gameId/results" params={{ gameId }} className="block mt-6">
+          <Link to="/game/$gameId/results" params={{ gameId }} className="block mt-6">
             <NeonButton variant="green" className="w-full">View Final Results →</NeonButton>
           </Link>
         )}

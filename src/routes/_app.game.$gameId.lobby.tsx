@@ -111,7 +111,7 @@ function LobbyPage() {
       <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-32">
         {/* Header strip */}
         <div className="flex items-center justify-between mb-3 gap-2">
-          <Link to="/_app/dashboard" className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Dashboard</Link>
+          <Link to="/dashboard" className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Dashboard</Link>
           <button
             onClick={() => setWatchMode((v) => !v)}
             className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition"
