@@ -10,7 +10,7 @@ import type { Game } from "@/lib/types";
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Sports Squares Live" },
+      { title: "Dashboard — Clutch Squares" },
       { name: "description", content: "Your active and past Squares games." },
     ],
   }),
