@@ -106,8 +106,8 @@ function Dashboard() {
       <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">SQ</div>
-            <div className="font-display font-bold text-sm">SQUARES<span className="text-[color:var(--neon-green)]">.LIVE</span></div>
+            <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">CS</div>
+            <div className="font-display font-bold text-sm"><span className="text-[color:var(--neon-blue)]">CLUTCH</span> <span className="text-[color:var(--neon-green)]">SQUARES</span></div>
           </Link>
           <button
             onClick={async () => {
