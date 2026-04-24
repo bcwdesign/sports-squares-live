@@ -215,7 +215,24 @@ function LivePage() {
       <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-12">
         <div className="flex items-center justify-between mb-3 gap-2">
           <Link to="/game/$gameId/lobby" params={{ gameId }} className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Lobby</Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap justify-end">
+            <Link
+              to="/game/$gameId/overlay"
+              params={{ gameId }}
+              className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-orange)] transition"
+            >
+              <Tv className="w-3.5 h-3.5" /> {isHost ? "Open Overlay" : "View Live Overlay"}
+            </Link>
+            {isHost && (
+              <button
+                onClick={runDemoSequence}
+                disabled={demoRunning}
+                className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-orange)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Cycle through fake quarter scores to demo the overlay"
+              >
+                <Zap className="w-3.5 h-3.5" /> {demoRunning ? "Demo running..." : "Demo Score Sequence"}
+              </button>
+            )}
             <button
               onClick={async () => {
                 if (!overlayUrl) { toast.error("Share link not ready yet"); return; }
