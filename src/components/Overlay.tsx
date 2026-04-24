@@ -80,31 +80,48 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
 
 function TopBranding({ game }: { game: Game }) {
   return (
-    <div className="relative px-8 pt-6 pb-3 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-black text-background text-base">
-          CS
+    <div className="relative px-4 md:px-8 pt-4 md:pt-6 pb-3 flex flex-col md:block gap-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-black text-background text-sm md:text-base">
+            CS
+          </div>
+          <div>
+            <div className="font-display font-black tracking-tight text-lg md:text-2xl leading-none">
+              <span className="text-[color:var(--neon-blue)]">CLUTCH</span>{" "}
+              <span className="text-[color:var(--neon-green)]">SQUARES</span>
+            </div>
+            <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground mt-1">
+              Live Watch Party
+            </div>
+          </div>
         </div>
-        <div>
-          <div className="font-display font-black tracking-tight text-2xl leading-none">
-            <span className="text-[color:var(--neon-blue)]">CLUTCH</span>{" "}
-            <span className="text-[color:var(--neon-green)]">SQUARES</span>
+
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-destructive/40 bg-destructive/10">
+            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-destructive animate-pulse" />
+            <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest text-destructive font-bold">Live</span>
           </div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-1">
-            Live Watch Party
-          </div>
+          <div className="hidden sm:block font-mono text-xs uppercase tracking-widest text-muted-foreground">{game.sport}</div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-destructive/40 bg-destructive/10">
-          <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-          <span className="font-mono text-[11px] uppercase tracking-widest text-destructive font-bold">Live</span>
+      {/* Mobile scoreboard — inline below logo row */}
+      <div className="flex md:hidden items-center justify-center gap-3">
+        <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
+        <div className="flex flex-col items-center min-w-[80px]">
+          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+            {game.status === "completed" ? "Final" : `Q${game.quarter}`}
+          </div>
+          <div className="font-mono font-black text-xl text-[color:var(--neon-orange)] tabular-nums">
+            {game.status === "completed" ? "—" : game.clock}
+          </div>
         </div>
-        <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{game.sport}</div>
+        <ScoreSide team={game.home_team} score={game.home_score} color="var(--neon-green)" align="left" />
       </div>
 
-      <div className="absolute left-1/2 -translate-x-1/2 top-5 flex items-center gap-6">
+      {/* Desktop scoreboard — absolutely positioned center */}
+      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 top-5 items-center gap-6">
         <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
         <div className="flex flex-col items-center min-w-[120px]">
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
