@@ -109,8 +109,15 @@ function Dashboard() {
             <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">SQ</div>
             <div className="font-display font-bold text-sm">SQUARES<span className="text-[color:var(--neon-green)]">.LIVE</span></div>
           </Link>
-          <button onClick={() => { signOut(); navigate({ to: "/" }); }} className="text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center gap-1">
-            <LogOut className="w-3.5 h-3.5" /> Sign out
+          <button
+            onClick={async () => {
+              await signOut();
+              toast.success("Signed out");
+              navigate({ to: "/auth" });
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-[color:var(--surface)] px-3 py-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-[color:var(--neon-orange)]/60 transition"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Logout
           </button>
         </div>
       </header>
