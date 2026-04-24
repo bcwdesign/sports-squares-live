@@ -97,6 +97,8 @@ function LivePage() {
 
   const isHost = !!user && !!game && game.host_id === user.id;
   const [demoRunning, setDemoRunning] = useState(false);
+  const demoCancelRef = useRef(false);
+  const [resetting, setResetting] = useState(false);
 
   // Host-only "Demo Score Sequence": cycles through a deterministic set of
   // quarter scores so the overlay can be demonstrated end-to-end without a
