@@ -225,7 +225,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
               <div
                 key={idx}
                 className={cn(
-                  "relative rounded-md flex items-center justify-center overflow-hidden text-[10px] font-mono leading-none p-1 border transition-all",
+                  "relative rounded md:rounded-md flex items-center justify-center overflow-hidden text-[8px] md:text-[10px] font-mono leading-none p-0.5 md:p-1 border transition-all",
                   !isClaimed && !isWin && "bg-muted/30 border-border/40",
                   isClaimed && !isWin && "bg-[color:var(--neon-blue)]/20 border-[color:var(--neon-blue)]/50",
                   isWin && "!bg-[color:var(--neon-orange)] !border-[color:var(--neon-orange)] animate-winner-pulse z-10",
@@ -235,7 +235,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
                   <span
                     className={cn(
                       "truncate w-full text-center font-bold",
-                      isWin ? "text-background text-xs" : "text-[color:var(--neon-blue)]",
+                      isWin ? "text-background text-[9px] md:text-xs" : "text-[color:var(--neon-blue)]",
                     )}
                   >
                     {sq.owner_name.slice(0, 6)}
