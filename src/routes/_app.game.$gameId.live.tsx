@@ -106,6 +106,7 @@ function LivePage() {
   // same updates via the existing realtime subscriptions.
   const runDemoSequence = async () => {
     if (!isHost || !game || demoRunning) return;
+    demoCancelRef.current = false;
     setDemoRunning(true);
     toast.message("Demo sequence started");
     const steps: Array<{ q: number; clock: string; home: number; away: number }> = [
@@ -121,6 +122,7 @@ function LivePage() {
     ];
     try {
       for (const step of steps) {
+        if (demoCancelRef.current) break;
         const { error } = await supabase
           .from("games")
           .update({
@@ -134,11 +136,44 @@ function LivePage() {
         if (error) throw error;
         await new Promise((r) => setTimeout(r, 2200));
       }
-      toast.success("Demo sequence complete");
+      if (!demoCancelRef.current) toast.success("Demo sequence complete");
     } catch (e) {
       toast.error("Demo sequence failed");
     } finally {
       setDemoRunning(false);
+    }
+  };
+
+  // Host-only: reset scores, quarter, clock, and status back to a fresh live
+  // tip-off. Cancels any in-flight demo sequence and keeps the board (claimed
+  // squares + axis numbers) intact so the demo can be re-run cleanly without
+  // disturbing players' picks. Does NOT reshuffle axes — use the lobby flow
+  // for a brand-new game.
+  const resetGame = async () => {
+    if (!isHost || !game || resetting) return;
+    const ok = window.confirm(
+      "Reset scores, quarter, and clock? Claimed squares stay. The game returns to a fresh tip-off so you can re-run the demo.",
+    );
+    if (!ok) return;
+    demoCancelRef.current = true;
+    setResetting(true);
+    try {
+      const { error } = await supabase
+        .from("games")
+        .update({
+          home_score: 0,
+          away_score: 0,
+          quarter: 1,
+          clock: "12:00",
+          status: "live",
+        })
+        .eq("id", game.id);
+      if (error) throw error;
+      toast.success("Game reset — ready to re-run demo");
+    } catch (e) {
+      toast.error("Couldn't reset the game");
+    } finally {
+      setResetting(false);
     }
   };
 
