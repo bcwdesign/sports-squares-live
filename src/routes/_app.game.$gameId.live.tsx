@@ -140,6 +140,12 @@ function LivePage() {
               <Trophy className="w-3.5 h-3.5" /> Share Overlay
             </button>
             <button
+              onClick={showQr}
+              className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-green)] transition"
+            >
+              <QrCode className="w-3.5 h-3.5" /> Show QR
+            </button>
+            <button
               onClick={() => setWatchMode((v) => !v)}
               className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition"
             >
