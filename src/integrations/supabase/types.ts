@@ -14,16 +14,221 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      game_players: {
+        Row: {
+          avatar_url: string | null
+          display_name: string
+          game_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          display_name: string
+          game_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          display_name?: string
+          game_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          away_axis: number[]
+          away_score: number
+          away_team: string
+          clock: string
+          created_at: string
+          entry_amount_label: string | null
+          game_date_time: string | null
+          home_axis: number[]
+          home_score: number
+          home_team: string
+          host_id: string
+          id: string
+          invite_code: string
+          max_squares_per_user: number
+          name: string
+          quarter: number
+          sport: string
+          status: Database["public"]["Enums"]["game_status"]
+        }
+        Insert: {
+          away_axis?: number[]
+          away_score?: number
+          away_team: string
+          clock?: string
+          created_at?: string
+          entry_amount_label?: string | null
+          game_date_time?: string | null
+          home_axis?: number[]
+          home_score?: number
+          home_team: string
+          host_id: string
+          id?: string
+          invite_code: string
+          max_squares_per_user?: number
+          name: string
+          quarter?: number
+          sport?: string
+          status?: Database["public"]["Enums"]["game_status"]
+        }
+        Update: {
+          away_axis?: number[]
+          away_score?: number
+          away_team?: string
+          clock?: string
+          created_at?: string
+          entry_amount_label?: string | null
+          game_date_time?: string | null
+          home_axis?: number[]
+          home_score?: number
+          home_team?: string
+          host_id?: string
+          id?: string
+          invite_code?: string
+          max_squares_per_user?: number
+          name?: string
+          quarter?: number
+          sport?: string
+          status?: Database["public"]["Enums"]["game_status"]
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          created_at: string
+          display_name: string
+          game_id: string
+          id: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          game_id: string
+          id?: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          game_id?: string
+          id?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+          is_guest: boolean
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name: string
+          id: string
+          is_guest?: boolean
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_guest?: boolean
+        }
+        Relationships: []
+      }
+      squares: {
+        Row: {
+          col: number
+          created_at: string
+          game_id: string
+          id: string
+          owner_id: string | null
+          owner_name: string | null
+          row: number
+        }
+        Insert: {
+          col: number
+          created_at?: string
+          game_id: string
+          id?: string
+          owner_id?: string | null
+          owner_name?: string | null
+          row: number
+        }
+        Update: {
+          col?: number
+          created_at?: string
+          game_id?: string
+          id?: string
+          owner_id?: string | null
+          owner_name?: string | null
+          row?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squares_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_claim_square: {
+        Args: { _game_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_game_host: {
+        Args: { _game_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_game_member: {
+        Args: { _game_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      game_status: "lobby" | "locked" | "live" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +355,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      game_status: ["lobby", "locked", "live", "completed"],
+    },
   },
 } as const
