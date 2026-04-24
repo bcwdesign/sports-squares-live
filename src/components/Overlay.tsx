@@ -53,7 +53,7 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
   }, [replayKey, hasWinner]);
 
   return (
-    <div className="fixed inset-0 bg-background overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-background overflow-y-auto md:overflow-hidden flex flex-col">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -64,11 +64,11 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
 
       <TopBranding game={game} />
 
-      <div className="relative flex-1 grid grid-cols-12 gap-6 px-8 py-4 min-h-0">
-        <div className="col-span-8 flex flex-col min-h-0">
+      <div className="relative flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 px-3 md:px-8 py-3 md:py-4 min-h-0">
+        <div className="md:col-span-8 flex flex-col min-h-0">
           <BoardArea game={game} squares={squares} winIdx={winIdx} />
         </div>
-        <div className="col-span-4 flex flex-col min-h-0">
+        <div className="md:col-span-4 flex flex-col min-h-0">
           <WinnerPanel game={game} winSq={winSq} scoresEntered={scoresEntered} />
         </div>
       </div>
