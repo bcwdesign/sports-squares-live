@@ -180,19 +180,43 @@ function LivePage() {
     }
   };
 
-  // Notify when a winning square changes
+  // Track winning square + drive WinnerCelebration via a stable key.
   const winIdx = game ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
-  const [lastWinIdx, setLastWinIdx] = useState<number>(-1);
+  const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
+  const winCol = winIdx >= 0 ? winIdx % 10 : -1;
+  const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
+  const scoresEntered = !!game && (game.home_score > 0 || game.away_score > 0);
+  const hasWinner = !!winSq?.owner_id;
+
+  const winnerAvatar = useMemo(() => {
+    if (!winSq?.owner_id) return null;
+    return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
+  }, [players, winSq?.owner_id]);
+
+  const winnerInfo = hasWinner && game
+    ? {
+        ownerName: winSq!.owner_name ?? "Player",
+        ownerAvatarUrl: winnerAvatar,
+        homeDigit: game.home_score % 10,
+        awayDigit: game.away_score % 10,
+        homeTeam: game.home_team,
+        awayTeam: game.away_team,
+        quarter: game.quarter,
+      }
+    : null;
+
+  const winnerKey = `${game?.quarter ?? 0}:${winSq?.owner_id ?? "none"}`;
+  const [replayKey, setReplayKey] = useState(0);
+
+  // Friendly toast when the winning player changes (in addition to celebration).
+  const lastWinIdxRef = useRef<number>(-1);
   useEffect(() => {
-    if (!game || winIdx === lastWinIdx) return;
-    if (lastWinIdx !== -1 && winIdx >= 0) {
-      const row = Math.floor(winIdx / 10);
-      const col = winIdx % 10;
-      const sq = squares.find((s) => s.row === row && s.col === col);
-      if (sq?.owner_name) toast.success(`🔥 ${sq.owner_name} now winning!`);
+    if (!game || winIdx === lastWinIdxRef.current) return;
+    if (lastWinIdxRef.current !== -1 && winIdx >= 0 && winSq?.owner_name) {
+      toast.success(`🔥 ${winSq.owner_name} now winning!`);
     }
-    setLastWinIdx(winIdx);
-  }, [winIdx, lastWinIdx, game, squares]);
+    lastWinIdxRef.current = winIdx;
+  }, [winIdx, game, winSq]);
 
   // Route to results when complete
   useEffect(() => {
@@ -205,10 +229,6 @@ function LivePage() {
   if (loading || !game) {
     return <div className="min-h-screen flex items-center justify-center text-xs font-mono uppercase tracking-widest text-muted-foreground">Loading...</div>;
   }
-
-  const winRow = Math.floor(winIdx / 10);
-  const winCol = winIdx % 10;
-  const winSq = squares.find((s) => s.row === winRow && s.col === winCol);
 
   return (
     <div className={watchMode ? "fixed inset-0 z-50 bg-background overflow-auto" : "min-h-screen"}>
