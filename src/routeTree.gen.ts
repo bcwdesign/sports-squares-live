@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OverlayTokenRouteImport } from './routes/overlay.$token'
 import { Route as JoinInviteCodeRouteImport } from './routes/join.$inviteCode'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
@@ -32,6 +33,11 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OverlayTokenRoute = OverlayTokenRouteImport.update({
+  id: '/overlay/$token',
+  path: '/overlay/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JoinInviteCodeRoute = JoinInviteCodeRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/overlay/$token': typeof OverlayTokenRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/overlay/$token': typeof OverlayTokenRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/_app/create': typeof AppCreateRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
+  '/overlay/$token': typeof OverlayTokenRoute
   '/_app/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/_app/game/$gameId/live': typeof AppGameGameIdLiveRoute
   '/_app/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/join/$inviteCode'
+    | '/overlay/$token'
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
     | '/game/$gameId/lobby'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/join/$inviteCode'
+    | '/overlay/$token'
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
     | '/game/$gameId/lobby'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_app/create'
     | '/_app/dashboard'
     | '/join/$inviteCode'
+    | '/overlay/$token'
     | '/_app/game/$gameId/invite'
     | '/_app/game/$gameId/live'
     | '/_app/game/$gameId/lobby'
@@ -147,6 +159,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   JoinInviteCodeRoute: typeof JoinInviteCodeRoute
+  OverlayTokenRoute: typeof OverlayTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/overlay/$token': {
+      id: '/overlay/$token'
+      path: '/overlay/$token'
+      fullPath: '/overlay/$token'
+      preLoaderRoute: typeof OverlayTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/join/$inviteCode': {
@@ -249,16 +269,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   JoinInviteCodeRoute: JoinInviteCodeRoute,
+  OverlayTokenRoute: OverlayTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
