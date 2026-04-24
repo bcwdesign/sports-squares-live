@@ -9,9 +9,11 @@ type Props = {
   winningIndex?: number | null;
   onSelect?: (i: number) => void;
   showAxes?: boolean;
+  /** When true, taken squares are clickable (e.g. for host to clear them). */
+  allowClickTaken?: boolean;
 };
 
-export function SquaresGrid({ game, squares, userId, selectedIndex, winningIndex, onSelect, showAxes }: Props) {
+export function SquaresGrid({ game, squares, userId, selectedIndex, winningIndex, onSelect, showAxes, allowClickTaken }: Props) {
   const showDigits = (game.status !== "lobby") && showAxes;
   // Build a 100-length array indexed by row*10+col
   const grid: (Square | null)[] = Array(100).fill(null);
@@ -50,13 +52,14 @@ export function SquaresGrid({ game, squares, userId, selectedIndex, winningIndex
               <button
                 key={idx}
                 onClick={() => onSelect?.(idx)}
-                disabled={locked || isTaken}
+                disabled={locked || (isTaken && !allowClickTaken)}
                 className={cn(
                   "relative rounded-[3px] sm:rounded-md transition-all duration-150 flex items-center justify-center overflow-hidden text-[7px] sm:text-[10px] font-mono leading-none p-0.5 border",
                   isOpen && !isSelected && "bg-muted/40 border-border/40 hover:bg-muted hover:border-[color:var(--neon-blue)]/60 hover:scale-105",
                   isSelected && "bg-[color:var(--neon-blue)] border-[color:var(--neon-blue)] text-background shadow-[var(--shadow-neon-blue)] scale-105",
                   isMine && !isSelected && "bg-[color:var(--neon-blue)]/30 border-[color:var(--neon-blue)] text-[color:var(--neon-blue)]",
-                  isTaken && "bg-secondary/60 border-border text-muted-foreground cursor-not-allowed",
+                  isTaken && !allowClickTaken && "bg-secondary/60 border-border text-muted-foreground cursor-not-allowed",
+                  isTaken && allowClickTaken && "bg-secondary/60 border-border text-muted-foreground hover:!border-[color:var(--neon-orange)] hover:!text-[color:var(--neon-orange)] cursor-pointer",
                   isWin && "animate-pulse-glow !bg-[color:var(--neon-orange)] !border-[color:var(--neon-orange)] !text-background z-10",
                 )}
               >

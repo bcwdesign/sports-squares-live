@@ -11,6 +11,16 @@ import { shuffle10 } from "@/lib/types";
 import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/game/$gameId/lobby")({
   head: () => ({ meta: [{ title: "Game Lobby — Clutch Squares" }] }),
@@ -26,6 +36,8 @@ function LobbyPage() {
   const [watchMode, setWatchMode] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [clearTarget, setClearTarget] = useState<{ id: string; ownerName: string; index: number } | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   // Auto-route if game is past lobby
   useEffect(() => {
@@ -91,6 +103,23 @@ function LobbyPage() {
     if (error) return toast.error(error.message);
     toast.success("Game locked. Tip-off!");
     navigate({ to: "/game/$gameId/live", params: { gameId } });
+  };
+
+  const confirmClear = async () => {
+    if (!clearTarget || !isHost) return;
+    setClearing(true);
+    const { error } = await supabase
+      .from("squares")
+      .update({ owner_id: null, owner_name: null })
+      .eq("id", clearTarget.id);
+    setClearing(false);
+    if (error) {
+      toast.error("Couldn't clear square");
+    } else {
+      toast.success("Square cleared");
+      setClearTarget(null);
+      if (selected === clearTarget.index) setSelected(null);
+    }
   };
 
   const share = async () => {
@@ -161,12 +190,20 @@ function LobbyPage() {
               squares={squares}
               userId={user?.id ?? null}
               selectedIndex={selected}
+              allowClickTaken={isHost}
               onSelect={(i) => {
                 if (game.status !== "lobby") return;
                 const row = Math.floor(i / 10);
                 const col = i % 10;
                 const sq = squares.find((s) => s.row === row && s.col === col);
-                if (!sq || sq.owner_id) return;
+                if (!sq) return;
+                if (sq.owner_id) {
+                  // Host can clear claimed squares
+                  if (isHost) {
+                    setClearTarget({ id: sq.id, ownerName: sq.owner_name ?? "Player", index: i });
+                  }
+                  return;
+                }
                 setSelected(selected === i ? null : i);
               }}
               showAxes
@@ -230,6 +267,29 @@ function LobbyPage() {
           )}
         </div>
       </div>
+
+      {/* Host: Clear claimed square confirmation */}
+      <AlertDialog open={!!clearTarget} onOpenChange={(o) => { if (!o) setClearTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear this square?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove <span className="font-bold text-foreground">{clearTarget?.ownerName}</span> from square{" "}
+              <span className="font-mono text-[color:var(--neon-orange)]">#{(clearTarget?.index ?? 0) + 1}</span> and make it available again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={clearing}
+              onClick={(e) => { e.preventDefault(); confirmClear(); }}
+              className="bg-[color:var(--neon-orange)] text-background hover:bg-[color:var(--neon-orange)]/90"
+            >
+              {clearing ? "Clearing..." : "Clear Square"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
