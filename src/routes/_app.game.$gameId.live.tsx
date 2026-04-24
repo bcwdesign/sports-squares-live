@@ -232,6 +232,12 @@ function LivePage() {
 
   return (
     <div className={watchMode ? "fixed inset-0 z-50 bg-background overflow-auto" : "min-h-screen"}>
+      <WinnerCelebration
+        winner={winnerInfo}
+        winnerKey={winnerKey}
+        replayKey={replayKey}
+        variant="compact"
+      />
       <TopBar game={game} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-12">
