@@ -203,6 +203,60 @@ function LivePage() {
           </p>
         )}
       </main>
+
+      {qrOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-background/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setQrOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-2xl border border-border bg-[color:var(--surface)] p-6 shadow-[var(--shadow-card)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setQrOpen(false)}
+              className="absolute top-3 right-3 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="text-center mb-4">
+              <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-green)]">Public Overlay</div>
+              <div className="font-display font-bold text-xl mt-1">Scan to Watch Live</div>
+              <p className="text-xs text-muted-foreground mt-1">Open this game's read-only TV overlay on any device.</p>
+            </div>
+            <div className="aspect-square rounded-xl bg-white p-3 flex items-center justify-center overflow-hidden">
+              {qrLoading || !qrDataUrl ? (
+                <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Generating...</div>
+              ) : (
+                <img src={qrDataUrl} alt="Overlay QR code" className="w-full h-full object-contain" />
+              )}
+            </div>
+            {overlayUrl && (
+              <div className="mt-4">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Overlay Link</div>
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={overlayUrl}
+                    onFocus={(e) => e.currentTarget.select()}
+                    className="flex-1 min-w-0 rounded-md border border-border bg-background px-2 py-1.5 text-xs font-mono text-foreground"
+                  />
+                  <button
+                    onClick={async () => {
+                      try { await navigator.clipboard.writeText(overlayUrl); toast.success("Copied"); }
+                      catch { toast.message(overlayUrl); }
+                    }}
+                    className="px-3 py-1.5 rounded-md border border-border text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] hover:border-[color:var(--neon-blue)]/40 transition"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
