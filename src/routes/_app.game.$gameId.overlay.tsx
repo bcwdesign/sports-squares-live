@@ -76,9 +76,39 @@ function AuthenticatedOverlayPage() {
 
   const isHost = !!user && game.host_id === user.id;
 
+  // Compute winner for the TV-sized celebration card.
+  const scoresEntered = game.home_score > 0 || game.away_score > 0;
+  const winIdx = scoresEntered ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
+  const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
+  const winCol = winIdx >= 0 ? winIdx % 10 : -1;
+  const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
+  const hasWinner = !!winSq?.owner_id;
+  const winnerAvatar = useMemo(() => {
+    if (!winSq?.owner_id) return null;
+    return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
+  }, [players, winSq?.owner_id]);
+  const winnerInfo = hasWinner
+    ? {
+        ownerName: winSq!.owner_name ?? "Player",
+        ownerAvatarUrl: winnerAvatar,
+        homeDigit: game.home_score % 10,
+        awayDigit: game.away_score % 10,
+        homeTeam: game.home_team,
+        awayTeam: game.away_team,
+        quarter: game.quarter,
+      }
+    : null;
+  const winnerKey = `${game.quarter}:${winSq?.owner_id ?? "none"}`;
+
   return (
     <>
       <Overlay game={game} squares={squares} replayKey={replayKey} />
+      <WinnerCelebration
+        winner={winnerInfo}
+        winnerKey={winnerKey}
+        replayKey={replayKey}
+        variant="tv"
+      />
 
       {/* Floating, auto-hiding HUD. Read-only navigation + host-only replay.
           Positioned to avoid the QR/footer area. */}
