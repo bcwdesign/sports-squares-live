@@ -118,6 +118,18 @@
   100% { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes bounce-in {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.15); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes winner-pulse {
+  0%, 100% { box-shadow: 0 0 30px var(--neon-orange), 0 0 80px oklch(0.78 0.2 55 / 0.6), inset 0 0 20px oklch(0.78 0.2 55 / 0.3); transform: scale(1); }
+  50% { box-shadow: 0 0 50px var(--neon-orange), 0 0 120px oklch(0.78 0.2 55 / 0.8), inset 0 0 30px oklch(0.78 0.2 55 / 0.5); transform: scale(1.06); }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
