@@ -149,9 +149,9 @@ function ScoreSide({
   align: "left" | "right";
 }) {
   return (
-    <div className={cn("flex items-center gap-3", align === "right" && "flex-row-reverse")}>
+    <div className={cn("flex items-center gap-2 md:gap-3", align === "right" && "flex-row-reverse")}>
       <div
-        className="px-3 py-1.5 rounded-lg font-display font-black text-xl tracking-wide"
+        className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-display font-black text-base md:text-xl tracking-wide"
         style={{
           backgroundColor: `color-mix(in oklab, ${color} 18%, transparent)`,
           color,
@@ -160,7 +160,7 @@ function ScoreSide({
       >
         {shortTeam(team)}
       </div>
-      <div className="font-mono font-black text-5xl tabular-nums" style={{ color }}>
+      <div className="font-mono font-black text-3xl md:text-5xl tabular-nums" style={{ color }}>
         {score}
       </div>
     </div>
