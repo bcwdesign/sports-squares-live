@@ -371,6 +371,84 @@ function LivePage() {
           </div>
         )}
 
+        {isHost && (
+          <div className="mb-4 rounded-xl border border-[color:var(--neon-green)]/30 bg-[color:var(--neon-green)]/5 p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--neon-green)] animate-pulse" />
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-green)]">
+                Manual Score Update
+              </span>
+              <span className="text-[10px] text-muted-foreground font-mono ml-auto hidden sm:inline">
+                Winner = last digit of each score
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+              <ScoreInput
+                label={game.home_team || "Home"}
+                colorVar="--neon-blue"
+                value={scoreDraft.home}
+                onChange={(v) => { setScoreEditing(true); setScoreDraft((s) => ({ ...s, home: v })); }}
+                onBlur={() => setScoreEditing(false)}
+                inputMode="numeric"
+              />
+              <ScoreInput
+                label={game.away_team || "Away"}
+                colorVar="--neon-orange"
+                value={scoreDraft.away}
+                onChange={(v) => { setScoreEditing(true); setScoreDraft((s) => ({ ...s, away: v })); }}
+                onBlur={() => setScoreEditing(false)}
+                inputMode="numeric"
+              />
+              <ScoreInput
+                label="Quarter"
+                colorVar="--neon-green"
+                value={scoreDraft.quarter}
+                onChange={(v) => { setScoreEditing(true); setScoreDraft((s) => ({ ...s, quarter: v })); }}
+                onBlur={() => setScoreEditing(false)}
+                inputMode="numeric"
+              />
+              <ScoreInput
+                label="Clock"
+                colorVar="--neon-blue"
+                value={scoreDraft.clock}
+                onChange={(v) => { setScoreEditing(true); setScoreDraft((s) => ({ ...s, clock: v })); }}
+                onBlur={() => setScoreEditing(false)}
+                placeholder="MM:SS"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => saveScore()}
+                disabled={savingScore || finalizing}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-blue)]/40 bg-[color:var(--neon-blue)]/10 text-[color:var(--neon-blue)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-blue)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-3.5 h-3.5" />
+                {savingScore ? "Saving..." : "Update Score"}
+              </button>
+              <button
+                onClick={() => {
+                  const ok = window.confirm(
+                    "Set this as the FINAL score? The game will be marked completed and the winning square will be locked in.",
+                  );
+                  if (!ok) return;
+                  saveScore({ final: true });
+                }}
+                disabled={savingScore || finalizing}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[color:var(--neon-green)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-green)]/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Mark game complete and lock the winner"
+              >
+                <Flag className="w-3.5 h-3.5" />
+                {finalizing ? "Finalizing..." : "Set Final Score"}
+              </button>
+              {scoreEditing && (
+                <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                  Editing — winning digits {parseScore().home % 10}-{parseScore().away % 10}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Now winning panel — adapts to no-winner / unclaimed / has-winner. */}
         <div className="rounded-2xl border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 p-4 mb-4 flex items-center gap-4 animate-scale-in">
           {hasWinner ? (
