@@ -8,7 +8,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { shuffle10 } from "@/lib/types";
-import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass } from "lucide-react";
+import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/game/$gameId/lobby")({
