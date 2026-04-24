@@ -8,8 +8,9 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
-import { Maximize2, Trophy } from "lucide-react";
+import { Maximize2, QrCode, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
+import QRCode from "qrcode";
 
 export const Route = createFileRoute("/_app/game/$gameId/live")({
   head: () => ({ meta: [{ title: "Live — Clutch Squares" }] }),
@@ -22,6 +23,30 @@ function LivePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [watchMode, setWatchMode] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+
+  const showQr = async () => {
+    setQrOpen(true);
+    if (qrDataUrl && overlayUrl) return;
+    setQrLoading(true);
+    try {
+      const { data } = await supabase.from("games").select("share_token").eq("id", gameId).maybeSingle();
+      const token = (data as { share_token?: string } | null)?.share_token;
+      if (!token) { toast.error("No share token"); setQrOpen(false); return; }
+      const url = `${window.location.origin}/overlay/${token}`;
+      const png = await QRCode.toDataURL(url, { width: 512, margin: 1, color: { dark: "#000000", light: "#ffffff" } });
+      setOverlayUrl(url);
+      setQrDataUrl(png);
+    } catch (e) {
+      toast.error("Failed to generate QR");
+      setQrOpen(false);
+    } finally {
+      setQrLoading(false);
+    }
+  };
 
   const isHost = !!user && !!game && game.host_id === user.id;
 
@@ -115,6 +140,12 @@ function LivePage() {
               <Trophy className="w-3.5 h-3.5" /> Share Overlay
             </button>
             <button
+              onClick={showQr}
+              className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-green)] transition"
+            >
+              <QrCode className="w-3.5 h-3.5" /> Show QR
+            </button>
+            <button
               onClick={() => setWatchMode((v) => !v)}
               className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] transition"
             >
@@ -172,6 +203,60 @@ function LivePage() {
           </p>
         )}
       </main>
+
+      {qrOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-background/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setQrOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-2xl border border-border bg-[color:var(--surface)] p-6 shadow-[var(--shadow-card)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setQrOpen(false)}
+              className="absolute top-3 right-3 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="text-center mb-4">
+              <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-green)]">Public Overlay</div>
+              <div className="font-display font-bold text-xl mt-1">Scan to Watch Live</div>
+              <p className="text-xs text-muted-foreground mt-1">Open this game's read-only TV overlay on any device.</p>
+            </div>
+            <div className="aspect-square rounded-xl bg-white p-3 flex items-center justify-center overflow-hidden">
+              {qrLoading || !qrDataUrl ? (
+                <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Generating...</div>
+              ) : (
+                <img src={qrDataUrl} alt="Overlay QR code" className="w-full h-full object-contain" />
+              )}
+            </div>
+            {overlayUrl && (
+              <div className="mt-4">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Overlay Link</div>
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={overlayUrl}
+                    onFocus={(e) => e.currentTarget.select()}
+                    className="flex-1 min-w-0 rounded-md border border-border bg-background px-2 py-1.5 text-xs font-mono text-foreground"
+                  />
+                  <button
+                    onClick={async () => {
+                      try { await navigator.clipboard.writeText(overlayUrl); toast.success("Copied"); }
+                      catch { toast.message(overlayUrl); }
+                    }}
+                    className="px-3 py-1.5 rounded-md border border-border text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-[color:var(--neon-blue)] hover:border-[color:var(--neon-blue)]/40 transition"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
