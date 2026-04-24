@@ -51,8 +51,9 @@ function AuthenticatedOverlayPage() {
 
   // Compute winner for the TV-sized celebration card. Hoisted above any early
   // returns so hook order stays stable across renders.
-  const scoresEntered = !!game && (game.home_score > 0 || game.away_score > 0);
-  const winIdx = game && scoresEntered ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
+  const winIdx = game && (game.home_score > 0 || game.away_score > 0)
+    ? winningSquareIndex(game, game.home_score, game.away_score)
+    : -1;
   const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
   const winCol = winIdx >= 0 ? winIdx % 10 : -1;
   const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
