@@ -62,7 +62,8 @@ During Blackathon 2026, we built the core real-time watch-party experience, incl
 
 ## Demo
 
-[Add your demo video link here]
+[[Demo video link here:](https://streamyard.com/9cm47338st8k)]
+[[Website:](https://clutchsquares.com/)]
 
 ## Hackathon Track
 
