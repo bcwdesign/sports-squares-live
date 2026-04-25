@@ -62,8 +62,9 @@ During Blackathon 2026, we built the core real-time watch-party experience, incl
 
 ## Demo Video
 
-[![Video Title](https://streamyard.com/9cm47338st8k/0.jpg)](https://streamyard.com/9cm47338st8k)
-
+<a href="https://streamyard.com/9cm47338st8k">
+<img width="1344" height="756" alt="clutchsquares_video" src="https://github.com/user-attachments/assets/270e0495-6e79-45b0-81bf-e2ed505e83d9" />
+</a>
 
 ## Website
 <a href="https://clutchsquares.com/">
