@@ -60,10 +60,15 @@ During Blackathon 2026, we built the core real-time watch-party experience, incl
 
 6. Winners are automatically calculated and highlighted
 
-## Demo
+## Demo Video
 
-[[Demo video link here:](https://streamyard.com/9cm47338st8k)]
-[[Website:](https://clutchsquares.com/)]
+[![Video Title](https://streamyard.com/9cm47338st8k/0.jpg)](https://streamyard.com/9cm47338st8k)
+
+
+## Website
+<a href="https://clutchsquares.com/">
+<img width="1011" height="884" alt="clutchsquares_site" src="https://github.com/user-attachments/assets/2c8af9e4-3dc4-4a73-b5ec-b5e1d5ad3967" />
+</a>
 
 ## Hackathon Track
 
@@ -71,4 +76,4 @@ Technology Solutions
 
 ## Notes
 
-ClutchSquares began as an early concept prior to Blackathon. The submitted version focuses on the real-time multiplayer experience and live watch-party features built during the event window.
+ClutchSquares began as an early concept the evening prior to Blackathon. The submitted version focuses on the real-time multiplayer experience and live watch-party features built during the event window.
