@@ -414,7 +414,7 @@ async function runSync(gameId: string): Promise<{
         game_clock: match.game_clock,
         game_status: match.game_status,
         score_source: "api",
-        raw_payload: match as unknown as Record<string, unknown>,
+        raw_payload: JSON.parse(JSON.stringify(match)),
       },
     ]);
   }
