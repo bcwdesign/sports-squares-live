@@ -8,6 +8,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { WinnerCelebration } from "@/components/WinnerCelebration";
+import { LiveScoreSyncPanel } from "@/components/LiveScoreSyncPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
 import { Maximize2, QrCode, RotateCcw, Sparkles, Trophy, Tv, Zap, X, Save, Flag } from "lucide-react";
@@ -474,6 +475,8 @@ function LivePage() {
             </button>
           </div>
         </div>
+
+        {isHost && <LiveScoreSyncPanel game={game} />}
 
         {isHost && (
           <div className="mb-4 rounded-xl border border-border bg-[color:var(--surface)] p-3 flex items-center gap-3 flex-wrap">

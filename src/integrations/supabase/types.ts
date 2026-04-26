@@ -51,64 +51,103 @@ export type Database = {
       }
       games: {
         Row: {
+          auto_sync_enabled: boolean
           away_axis: number[]
           away_score: number
           away_team: string
           clock: string
           created_at: string
           entry_amount_label: string | null
+          external_away_team_id: string | null
+          external_away_team_name: string | null
+          external_game_id: string | null
+          external_home_team_id: string | null
+          external_home_team_name: string | null
+          external_provider: string | null
+          game_clock: string | null
           game_date_time: string | null
+          game_status: string | null
           home_axis: number[]
           home_score: number
           home_team: string
           host_id: string
           id: string
           invite_code: string
+          last_score_sync_at: string | null
+          last_score_sync_error: string | null
           max_squares_per_user: number
           name: string
+          period: number | null
           quarter: number
+          score_source: string
           share_token: string
           sport: string
           status: Database["public"]["Enums"]["game_status"]
         }
         Insert: {
+          auto_sync_enabled?: boolean
           away_axis?: number[]
           away_score?: number
           away_team: string
           clock?: string
           created_at?: string
           entry_amount_label?: string | null
+          external_away_team_id?: string | null
+          external_away_team_name?: string | null
+          external_game_id?: string | null
+          external_home_team_id?: string | null
+          external_home_team_name?: string | null
+          external_provider?: string | null
+          game_clock?: string | null
           game_date_time?: string | null
+          game_status?: string | null
           home_axis?: number[]
           home_score?: number
           home_team: string
           host_id: string
           id?: string
           invite_code: string
+          last_score_sync_at?: string | null
+          last_score_sync_error?: string | null
           max_squares_per_user?: number
           name: string
+          period?: number | null
           quarter?: number
+          score_source?: string
           share_token?: string
           sport?: string
           status?: Database["public"]["Enums"]["game_status"]
         }
         Update: {
+          auto_sync_enabled?: boolean
           away_axis?: number[]
           away_score?: number
           away_team?: string
           clock?: string
           created_at?: string
           entry_amount_label?: string | null
+          external_away_team_id?: string | null
+          external_away_team_name?: string | null
+          external_game_id?: string | null
+          external_home_team_id?: string | null
+          external_home_team_name?: string | null
+          external_provider?: string | null
+          game_clock?: string | null
           game_date_time?: string | null
+          game_status?: string | null
           home_axis?: number[]
           home_score?: number
           home_team?: string
           host_id?: string
           id?: string
           invite_code?: string
+          last_score_sync_at?: string | null
+          last_score_sync_error?: string | null
           max_squares_per_user?: number
           name?: string
+          period?: number | null
           quarter?: number
+          score_source?: string
           share_token?: string
           sport?: string
           status?: Database["public"]["Enums"]["game_status"]
@@ -215,6 +254,59 @@ export type Database = {
           },
         ]
       }
+      score_events: {
+        Row: {
+          away_score: number | null
+          created_at: string
+          external_game_id: string | null
+          game_clock: string | null
+          game_id: string
+          game_status: string | null
+          home_score: number | null
+          id: string
+          period: number | null
+          provider: string
+          raw_payload: Json | null
+          score_source: string
+        }
+        Insert: {
+          away_score?: number | null
+          created_at?: string
+          external_game_id?: string | null
+          game_clock?: string | null
+          game_id: string
+          game_status?: string | null
+          home_score?: number | null
+          id?: string
+          period?: number | null
+          provider: string
+          raw_payload?: Json | null
+          score_source?: string
+        }
+        Update: {
+          away_score?: number | null
+          created_at?: string
+          external_game_id?: string | null
+          game_clock?: string | null
+          game_id?: string
+          game_status?: string | null
+          home_score?: number | null
+          id?: string
+          period?: number | null
+          provider?: string
+          raw_payload?: Json | null
+          score_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_events_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squares: {
         Row: {
           col: number
@@ -252,6 +344,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      venues: {
+        Row: {
+          active: boolean
+          created_at: string
+          founder_edge: boolean
+          founder_edge_position: number | null
+          id: string
+          monthly_price: number
+          owner_user_id: string
+          plan_name: string
+          venue_name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          founder_edge?: boolean
+          founder_edge_position?: number | null
+          id?: string
+          monthly_price?: number
+          owner_user_id: string
+          plan_name?: string
+          venue_name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          founder_edge?: boolean
+          founder_edge_position?: number | null
+          id?: string
+          monthly_price?: number
+          owner_user_id?: string
+          plan_name?: string
+          venue_name?: string
+        }
+        Relationships: []
       }
     }
     Views: {
