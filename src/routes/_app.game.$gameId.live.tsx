@@ -476,6 +476,8 @@ function LivePage() {
           </div>
         </div>
 
+        {isHost && <LiveScoreSyncPanel game={game} />}
+
         {isHost && (
           <div className="mb-4 rounded-xl border border-border bg-[color:var(--surface)] p-3 flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 mr-1">
