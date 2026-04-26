@@ -43,6 +43,8 @@ type Props = {
     last_score_sync_at?: string | null;
     last_score_sync_error?: string | null;
     game_status?: string | null;
+    period?: number | null;
+    game_clock?: string | null;
   };
 };
 
