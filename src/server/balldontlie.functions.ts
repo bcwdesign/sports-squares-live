@@ -403,18 +403,20 @@ async function runSync(gameId: string): Promise<{
     g.period !== match.period;
 
   if (changed) {
-    await supabaseAdmin.from("score_events").insert({
-      game_id: gameId,
-      provider: "balldontlie",
-      external_game_id: g.external_game_id,
-      home_score: match.home_score,
-      away_score: match.away_score,
-      period: match.period,
-      game_clock: match.game_clock,
-      game_status: match.game_status,
-      score_source: "api",
-      raw_payload: match as unknown as Record<string, unknown>,
-    });
+    await supabaseAdmin.from("score_events").insert([
+      {
+        game_id: gameId,
+        provider: "balldontlie",
+        external_game_id: g.external_game_id,
+        home_score: match.home_score,
+        away_score: match.away_score,
+        period: match.period,
+        game_clock: match.game_clock,
+        game_status: match.game_status,
+        score_source: "api",
+        raw_payload: match as unknown as Record<string, unknown>,
+      },
+    ]);
   }
 
   lastSyncByGame.set(gameId, Date.now());
