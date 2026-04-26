@@ -8,6 +8,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { WinnerCelebration } from "@/components/WinnerCelebration";
+import { LiveScoreSyncPanel } from "@/components/LiveScoreSyncPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
 import { Maximize2, QrCode, RotateCcw, Sparkles, Trophy, Tv, Zap, X, Save, Flag } from "lucide-react";
