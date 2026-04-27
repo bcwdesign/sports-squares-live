@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { NeonButton } from "@/components/NeonButton";
-import { Plus, KeyRound, LogOut, Trophy, UserCog } from "lucide-react";
+import { Plus, KeyRound, LogOut, Trophy, UserCog, ShieldCheck } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
 import type { Game } from "@/lib/types";
@@ -26,6 +26,18 @@ function Dashboard() {
   const [showJoin, setShowJoin] = useState(false);
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "super_admin")
+      .maybeSingle()
+      .then(({ data }) => setIsSuperAdmin(!!data));
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -111,6 +123,15 @@ function Dashboard() {
             <div className="font-display font-bold text-sm"><span className="text-[color:var(--neon-blue)]">CLUTCH</span> <span className="text-[color:var(--neon-green)]">SQUARES</span></div>
           </Link>
           <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Link
+                to="/admin"
+                className="inline-flex items-center gap-1.5 rounded-md border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 px-3 py-1.5 text-xs font-mono uppercase tracking-widest text-[color:var(--neon-green)] hover:border-[color:var(--neon-green)]/80 transition"
+                title="Super admin console"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" /> Admin
+              </Link>
+            )}
             <Link
               to="/profile"
               className="inline-flex items-center gap-2 rounded-md border border-border bg-[color:var(--surface)] pl-1.5 pr-3 py-1 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-[color:var(--neon-blue)]/60 transition"

@@ -19,6 +19,7 @@ import { Route as AppVenueRouteImport } from './routes/_app.venue'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
 import { Route as AppGameGameIdOverlayRouteImport } from './routes/_app.game.$gameId.overlay'
 import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$gameId.lobby'
@@ -74,6 +75,11 @@ const AppCreateRoute = AppCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppGameGameIdResultsRoute = AppGameGameIdResultsRouteImport.update({
   id: '/game/$gameId/results',
   path: '/game/$gameId/results',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/admin': typeof AppAdminRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
   '/profile': typeof AppProfileRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/admin': typeof AppAdminRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
   '/profile': typeof AppProfileRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/_app/admin': typeof AppAdminRoute
   '/_app/create': typeof AppCreateRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/profile': typeof AppProfileRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/docs'
+    | '/admin'
     | '/create'
     | '/dashboard'
     | '/profile'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/docs'
+    | '/admin'
     | '/create'
     | '/dashboard'
     | '/profile'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/docs'
+    | '/_app/admin'
     | '/_app/create'
     | '/_app/dashboard'
     | '/_app/profile'
@@ -283,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCreateRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/game/$gameId/results': {
       id: '/_app/game/$gameId/results'
       path: '/game/$gameId/results'
@@ -322,6 +341,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
   AppCreateRoute: typeof AppCreateRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppProfileRoute: typeof AppProfileRoute
@@ -334,6 +354,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
   AppCreateRoute: AppCreateRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppProfileRoute: AppProfileRoute,
