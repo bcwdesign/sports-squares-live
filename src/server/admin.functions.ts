@@ -85,13 +85,91 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     const userId = context.userId;
     await assertSuperAdmin(userId);
 
-    // Stats via SECURITY DEFINER RPC
-    const { data: statsData, error: statsErr } = await supabaseAdmin.rpc("admin_stats");
-    if (statsErr) throw new Error(statsErr.message);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const readCount = (label: string, result: { count: number | null; error: { message: string } | null }) => {
+      if (result.error) throw new Error(`${label}: ${result.error.message}`);
+      return result.count ?? 0;
+    };
 
-    // Recent winners via SECURITY DEFINER RPC
-    const { data: winnersData, error: winnersErr } = await supabaseAdmin.rpc("admin_recent_winners");
-    if (winnersErr) throw new Error(winnersErr.message);
+    const [
+      totalUsersRes,
+      totalGuestsRes,
+      totalGamesRes,
+      activeGamesRes,
+      liveGamesRes,
+      lobbyGamesRes,
+      completedGamesRes,
+      totalPlayersRes,
+      totalSquaresClaimedRes,
+      totalMessagesRes,
+      totalVenuesRes,
+      autoSyncedGamesRes,
+      gamesLast7dRes,
+      usersLast7dRes,
+    ] = await Promise.all([
+      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).eq("is_guest", true),
+      supabaseAdmin.from("games").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).in("status", ["lobby", "locked", "live"]),
+      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).eq("status", "live"),
+      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).eq("status", "lobby"),
+      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).eq("status", "completed"),
+      supabaseAdmin.from("game_players").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("squares").select("*", { count: "exact", head: true }).not("owner_id", "is", null),
+      supabaseAdmin.from("messages").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("venues").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).eq("auto_sync_enabled", true),
+      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).gt("created_at", sevenDaysAgo),
+      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).gt("created_at", sevenDaysAgo),
+    ]);
+
+    const statsData: AdminStats = {
+      total_users: readCount("total users", totalUsersRes),
+      total_guests: readCount("total guests", totalGuestsRes),
+      total_games: readCount("total games", totalGamesRes),
+      active_games: readCount("active games", activeGamesRes),
+      live_games: readCount("live games", liveGamesRes),
+      lobby_games: readCount("lobby games", lobbyGamesRes),
+      completed_games: readCount("completed games", completedGamesRes),
+      total_players: readCount("total players", totalPlayersRes),
+      total_squares_claimed: readCount("claimed squares", totalSquaresClaimedRes),
+      total_messages: readCount("messages", totalMessagesRes),
+      total_venues: readCount("venues", totalVenuesRes),
+      auto_synced_games: readCount("auto synced games", autoSyncedGamesRes),
+      games_last_7d: readCount("games last 7 days", gamesLast7dRes),
+      users_last_7d: readCount("users last 7 days", usersLast7dRes),
+    };
+
+    const { data: completedRows, error: completedErr } = await supabaseAdmin
+      .from("games")
+      .select("id, name, home_team, away_team, home_score, away_score, created_at, home_axis, away_axis")
+      .eq("status", "completed")
+      .order("created_at", { ascending: false })
+      .limit(25);
+    if (completedErr) throw new Error(completedErr.message);
+
+    const completedIds = (completedRows ?? []).map((g) => g.id);
+    const { data: winnerSquares, error: winnerSquaresErr } = await supabaseAdmin
+      .from("squares")
+      .select("game_id, row, col, owner_name")
+      .in("game_id", completedIds.length ? completedIds : ["00000000-0000-0000-0000-000000000000"]);
+    if (winnerSquaresErr) throw new Error(winnerSquaresErr.message);
+
+    const winnerSquareMap = new Map((winnerSquares ?? []).map((s) => [`${s.game_id}:${s.row}:${s.col}`, s.owner_name]));
+    const winnersData: AdminWinner[] = (completedRows ?? []).map((g) => {
+      const row = g.away_axis.indexOf(g.away_score % 10);
+      const col = g.home_axis.indexOf(g.home_score % 10);
+      return {
+        game_id: g.id,
+        game_name: g.name,
+        home_team: g.home_team,
+        away_team: g.away_team,
+        home_score: g.home_score,
+        away_score: g.away_score,
+        created_at: g.created_at,
+        winner_name: row >= 0 && col >= 0 ? winnerSquareMap.get(`${g.id}:${row}:${col}`) ?? null : null,
+      };
+    });
 
     // Games (admin client bypasses RLS)
     const { data: gamesRows, error: gamesErr } = await supabaseAdmin
