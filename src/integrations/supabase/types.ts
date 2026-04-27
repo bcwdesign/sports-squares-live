@@ -345,6 +345,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       venues: {
         Row: {
           active: boolean
@@ -386,11 +407,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_recent_winners: { Args: never; Returns: Json }
+      admin_stats: { Args: never; Returns: Json }
       can_claim_square: {
         Args: { _game_id: string; _user_id: string }
         Returns: boolean
       }
       get_overlay_by_token: { Args: { _token: string }; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_game_host: {
         Args: { _game_id: string; _user_id: string }
         Returns: boolean
@@ -401,6 +431,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "super_admin" | "admin" | "user"
       game_status: "lobby" | "locked" | "live" | "completed"
     }
     CompositeTypes: {
@@ -529,6 +560,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["super_admin", "admin", "user"],
       game_status: ["lobby", "locked", "live", "completed"],
     },
   },
