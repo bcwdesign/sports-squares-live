@@ -93,33 +93,21 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     // .length when the server returns count: null (which can happen on some
     // edge runtimes when head requests are stripped of the Content-Range header).
     type CountTable = "profiles" | "games" | "game_players" | "squares" | "messages" | "venues";
-    const exactCount = async (
-      label: string,
-      table: CountTable,
-      build: (q: ReturnType<typeof supabaseAdmin.from<CountTable>>) => unknown,
-    ): Promise<number> => {
-      // First try: HEAD with exact count
-      // We re-build the query each time because PostgrestFilterBuilder is not reusable.
-      const headQuery = build(supabaseAdmin.from(table)) as {
-        then: Parameters<Promise<{ count: number | null; error: { message: string } | null }>["then"]>[0];
-      };
-      const headRes = (await headQuery) as unknown as {
-        count: number | null;
-        error: { message: string } | null;
-      };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type Builder = (q: any) => any;
+
+    const exactCount = async (label: string, table: CountTable, build: Builder): Promise<number> => {
+      // First try: HEAD with exact count.
+      const headRes = await build(supabaseAdmin.from(table));
       if (headRes.error) throw new Error(`${label}: ${headRes.error.message}`);
       if (typeof headRes.count === "number") return headRes.count;
 
-      // Fallback: select ids and count rows client-side
-      const fallbackQuery = build(supabaseAdmin.from(table)) as unknown as {
-        then: Parameters<Promise<{ data: Array<{ id: string }> | null; error: { message: string } | null }>["then"]>[0];
-      };
-      const fallbackRes = (await fallbackQuery) as unknown as {
-        data: Array<{ id: string }> | null;
-        error: { message: string } | null;
-      };
+      // Fallback: re-issue the query without `head: true` and count rows ourselves.
+      // This protects against environments where the Content-Range header is
+      // stripped and PostgREST returns count: null.
+      const fallbackRes = await build(supabaseAdmin.from(table));
       if (fallbackRes.error) throw new Error(`${label} fallback: ${fallbackRes.error.message}`);
-      return (fallbackRes.data ?? []).length;
+      return Array.isArray(fallbackRes.data) ? fallbackRes.data.length : 0;
     };
 
     const [
