@@ -35,8 +35,8 @@ export const Route = createRootRoute({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Clutch Squares — Real-time NBA Squares" },
       { name: "twitter:description", content: "Create private NBA Squares games for live watch parties. Real-time scoring, neon UI, second-screen ready." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/102b8dfa-46f8-401c-9936-9fcd51b2b238/id-preview-27d31430--0f807bfb-a70b-428e-a361-278d1cd60692.lovable.app-1776998721065.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/102b8dfa-46f8-401c-9936-9fcd51b2b238/id-preview-27d31430--0f807bfb-a70b-428e-a361-278d1cd60692.lovable.app-1776998721065.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/19774724-ec17-44bc-a3e7-616244f6b00e" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/19774724-ec17-44bc-a3e7-616244f6b00e" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
