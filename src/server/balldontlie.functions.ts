@@ -340,7 +340,7 @@ async function runSync(gameId: string): Promise<{
   const { data: g, error: gErr } = await supabaseAdmin
     .from("games")
     .select(
-      "id, external_provider, external_game_id, period, home_score, away_score",
+      "id, external_provider, external_game_id, period, home_score, away_score, home_team, away_team, external_home_team_id, external_away_team_id, external_home_team_name, external_away_team_name",
     )
     .eq("id", gameId)
     .maybeSingle();
@@ -374,11 +374,46 @@ async function runSync(gameId: string): Promise<{
   const upstreamStatus = (match.game_status ?? "").toLowerCase();
   const completed = upstreamStatus.includes("final");
 
+  // -------- Home/Away orientation guard --------------------------------------
+  // BALLDONTLIE's "home" team is the real venue's home team, which may NOT
+  // match how the host set up this ClutchSquares game. If the host's local
+  // home_team actually corresponds to the upstream AWAY team, we flip the
+  // scores so they land in the right column on the board.
+  //
+  // Match priority: external_*_team_id (saved at connect time) → fuzzy name
+  // match against home_team / away_team strings.
+  const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().trim();
+  const localHome = norm(g.home_team);
+  const localAway = norm(g.away_team);
+  const upHomeId = String(match.home_team_id ?? "");
+  const upAwayId = String(match.away_team_id ?? "");
+  const upHomeName = norm(match.home_team_name);
+  const upAwayName = norm(match.away_team_name);
+
+  let swap = false;
+  if (g.external_home_team_id && g.external_away_team_id) {
+    // Saved mapping says local-home == upstream id X. If that id is actually
+    // the upstream away team this cycle, swap.
+    if (g.external_home_team_id === upAwayId && g.external_away_team_id === upHomeId) {
+      swap = true;
+    }
+  } else if (localHome && localAway) {
+    const homeMatchesUpHome = upHomeName.includes(localHome) || localHome.includes(upHomeName);
+    const homeMatchesUpAway = upAwayName.includes(localHome) || localHome.includes(upAwayName);
+    const awayMatchesUpAway = upAwayName.includes(localAway) || localAway.includes(upAwayName);
+    if (!homeMatchesUpHome && homeMatchesUpAway && awayMatchesUpAway) {
+      swap = true;
+    }
+  }
+
+  const finalHomeScore = swap ? match.away_score : match.home_score;
+  const finalAwayScore = swap ? match.home_score : match.away_score;
+
   const { error: updErr } = await supabaseAdmin
     .from("games")
     .update({
-      home_score: match.home_score,
-      away_score: match.away_score,
+      home_score: finalHomeScore,
+      away_score: finalAwayScore,
       period: match.period,
       game_clock: match.game_clock,
       game_status: match.game_status,
@@ -398,8 +433,8 @@ async function runSync(gameId: string): Promise<{
   // Append-only audit log. Idempotency: if nothing changed, skip the insert
   // so we don't spam score_events with duplicate "no-op" rows.
   const changed =
-    g.home_score !== match.home_score ||
-    g.away_score !== match.away_score ||
+    g.home_score !== finalHomeScore ||
+    g.away_score !== finalAwayScore ||
     g.period !== match.period;
 
   if (changed) {
@@ -408,13 +443,13 @@ async function runSync(gameId: string): Promise<{
         game_id: gameId,
         provider: "balldontlie",
         external_game_id: g.external_game_id,
-        home_score: match.home_score,
-        away_score: match.away_score,
+        home_score: finalHomeScore,
+        away_score: finalAwayScore,
         period: match.period,
         game_clock: match.game_clock,
         game_status: match.game_status,
         score_source: "api",
-        raw_payload: JSON.parse(JSON.stringify(match)),
+        raw_payload: JSON.parse(JSON.stringify({ ...match, _orientation_swapped: swap })),
       },
     ]);
   }
@@ -423,8 +458,8 @@ async function runSync(gameId: string): Promise<{
 
   return {
     synced: true,
-    home_score: match.home_score,
-    away_score: match.away_score,
+    home_score: finalHomeScore,
+    away_score: finalAwayScore,
     period: match.period,
     game_clock: match.game_clock,
     game_status: match.game_status,
