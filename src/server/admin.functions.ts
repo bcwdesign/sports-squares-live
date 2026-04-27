@@ -86,58 +86,89 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     await assertSuperAdmin(userId);
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const readCount = (label: string, result: { count: number | null; error: { message: string } | null }) => {
-      if (result.error) throw new Error(`${label}: ${result.error.message}`);
-      return result.count ?? 0;
+
+    // Run an exact count via PostgREST. We select a single column ("id") instead
+    // of "*" to avoid PostgREST trying to materialise every column for the
+    // head request, and we provide a fallback that fetches the ids and uses
+    // .length when the server returns count: null (which can happen on some
+    // edge runtimes when head requests are stripped of the Content-Range header).
+    type CountTable = "profiles" | "games" | "game_players" | "squares" | "messages" | "venues";
+    const exactCount = async (
+      label: string,
+      table: CountTable,
+      build: (q: ReturnType<typeof supabaseAdmin.from<CountTable>>) => unknown,
+    ): Promise<number> => {
+      // First try: HEAD with exact count
+      // We re-build the query each time because PostgrestFilterBuilder is not reusable.
+      const headQuery = build(supabaseAdmin.from(table)) as {
+        then: Parameters<Promise<{ count: number | null; error: { message: string } | null }>["then"]>[0];
+      };
+      const headRes = (await headQuery) as unknown as {
+        count: number | null;
+        error: { message: string } | null;
+      };
+      if (headRes.error) throw new Error(`${label}: ${headRes.error.message}`);
+      if (typeof headRes.count === "number") return headRes.count;
+
+      // Fallback: select ids and count rows client-side
+      const fallbackQuery = build(supabaseAdmin.from(table)) as unknown as {
+        then: Parameters<Promise<{ data: Array<{ id: string }> | null; error: { message: string } | null }>["then"]>[0];
+      };
+      const fallbackRes = (await fallbackQuery) as unknown as {
+        data: Array<{ id: string }> | null;
+        error: { message: string } | null;
+      };
+      if (fallbackRes.error) throw new Error(`${label} fallback: ${fallbackRes.error.message}`);
+      return (fallbackRes.data ?? []).length;
     };
 
     const [
-      totalUsersRes,
-      totalGuestsRes,
-      totalGamesRes,
-      activeGamesRes,
-      liveGamesRes,
-      lobbyGamesRes,
-      completedGamesRes,
-      totalPlayersRes,
-      totalSquaresClaimedRes,
-      totalMessagesRes,
-      totalVenuesRes,
-      autoSyncedGamesRes,
-      gamesLast7dRes,
-      usersLast7dRes,
+      total_users,
+      total_guests,
+      total_games,
+      active_games,
+      live_games,
+      lobby_games,
+      completed_games,
+      total_players,
+      total_squares_claimed,
+      total_messages,
+      total_venues,
+      auto_synced_games,
+      games_last_7d,
+      users_last_7d,
     ] = await Promise.all([
-      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).eq("is_guest", true),
-      supabaseAdmin.from("games").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).in("status", ["lobby", "locked", "live"]),
-      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).eq("status", "live"),
-      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).eq("status", "lobby"),
-      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).eq("status", "completed"),
-      supabaseAdmin.from("game_players").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("squares").select("*", { count: "exact", head: true }).not("owner_id", "is", null),
-      supabaseAdmin.from("messages").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("venues").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).eq("auto_sync_enabled", true),
-      supabaseAdmin.from("games").select("*", { count: "exact", head: true }).gt("created_at", sevenDaysAgo),
-      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).gt("created_at", sevenDaysAgo),
+      exactCount("total_users", "profiles", (q) => q.select("id", { count: "exact", head: true })),
+      exactCount("total_guests", "profiles", (q) => q.select("id", { count: "exact", head: true }).eq("is_guest", true)),
+      exactCount("total_games", "games", (q) => q.select("id", { count: "exact", head: true })),
+      exactCount("active_games", "games", (q) => q.select("id", { count: "exact", head: true }).in("status", ["lobby", "locked", "live"])),
+      exactCount("live_games", "games", (q) => q.select("id", { count: "exact", head: true }).eq("status", "live")),
+      exactCount("lobby_games", "games", (q) => q.select("id", { count: "exact", head: true }).eq("status", "lobby")),
+      exactCount("completed_games", "games", (q) => q.select("id", { count: "exact", head: true }).eq("status", "completed")),
+      exactCount("total_players", "game_players", (q) => q.select("id", { count: "exact", head: true })),
+      exactCount("total_squares_claimed", "squares", (q) => q.select("id", { count: "exact", head: true }).not("owner_id", "is", null)),
+      exactCount("total_messages", "messages", (q) => q.select("id", { count: "exact", head: true })),
+      exactCount("total_venues", "venues", (q) => q.select("id", { count: "exact", head: true })),
+      exactCount("auto_synced_games", "games", (q) => q.select("id", { count: "exact", head: true }).eq("auto_sync_enabled", true)),
+      exactCount("games_last_7d", "games", (q) => q.select("id", { count: "exact", head: true }).gt("created_at", sevenDaysAgo)),
+      exactCount("users_last_7d", "profiles", (q) => q.select("id", { count: "exact", head: true }).gt("created_at", sevenDaysAgo)),
     ]);
 
     const statsData: AdminStats = {
-      total_users: readCount("total users", totalUsersRes),
-      total_guests: readCount("total guests", totalGuestsRes),
-      total_games: readCount("total games", totalGamesRes),
-      active_games: readCount("active games", activeGamesRes),
-      live_games: readCount("live games", liveGamesRes),
-      lobby_games: readCount("lobby games", lobbyGamesRes),
-      completed_games: readCount("completed games", completedGamesRes),
-      total_players: readCount("total players", totalPlayersRes),
-      total_squares_claimed: readCount("claimed squares", totalSquaresClaimedRes),
-      total_messages: readCount("messages", totalMessagesRes),
-      total_venues: readCount("venues", totalVenuesRes),
-      auto_synced_games: readCount("auto synced games", autoSyncedGamesRes),
-      games_last_7d: readCount("games last 7 days", gamesLast7dRes),
-      users_last_7d: readCount("users last 7 days", usersLast7dRes),
+      total_users,
+      total_guests,
+      total_games,
+      active_games,
+      live_games,
+      lobby_games,
+      completed_games,
+      total_players,
+      total_squares_claimed,
+      total_messages,
+      total_venues,
+      auto_synced_games,
+      games_last_7d,
+      users_last_7d,
     };
 
     const { data: completedRows, error: completedErr } = await supabaseAdmin
