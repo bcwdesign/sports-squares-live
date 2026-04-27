@@ -458,8 +458,8 @@ async function runSync(gameId: string): Promise<{
 
   return {
     synced: true,
-    home_score: match.home_score,
-    away_score: match.away_score,
+    home_score: finalHomeScore,
+    away_score: finalAwayScore,
     period: match.period,
     game_clock: match.game_clock,
     game_status: match.game_status,
