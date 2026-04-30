@@ -18,10 +18,31 @@ export const Route = createFileRoute("/_app/game/$gameId/results")({
 
 function ResultsPage() {
   const { gameId } = Route.useParams();
-  const { game, squares, loading } = useGame(gameId);
+  const { game, squares, players, loading } = useGame(gameId);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [resetting, setResetting] = useState(false);
+  const [recapOpen, setRecapOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [results, setResults] = useState<QuarterResult[]>([]);
+  const recapRef = useRef<HTMLDivElement | null>(null);
+
+  // Load quarter winners from the snapshot table.
+  useEffect(() => {
+    if (!gameId) return;
+    let active = true;
+    supabase
+      .from("quarter_results")
+      .select("quarter, home_score, away_score, home_digit, away_digit, winner_name, is_final")
+      .eq("game_id", gameId)
+      .order("quarter")
+      .then(({ data }) => {
+        if (active && data) setResults(data as QuarterResult[]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [gameId]);
 
   if (loading || !game) {
     return <div className="min-h-screen flex items-center justify-center text-xs font-mono uppercase tracking-widest text-muted-foreground">Loading...</div>;
