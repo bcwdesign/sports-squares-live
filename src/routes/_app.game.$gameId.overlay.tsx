@@ -10,7 +10,7 @@
 // with a link back to the dashboard.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { Overlay, fireConfetti } from "@/components/Overlay";
 import { WinnerCelebration } from "@/components/WinnerCelebration";
@@ -49,8 +49,8 @@ function AuthenticatedOverlayPage() {
     };
   }, []);
 
-  // Compute winner for the TV-sized celebration card. Hoisted above any early
-  // returns so hook order stays stable across renders.
+  // Compute current leader for the TV-sized celebration card. Hoisted above
+  // any early returns so hook order stays stable across renders.
   const winIdx = game && (game.home_score > 0 || game.away_score > 0)
     ? winningSquareIndex(game, game.home_score, game.away_score)
     : -1;
@@ -61,6 +61,48 @@ function AuthenticatedOverlayPage() {
     if (!winSq?.owner_id) return null;
     return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
   }, [players, winSq?.owner_id]);
+
+  const hasWinner = !!winSq?.owner_id;
+  const currentLeaderInfo = hasWinner && game
+    ? {
+        ownerName: winSq!.owner_name ?? "Player",
+        ownerAvatarUrl: winnerAvatar,
+        homeDigit: game.home_score % 10,
+        awayDigit: game.away_score % 10,
+        homeTeam: game.home_team,
+        awayTeam: game.away_team,
+        quarter: game.quarter,
+      }
+    : null;
+  const lastLeaderRef = useRef<typeof currentLeaderInfo>(null);
+  useEffect(() => {
+    lastLeaderRef.current = currentLeaderInfo;
+  });
+
+  // Celebration only fires on milestones: quarter advance OR game completion.
+  const [celebration, setCelebration] = useState<{
+    info: NonNullable<typeof currentLeaderInfo>;
+    key: string;
+  } | null>(null);
+  const prevQuarterRef = useRef<number | null>(null);
+  const prevStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!game) return;
+    const prevQ = prevQuarterRef.current;
+    const prevS = prevStatusRef.current;
+    prevQuarterRef.current = game.quarter;
+    prevStatusRef.current = game.status;
+    if (prevQ === null) return;
+    if (prevS !== "completed" && game.status === "completed") {
+      const info = lastLeaderRef.current ?? currentLeaderInfo;
+      if (info) setCelebration({ info, key: `final:${info.quarter}:${info.ownerName}` });
+      return;
+    }
+    if (game.quarter > prevQ) {
+      const info = lastLeaderRef.current;
+      if (info) setCelebration({ info, key: `q${prevQ}:${info.ownerName}` });
+    }
+  }, [game?.quarter, game?.status]);
 
   if (loading) {
     return (
@@ -88,26 +130,13 @@ function AuthenticatedOverlayPage() {
   }
 
   const isHost = !!user && game.host_id === user.id;
-  const hasWinner = !!winSq?.owner_id;
-  const winnerInfo = hasWinner
-    ? {
-        ownerName: winSq!.owner_name ?? "Player",
-        ownerAvatarUrl: winnerAvatar,
-        homeDigit: game.home_score % 10,
-        awayDigit: game.away_score % 10,
-        homeTeam: game.home_team,
-        awayTeam: game.away_team,
-        quarter: game.quarter,
-      }
-    : null;
-  const winnerKey = `${game.quarter}:${winSq?.owner_id ?? "none"}`;
 
   return (
     <>
       <Overlay game={game} squares={squares} replayKey={replayKey} />
       <WinnerCelebration
-        winner={winnerInfo}
-        winnerKey={winnerKey}
+        winner={celebration?.info ?? null}
+        winnerKey={celebration?.key ?? "none"}
         replayKey={replayKey}
         variant="tv"
       />

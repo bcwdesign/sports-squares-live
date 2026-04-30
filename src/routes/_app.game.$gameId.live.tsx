@@ -380,7 +380,8 @@ function LivePage() {
     }
   };
 
-  // Track winning square + drive WinnerCelebration via a stable key.
+  // Track winning square (current leader) — used for grid highlighting and as
+  // the snapshot source when a quarter ends.
   const winIdx = game ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
   const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
   const winCol = winIdx >= 0 ? winIdx % 10 : -1;
@@ -393,7 +394,9 @@ function LivePage() {
     return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
   }, [players, winSq?.owner_id]);
 
-  const winnerInfo = hasWinner && game
+  // Current (live) leader info — kept in a ref so we can snapshot it the
+  // moment a quarter ends or the game completes.
+  const currentLeaderInfo = hasWinner && game
     ? {
         ownerName: winSq!.owner_name ?? "Player",
         ownerAvatarUrl: winnerAvatar,
@@ -404,19 +407,50 @@ function LivePage() {
         quarter: game.quarter,
       }
     : null;
+  const lastLeaderRef = useRef<typeof currentLeaderInfo>(null);
+  useEffect(() => {
+    lastLeaderRef.current = currentLeaderInfo;
+  });
 
-  const winnerKey = `${game?.quarter ?? 0}:${winSq?.owner_id ?? "none"}`;
+  // Celebration state — only set on milestones (quarter advance OR game end).
+  const [celebration, setCelebration] = useState<{
+    info: NonNullable<typeof currentLeaderInfo>;
+    key: string;
+  } | null>(null);
   const [replayKey, setReplayKey] = useState(0);
 
-  // Friendly toast when the winning player changes (in addition to celebration).
-  const lastWinIdxRef = useRef<number>(-1);
+  // Detect milestones. Track previous quarter + status across renders.
+  const prevQuarterRef = useRef<number | null>(null);
+  const prevStatusRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!game || winIdx === lastWinIdxRef.current) return;
-    if (lastWinIdxRef.current !== -1 && winIdx >= 0 && winSq?.owner_name) {
-      toast.success(`🔥 ${winSq.owner_name} now winning!`);
+    if (!game) return;
+    const prevQ = prevQuarterRef.current;
+    const prevS = prevStatusRef.current;
+    prevQuarterRef.current = game.quarter;
+    prevStatusRef.current = game.status;
+
+    // First observation — establish baseline, no celebration.
+    if (prevQ === null) return;
+
+    // Game just completed → celebrate the final quarter's winner.
+    if (prevS !== "completed" && game.status === "completed") {
+      const info = lastLeaderRef.current ?? currentLeaderInfo;
+      if (info) {
+        setCelebration({ info, key: `final:${info.quarter}:${info.ownerName}` });
+        toast.success(`🏆 ${info.ownerName} wins the game!`);
+      }
+      return;
     }
-    lastWinIdxRef.current = winIdx;
-  }, [winIdx, game, winSq]);
+
+    // Quarter advanced → celebrate the just-ended quarter's winner.
+    if (game.quarter > prevQ) {
+      const info = lastLeaderRef.current;
+      if (info) {
+        setCelebration({ info, key: `q${prevQ}:${info.ownerName}` });
+        toast.success(`🏆 ${info.ownerName} wins Q${prevQ}!`);
+      }
+    }
+  }, [game?.quarter, game?.status]);
 
   // Route to results when complete
   useEffect(() => {
@@ -433,8 +467,8 @@ function LivePage() {
   return (
     <div className={watchMode ? "fixed inset-0 z-50 bg-background overflow-auto" : "min-h-screen"}>
       <WinnerCelebration
-        winner={winnerInfo}
-        winnerKey={winnerKey}
+        winner={celebration?.info ?? null}
+        winnerKey={celebration?.key ?? "none"}
         replayKey={replayKey}
         variant="compact"
       />
