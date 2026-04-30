@@ -55,6 +55,58 @@ function ResultsPage() {
   const youWon = winSq?.owner_id === user?.id;
   const isHost = !!user && game.host_id === user.id;
 
+  const mvpAvatarUrl = useMemo(() => {
+    if (!winSq?.owner_id) return null;
+    return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
+  }, [players, winSq?.owner_id]);
+
+  // Generate a PNG of the recap card and either download it or fire the
+  // Web Share sheet with the image attached when supported.
+  const exportRecap = async (mode: "share" | "download") => {
+    if (!recapRef.current || exporting) return;
+    setExporting(true);
+    try {
+      const dataUrl = await toPng(recapRef.current, {
+        cacheBust: true,
+        pixelRatio: 1,
+        width: RECAP_CARD_SIZE.width,
+        height: RECAP_CARD_SIZE.height,
+        backgroundColor: "#000000",
+      });
+      const filename = `clutch-squares-${game.away_team}-${game.home_team}.png`;
+
+      if (mode === "share") {
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], filename, { type: "image/png" });
+        const nav = navigator as Navigator & {
+          canShare?: (data: { files: File[] }) => boolean;
+          share?: (data: { files?: File[]; title?: string; text?: string; url?: string }) => Promise<void>;
+        };
+        if (nav.canShare?.({ files: [file] }) && nav.share) {
+          await nav.share({
+            files: [file],
+            title: "Clutch Squares Recap",
+            text: `${game.away_team} ${game.away_score} – ${game.home_score} ${game.home_team}`,
+          });
+          return;
+        }
+      }
+
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success("Recap saved to your device");
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't generate recap image");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Host-only: rewind a completed game back to a fresh tip-off so the demo
   // (or a real game) can be re-run. Keeps claimed squares intact and routes
   // the host back to the live page.
