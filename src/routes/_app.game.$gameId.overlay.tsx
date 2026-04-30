@@ -10,7 +10,7 @@
 // with a link back to the dashboard.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { Overlay, fireConfetti } from "@/components/Overlay";
 import { WinnerCelebration } from "@/components/WinnerCelebration";
