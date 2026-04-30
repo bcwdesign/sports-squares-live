@@ -467,8 +467,8 @@ function LivePage() {
   return (
     <div className={watchMode ? "fixed inset-0 z-50 bg-background overflow-auto" : "min-h-screen"}>
       <WinnerCelebration
-        winner={winnerInfo}
-        winnerKey={winnerKey}
+        winner={celebration?.info ?? null}
+        winnerKey={celebration?.key ?? "none"}
         replayKey={replayKey}
         variant="compact"
       />
