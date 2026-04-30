@@ -1,13 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/TopBar";
 import { NeonButton } from "@/components/NeonButton";
-import { Trophy, Share2, RotateCcw } from "lucide-react";
+import { RecapCard, RECAP_CARD_SIZE, type QuarterResult } from "@/components/RecapCard";
+import { Trophy, Share2, RotateCcw, Image as ImageIcon, Download, X } from "lucide-react";
 import { toast } from "sonner";
 import { winningSquareIndex } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
+import { toPng } from "html-to-image";
 
 export const Route = createFileRoute("/_app/game/$gameId/results")({
   head: () => ({ meta: [{ title: "Results — Clutch Squares" }] }),
