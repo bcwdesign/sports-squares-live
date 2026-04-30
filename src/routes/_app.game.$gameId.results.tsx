@@ -239,6 +239,92 @@ function ResultsPage() {
           ← Back to dashboard
         </Link>
       </main>
+
+      {/* Recap card preview / share modal */}
+      {recapOpen && (
+        <div
+          className="fixed inset-0 z-[80] bg-black/85 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center overflow-y-auto p-4 sm:p-6 animate-fade-in"
+          onClick={() => setRecapOpen(false)}
+        >
+          <div
+            className="w-full max-w-md flex items-center justify-between mb-3 sm:mb-4 sticky top-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="font-mono uppercase tracking-[0.3em] text-[10px] text-[color:var(--neon-green)]">
+              Shareable Recap
+            </div>
+            <button
+              onClick={() => setRecapOpen(false)}
+              className="p-2 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Scaled preview wrapper. The card itself renders at 1080x1350. */}
+          <div
+            className="w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="relative w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+              style={{ aspectRatio: `${RECAP_CARD_SIZE.width} / ${RECAP_CARD_SIZE.height}` }}
+            >
+              {/* Hidden full-size source for export, then scaled to preview width. */}
+              <div
+                style={{
+                  width: RECAP_CARD_SIZE.width,
+                  height: RECAP_CARD_SIZE.height,
+                  transform: "scale(var(--recap-scale))",
+                  transformOrigin: "top left",
+                  // The wrapper sets --recap-scale based on its actual rendered width.
+                }}
+                ref={(el) => {
+                  if (!el) return;
+                  const parent = el.parentElement;
+                  if (!parent) return;
+                  const apply = () => {
+                    const w = parent.clientWidth;
+                    el.style.setProperty("--recap-scale", `${w / RECAP_CARD_SIZE.width}`);
+                  };
+                  apply();
+                  // Re-apply on resize.
+                  const ro = new ResizeObserver(apply);
+                  ro.observe(parent);
+                }}
+              >
+                <div ref={recapRef}>
+                  <RecapCard
+                    game={game}
+                    results={results}
+                    mvpName={winSq?.owner_name ?? null}
+                    mvpAvatarUrl={mvpAvatarUrl}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="w-full max-w-md grid grid-cols-2 gap-3 mt-4 sm:mt-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button onClick={() => exportRecap("download")} disabled={exporting}>
+              <NeonButton variant="ghost" className="w-full">
+                <Download className="w-4 h-4 inline mr-2" />
+                {exporting ? "Rendering..." : "Download"}
+              </NeonButton>
+            </button>
+            <button onClick={() => exportRecap("share")} disabled={exporting}>
+              <NeonButton variant="orange" className="w-full">
+                <Share2 className="w-4 h-4 inline mr-2" />
+                Share
+              </NeonButton>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
