@@ -31,17 +31,26 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
   const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
   const hasWinner = !!winSq?.owner_name;
 
-  // Fire confetti when the winning player identity changes for a quarter, OR
-  // when the host explicitly requests a replay via `replayKey`.
-  const lastWinnerKey = useRef<string>("");
+  // Fire confetti only at milestones: when the quarter advances (the just-
+  // ended quarter has a winner) OR when the game completes. Mid-quarter score
+  // changes do NOT trigger confetti.
+  const prevQuarterRef = useRef<number | null>(null);
+  const prevStatusRef = useRef<string | null>(null);
+  const lastHadWinnerRef = useRef<boolean>(false);
   useEffect(() => {
-    const key = `${game.quarter}:${winSq?.owner_id ?? ""}`;
-    if (!hasWinner) return;
-    if (lastWinnerKey.current && lastWinnerKey.current !== key) {
+    const prevQ = prevQuarterRef.current;
+    const prevS = prevStatusRef.current;
+    const hadWinner = lastHadWinnerRef.current;
+    prevQuarterRef.current = game.quarter;
+    prevStatusRef.current = game.status;
+    lastHadWinnerRef.current = hasWinner;
+    if (prevQ === null) return;
+    const completed = prevS !== "completed" && game.status === "completed";
+    const advanced = game.quarter > prevQ;
+    if ((completed || advanced) && (hadWinner || hasWinner)) {
       fireConfetti();
     }
-    lastWinnerKey.current = key;
-  }, [hasWinner, winSq?.owner_id, game.quarter]);
+  }, [game.quarter, game.status, hasWinner]);
 
   const firstReplay = useRef(true);
   useEffect(() => {
