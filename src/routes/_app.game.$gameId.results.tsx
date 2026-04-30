@@ -203,11 +203,22 @@ function ResultsPage() {
           </div>
         </div>
 
+        {/* Recap card CTA */}
+        <button
+          onClick={() => setRecapOpen(true)}
+          className="block w-full mb-3"
+        >
+          <NeonButton variant="orange" className="w-full">
+            <ImageIcon className="w-4 h-4 inline mr-2" />
+            Generate Shareable Recap
+          </NeonButton>
+        </button>
+
         {/* Actions */}
         <div className="grid grid-cols-2 gap-3">
           <button onClick={share}>
             <NeonButton variant="ghost" className="w-full">
-              <Share2 className="w-4 h-4 inline mr-2" />Share
+              <Share2 className="w-4 h-4 inline mr-2" />Share Text
             </NeonButton>
           </button>
           <Link to="/dashboard">
