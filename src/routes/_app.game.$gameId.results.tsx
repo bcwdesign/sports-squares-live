@@ -44,21 +44,25 @@ function ResultsPage() {
     };
   }, [gameId]);
 
-  if (loading || !game) {
-    return <div className="min-h-screen flex items-center justify-center text-xs font-mono uppercase tracking-widest text-muted-foreground">Loading...</div>;
-  }
+  // Compute winning square (safe to call with possibly-null game — guarded below).
+  const winIdx = game ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
+  const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
+  const winCol = winIdx >= 0 ? winIdx % 10 : -1;
+  const winSq = winIdx >= 0 ? squares.find((s) => s.row === winRow && s.col === winCol) : undefined;
 
-  const winIdx = winningSquareIndex(game, game.home_score, game.away_score);
-  const winRow = Math.floor(winIdx / 10);
-  const winCol = winIdx % 10;
-  const winSq = squares.find((s) => s.row === winRow && s.col === winCol);
-  const youWon = winSq?.owner_id === user?.id;
-  const isHost = !!user && game.host_id === user.id;
-
+  // IMPORTANT: All hooks must run on every render. Keep useMemo above the
+  // early `if (loading || !game)` return so React's hook order stays stable.
   const mvpAvatarUrl = useMemo(() => {
     if (!winSq?.owner_id) return null;
     return players.find((p) => p.user_id === winSq.owner_id)?.avatar_url ?? null;
   }, [players, winSq?.owner_id]);
+
+  if (loading || !game) {
+    return <div className="min-h-screen flex items-center justify-center text-xs font-mono uppercase tracking-widest text-muted-foreground">Loading...</div>;
+  }
+
+  const youWon = winSq?.owner_id === user?.id;
+  const isHost = !!user && game.host_id === user.id;
 
   // Generate a PNG of the recap card and either download it or fire the
   // Web Share sheet with the image attached when supported.
