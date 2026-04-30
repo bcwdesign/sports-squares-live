@@ -135,8 +135,8 @@ function AuthenticatedOverlayPage() {
     <>
       <Overlay game={game} squares={squares} replayKey={replayKey} />
       <WinnerCelebration
-        winner={winnerInfo}
-        winnerKey={winnerKey}
+        winner={celebration?.info ?? null}
+        winnerKey={celebration?.key ?? "none"}
         replayKey={replayKey}
         variant="tv"
       />
