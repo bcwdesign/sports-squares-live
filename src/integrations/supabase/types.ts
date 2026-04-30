@@ -213,6 +213,56 @@ export type Database = {
         }
         Relationships: []
       }
+      quarter_results: {
+        Row: {
+          away_digit: number
+          away_score: number
+          created_at: string
+          game_id: string
+          home_digit: number
+          home_score: number
+          id: string
+          is_final: boolean
+          quarter: number
+          winner_name: string | null
+          winner_user_id: string | null
+        }
+        Insert: {
+          away_digit: number
+          away_score: number
+          created_at?: string
+          game_id: string
+          home_digit: number
+          home_score: number
+          id?: string
+          is_final?: boolean
+          quarter: number
+          winner_name?: string | null
+          winner_user_id?: string | null
+        }
+        Update: {
+          away_digit?: number
+          away_score?: number
+          created_at?: string
+          game_id?: string
+          home_digit?: number
+          home_score?: number
+          id?: string
+          is_final?: boolean
+          quarter?: number
+          winner_name?: string | null
+          winner_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quarter_results_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       score_drafts: {
         Row: {
           away: string
