@@ -161,12 +161,13 @@ function Dashboard() {
       <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
         <div className="mb-6 animate-fade-in">
           <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Welcome back</div>
-          <h1 className="font-display font-bold text-3xl">
+          <h1 className="font-display font-bold text-3xl">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {profile?.display_name ?? "Player"}
             {profile?.is_guest && (
               <span className="ml-2 align-middle text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-full border border-[color:var(--neon-orange)]/40 text-[color:var(--neon-orange)]">Guest</span>
             )}
-          </h1>
+          </p>
         </div>
 
         {/* Primary CTAs */}
@@ -185,8 +186,10 @@ function Dashboard() {
 
         {showJoin && (
           <div className="rounded-xl border border-border bg-[color:var(--surface)] p-4 mb-8 animate-scale-in">
+            <label htmlFor="invite-code-input" className="sr-only">Invite code</label>
             <div className="flex gap-2">
               <input
+                id="invite-code-input"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="INVITE CODE"
