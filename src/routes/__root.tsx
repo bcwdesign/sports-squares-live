@@ -37,6 +37,28 @@ export const Route = createRootRoute({
       { name: "twitter:description", content: "Create private NBA Squares games for live watch parties. Real-time scoring, neon UI, second-screen ready." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/19774724-ec17-44bc-a3e7-616244f6b00e" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/19774724-ec17-44bc-a3e7-616244f6b00e" },
+      { property: "og:site_name", content: "Clutch Squares" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Clutch Squares",
+          url: "https://clutchsquares.com",
+          logo: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/19774724-ec17-44bc-a3e7-616244f6b00e",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Clutch Squares",
+          url: "https://clutchsquares.com",
+        }),
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
