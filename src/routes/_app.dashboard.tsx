@@ -12,8 +12,12 @@ export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Clutch Squares" },
-      { name: "description", content: "Your active and past Squares games." },
+      { name: "description", content: "Your Clutch Squares dashboard — jump back into active NBA Squares games, browse past games, or start a new one with friends." },
+      { property: "og:title", content: "Dashboard — Clutch Squares" },
+      { property: "og:description", content: "Jump back into active NBA Squares games or start a new one with friends." },
+      { property: "og:url", content: "https://clutchsquares.com/dashboard" },
     ],
+    links: [{ rel: "canonical", href: "https://clutchsquares.com/dashboard" }],
   }),
   component: Dashboard,
 });

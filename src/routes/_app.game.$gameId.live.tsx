@@ -16,7 +16,14 @@ import { toast } from "sonner";
 import QRCode from "qrcode";
 
 export const Route = createFileRoute("/_app/game/$gameId/live")({
-  head: () => ({ meta: [{ title: "Live — Clutch Squares" }] }),
+  head: () => ({
+    meta: [
+      { title: "Live Game — Clutch Squares" },
+      { name: "description", content: "Live NBA Squares game board with real-time scores, quarter winners, and a TV-ready overlay for your watch party." },
+      { property: "og:title", content: "Live Game — Clutch Squares" },
+      { property: "og:description", content: "Live NBA Squares board with real-time scores and quarter winners." },
+    ],
+  }),
   component: LivePage,
 });
 

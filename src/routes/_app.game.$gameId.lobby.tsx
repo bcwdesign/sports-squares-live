@@ -23,7 +23,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/game/$gameId/lobby")({
-  head: () => ({ meta: [{ title: "Game Lobby — Clutch Squares" }] }),
+  head: () => ({
+    meta: [
+      { title: "Game Lobby — Clutch Squares" },
+      { name: "description", content: "Game lobby for a Clutch Squares NBA game — invite players, claim squares on the 10×10 board, and lock in before tip-off." },
+      { property: "og:title", content: "Game Lobby — Clutch Squares" },
+      { property: "og:description", content: "Invite players and claim squares on the 10×10 board before tip-off." },
+    ],
+  }),
   component: LobbyPage,
 });
 
