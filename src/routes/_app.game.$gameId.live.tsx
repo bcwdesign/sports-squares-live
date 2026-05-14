@@ -482,6 +482,7 @@ function LivePage() {
       <TopBar game={game} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-12">
+        <h1 className="sr-only">{game.away_team} at {game.home_team} — Live Squares</h1>
         <div className="flex items-center justify-between mb-3 gap-2">
           <Link to="/game/$gameId/lobby" params={{ gameId }} className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Lobby</Link>
           <div className="flex items-center gap-3 flex-wrap justify-end">
