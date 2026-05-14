@@ -1,0 +1,17 @@
+# Clutch Squares
+
+> Real-time NBA Squares for private watch parties. Create a game, invite friends, fill a 10×10 board, and win when your numbers hit at the end of each quarter.
+
+Clutch Squares is a web app for hosting private NBA Squares games. Hosts create a game, invite players via code or link, players claim squares before tip-off, and the app syncs scores in real time, awards quarter winners, generates a shareable recap, and includes a TV-ready overlay.
+
+## Pages
+
+- [Home](/): Landing page introducing Clutch Squares and how it works.
+- [Sign in / sign up](/auth): Email, Google, or guest sign in.
+- [Dashboard](/dashboard): A signed-in player's active and past Squares games.
+- [Create a game](/create): Set up a new private NBA Squares game.
+- [Developer docs](/docs): Realtime game state subscriptions and live score updates.
+
+## Optional
+
+- [Join by invite code](/join/CODE): Players land here from a share link to join a host's game.

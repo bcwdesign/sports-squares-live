@@ -16,7 +16,14 @@ import { toast } from "sonner";
 import QRCode from "qrcode";
 
 export const Route = createFileRoute("/_app/game/$gameId/live")({
-  head: () => ({ meta: [{ title: "Live — Clutch Squares" }] }),
+  head: () => ({
+    meta: [
+      { title: "Live Game — Clutch Squares" },
+      { name: "description", content: "Live NBA Squares game board with real-time scores, quarter winners, and a TV-ready overlay for your watch party." },
+      { property: "og:title", content: "Live Game — Clutch Squares" },
+      { property: "og:description", content: "Live NBA Squares board with real-time scores and quarter winners." },
+    ],
+  }),
   component: LivePage,
 });
 
@@ -475,6 +482,7 @@ function LivePage() {
       <TopBar game={game} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-12">
+        <h1 className="sr-only">{game.away_team} at {game.home_team} — Live Squares</h1>
         <div className="flex items-center justify-between mb-3 gap-2">
           <Link to="/game/$gameId/lobby" params={{ gameId }} className="text-xs text-muted-foreground hover:text-foreground font-mono uppercase">← Lobby</Link>
           <div className="flex items-center gap-3 flex-wrap justify-end">
@@ -762,6 +770,7 @@ function LivePage() {
                 <div className="flex items-center gap-2">
                   <input
                     readOnly
+                    aria-label="Public overlay link"
                     value={overlayUrl}
                     onFocus={(e) => e.currentTarget.select()}
                     className="flex-1 min-w-0 rounded-md border border-border bg-background px-2 py-1.5 text-xs font-mono text-foreground"

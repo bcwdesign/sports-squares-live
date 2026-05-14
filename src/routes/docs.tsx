@@ -18,6 +18,21 @@ export const Route = createFileRoute("/docs")({
         content:
           "How to subscribe to realtime game state and push NBA live score updates in Clutch Squares.",
       },
+      { property: "og:url", content: "https://clutchsquares.com/docs" },
+    ],
+    links: [{ rel: "canonical", href: "https://clutchsquares.com/docs" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "TechArticle",
+          headline: "Clutch Squares — API & Integration Docs",
+          description:
+            "Developer documentation for Clutch Squares: realtime game state subscriptions and NBA live score updates.",
+          author: { "@type": "Organization", name: "Clutch Squares" },
+        }),
+      },
     ],
   }),
   component: DocsPage,

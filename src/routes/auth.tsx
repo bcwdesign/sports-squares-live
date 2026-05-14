@@ -16,8 +16,12 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign In — Clutch Squares" },
-      { name: "description", content: "Sign in or continue as a guest." },
+      { name: "description", content: "Sign in to Clutch Squares to host or join real-time NBA Squares games with friends. Email, Google, or guest access." },
+      { property: "og:title", content: "Sign In — Clutch Squares" },
+      { property: "og:description", content: "Sign in to Clutch Squares to host or join real-time NBA Squares games with friends." },
+      { property: "og:url", content: "https://clutchsquares.com/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://clutchsquares.com/auth" }],
   }),
   component: AuthPage,
 });

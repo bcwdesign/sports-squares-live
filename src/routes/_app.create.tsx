@@ -63,7 +63,7 @@ function CreateGame() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">
+          <Link to="/dashboard" aria-label="Back to dashboard" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <h1 className="font-display font-bold">New Game</h1>
@@ -145,10 +145,10 @@ function CreateGame() {
 
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{label}</div>
+    <label className="block">
+      <span className="block font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{label}</span>
       {children}
-    </div>
+    </label>
   );
 }
 

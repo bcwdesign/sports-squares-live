@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
@@ -26,6 +27,11 @@ import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$game
 import { Route as AppGameGameIdLiveRouteImport } from './routes/_app.game.$gameId.live'
 import { Route as AppGameGameIdInviteRouteImport } from './routes/_app.game.$gameId.invite'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AppAdminRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AppAdminRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_app/admin': typeof AppAdminRoute
   '/_app/create': typeof AppCreateRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/docs'
+    | '/sitemap.xml'
     | '/admin'
     | '/create'
     | '/dashboard'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/docs'
+    | '/sitemap.xml'
     | '/admin'
     | '/create'
     | '/dashboard'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/docs'
+    | '/sitemap.xml'
     | '/_app/admin'
     | '/_app/create'
     | '/_app/dashboard'
@@ -219,12 +231,20 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   DocsRoute: typeof DocsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   JoinInviteCodeRoute: typeof JoinInviteCodeRoute
   OverlayTokenRoute: typeof OverlayTokenRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs': {
       id: '/docs'
       path: '/docs'
@@ -373,6 +393,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   DocsRoute: DocsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   JoinInviteCodeRoute: JoinInviteCodeRoute,
   OverlayTokenRoute: OverlayTokenRoute,
 }

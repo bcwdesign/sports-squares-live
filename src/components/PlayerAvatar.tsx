@@ -58,7 +58,7 @@ export function PlayerAvatar({
       {src ? (
         <img
           src={src}
-          alt={name ?? "Player"}
+          alt={name ? `${name} avatar` : "Player avatar"}
           className="absolute inset-0 w-full h-full object-cover"
           loading="lazy"
         />

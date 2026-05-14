@@ -42,9 +42,10 @@ function Landing() {
             <h1 className="font-display font-bold text-5xl sm:text-7xl tracking-tight leading-[0.95]">
               <span className="text-[color:var(--neon-blue)]">CLUTCH</span>{" "}
               <span className="text-[color:var(--neon-green)]">SQUARES</span>
+              <span className="sr-only"> — Play NBA Squares with Friends</span>
             </h1>
             <p className="text-muted-foreground mt-5 text-lg sm:text-xl max-w-xl mx-auto">
-              Play. Compete. Win with friends.
+              Play NBA Squares with friends. Compete. Win.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-8 max-w-md mx-auto">
