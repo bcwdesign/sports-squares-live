@@ -769,6 +769,7 @@ function LivePage() {
                 <div className="flex items-center gap-2">
                   <input
                     readOnly
+                    aria-label="Public overlay link"
                     value={overlayUrl}
                     onFocus={(e) => e.currentTarget.select()}
                     className="flex-1 min-w-0 rounded-md border border-border bg-background px-2 py-1.5 text-xs font-mono text-foreground"

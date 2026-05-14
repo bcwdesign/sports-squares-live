@@ -145,10 +145,10 @@ function CreateGame() {
 
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{label}</div>
+    <label className="block">
+      <span className="block font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{label}</span>
       {children}
-    </div>
+    </label>
   );
 }
 
