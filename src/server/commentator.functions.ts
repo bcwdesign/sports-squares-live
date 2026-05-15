@@ -288,9 +288,9 @@ export const generateCommentatorVoiceClip = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await assertHost(supabase, data.gameId, userId);
+  .handler(async ({ data }) => {
+    // Any authenticated viewer of the overlay may request a voice clip —
+    // it's a read-only render, no game state is mutated.
 
     const apiKey = process.env.HEYGEN_API_KEY;
     if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
@@ -338,9 +338,8 @@ export const getCommentatorVoiceClipStatus = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({ gameId: z.string().uuid(), videoId: z.string().min(1) }).parse(input),
   )
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await assertHost(supabase, data.gameId, userId);
+  .handler(async ({ data }) => {
+    // Any authenticated viewer may poll status — read-only.
 
     const apiKey = process.env.HEYGEN_API_KEY;
     if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
