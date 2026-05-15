@@ -171,6 +171,53 @@ function ResultsPage() {
           </div>
         </div>
 
+        {/* AI Commentator final recap video */}
+        {(() => {
+          const g = game as typeof game & {
+            commentator_enabled?: boolean | null;
+            commentator_name?: string | null;
+            heygen_reactions_enabled?: boolean | null;
+            heygen_video_url?: string | null;
+            heygen_video_status?: string | null;
+          };
+          if (!g.commentator_enabled) return null;
+          const vStatus = (g.heygen_video_status || "").toLowerCase();
+          const failed = vStatus.startsWith("error") || vStatus.startsWith("failed");
+          const processing =
+            !!g.heygen_reactions_enabled &&
+            !g.heygen_video_url &&
+            !failed;
+          if (!g.heygen_video_url && !processing && !failed) return null;
+          return (
+            <div className="rounded-2xl border-2 border-[color:var(--neon-blue)]/40 bg-[color:var(--surface)]/90 p-4 mb-6 shadow-[var(--shadow-card)]">
+              <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
+                <Mic className="w-3 h-3 text-[color:var(--neon-blue)]" />
+                {g.commentator_name || "AI Commentator"} — Final Recap
+              </div>
+              {g.heygen_video_url ? (
+                <video
+                  src={g.heygen_video_url}
+                  autoPlay
+                  controls
+                  playsInline
+                  className="w-full rounded-xl bg-black aspect-video object-cover"
+                />
+              ) : processing ? (
+                <div className="flex items-center gap-2 rounded-lg border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 px-3 py-3">
+                  <Loader2 className="w-4 h-4 text-[color:var(--neon-orange)] animate-spin shrink-0" />
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-orange)] truncate">
+                    Rendering final recap video… {vStatus ? `(${vStatus})` : "(queued)"}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-3 font-mono text-[10px] uppercase tracking-widest text-destructive">
+                  Recap video failed ({vStatus})
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Final winner */}
         <div
           className="rounded-2xl border p-6 mb-6 text-center animate-scale-in"
