@@ -1,10 +1,16 @@
 // AI Commentator card shown on the live overlay. Renders HeyGen video when
 // available, otherwise an avatar placeholder, the latest commentary line,
-// and a status pill. Mute/unmute toggles browser TTS.
+// and a status pill. When unmuted, each new commentary line is spoken using
+// the SAME HeyGen voice the avatar uses (via a short rendered voice clip).
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Mic, Volume2, VolumeX } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { cn } from "@/lib/utils";
 import type { Game } from "@/lib/types";
+import {
+  generateCommentatorVoiceClip,
+  getCommentatorVoiceClipStatus,
+} from "@/server/commentator.functions";
 
 type Props = {
   game: Game & {
@@ -22,34 +28,81 @@ type Props = {
   defaultMuted?: boolean;
 };
 
-const VOICE_STYLE_MAP: Record<string, { rate: number; pitch: number }> = {
-  Energetic: { rate: 1.15, pitch: 1.15 },
-  "Deep Voice": { rate: 0.9, pitch: 0.6 },
-  Funny: { rate: 1.1, pitch: 1.4 },
-  Professional: { rate: 1.0, pitch: 1.0 },
-  Streetball: { rate: 1.1, pitch: 1.1 },
-  Dramatic: { rate: 0.95, pitch: 0.85 },
-};
-
 export function CommentatorCard({ game, defaultMuted = true }: Props) {
   const enabled = !!game.commentator_enabled;
   const [muted, setMuted] = useState(defaultMuted);
-  const lastSpokenRef = useRef<string | null>(null);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const requestedTextRef = useRef<string | null>(null);
+  const activeJobRef = useRef<{ text: string; videoId: string } | null>(null);
 
+  const generateClip = useServerFn(generateCommentatorVoiceClip);
+  const getClipStatus = useServerFn(getCommentatorVoiceClipStatus);
+
+  // When a new commentary line arrives and we're unmuted, render it through
+  // HeyGen with the avatar's voice and play just the audio.
   useEffect(() => {
-    if (!enabled) return;
-    if (muted) return;
+    if (!enabled || muted) return;
     const text = game.commentator_latest_text?.trim();
-    if (!text || text === lastSpokenRef.current) return;
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    if (window.speechSynthesis.speaking) return;
-    lastSpokenRef.current = text;
-    const u = new SpeechSynthesisUtterance(text);
-    const tuning = VOICE_STYLE_MAP[game.commentator_voice_style || "Energetic"] || VOICE_STYLE_MAP.Energetic;
-    u.rate = tuning.rate;
-    u.pitch = tuning.pitch;
-    window.speechSynthesis.speak(u);
-  }, [enabled, muted, game.commentator_latest_text, game.commentator_voice_style]);
+    if (!text || text === requestedTextRef.current) return;
+    requestedTextRef.current = text;
+
+    let cancelled = false;
+    setVoiceLoading(true);
+
+    (async () => {
+      try {
+        const gen = await generateClip({ data: { gameId: game.id, text } });
+        if (cancelled) return;
+        if (!gen?.ok || !gen.video_id) {
+          setVoiceLoading(false);
+          return;
+        }
+        activeJobRef.current = { text, videoId: gen.video_id };
+
+        // Poll up to ~90s for the clip to render.
+        const start = Date.now();
+        while (!cancelled && Date.now() - start < 90_000) {
+          // If a newer line came in, abandon this one.
+          if (requestedTextRef.current !== text) return;
+          await new Promise((r) => setTimeout(r, 3000));
+          const s = await getClipStatus({
+            data: { gameId: game.id, videoId: gen.video_id },
+          });
+          if (cancelled) return;
+          if (s?.status === "completed" && s.url) {
+            if (requestedTextRef.current !== text) return;
+            const el = audioRef.current;
+            if (el) {
+              el.src = s.url;
+              el.play().catch(() => {
+                /* autoplay may still be blocked; user can unmute again */
+              });
+            }
+            break;
+          }
+          if (s?.status && (s.status.startsWith("failed") || s.status.startsWith("error"))) {
+            break;
+          }
+        }
+      } catch (err) {
+        console.warn("Commentator voice clip failed", err);
+      } finally {
+        if (!cancelled) setVoiceLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, muted, game.id, game.commentator_latest_text, generateClip, getClipStatus]);
+
+  // Stop playback immediately when muted.
+  useEffect(() => {
+    if (muted && audioRef.current) {
+      audioRef.current.pause();
+    }
+  }, [muted]);
 
   if (!enabled) return null;
 
@@ -74,6 +127,9 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
       <div className="flex items-center justify-between mb-2 md:mb-3">
         <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           <Mic className="w-3 h-3 text-[color:var(--neon-blue)]" /> AI Commentator
+          {voiceLoading && !muted && (
+            <Loader2 className="w-3 h-3 animate-spin text-[color:var(--neon-orange)]" />
+          )}
         </div>
         <button
           onClick={() => setMuted((m) => !m)}
@@ -151,6 +207,9 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
           {game.commentator_latest_text || "Waiting for tipoff. Your AI commentator is ready."}
         </p>
       </div>
+
+      {/* Hidden audio element plays the HeyGen-rendered voice clip. */}
+      <audio ref={audioRef} hidden preload="auto" />
     </div>
   );
 }
