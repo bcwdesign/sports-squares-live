@@ -71,14 +71,17 @@ function CreateGame() {
         commentator_enabled: commentatorEnabled,
       };
       if (commentatorEnabled) {
+        const preset = getCommentatorByName(commPersonality);
         Object.assign(insertPayload, {
-          commentator_name: commName.trim() || "Coach Chaos",
+          commentator_name: commName.trim() || commPersonality,
           commentator_personality: commPersonality,
           commentator_voice_style: commVoice,
           commentator_catchphrases: commCatchphrases.trim() || null,
           commentator_intro_script: introScriptValue,
           heygen_intro_enabled: heygenIntro,
           heygen_reactions_enabled: heygenReactions,
+          heygen_avatar_id: preset?.heygenAvatarId ?? null,
+          heygen_voice_id: preset?.heygenVoiceId ?? null,
         });
       }
       const { data, error } = await supabase
