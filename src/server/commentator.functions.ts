@@ -129,7 +129,14 @@ export const generateScoreCommentary = createServerFn({ method: "POST" })
 
 export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ gameId: z.string().uuid() }).parse(input))
+  .inputValidator((input) =>
+    z
+      .object({
+        gameId: z.string().uuid(),
+        kind: z.enum(["intro", "final"]).optional().default("intro"),
+      })
+      .parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertHost(supabase, data.gameId, userId);
@@ -139,14 +146,51 @@ export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
 
     const { data: game, error } = await supabaseAdmin
       .from("games")
-      .select("commentator_intro_script, commentator_name, heygen_avatar_id, heygen_voice_id")
+      .select(
+        "commentator_intro_script, commentator_name, heygen_avatar_id, heygen_voice_id, home_team, away_team, home_score, away_score, home_axis, away_axis",
+      )
       .eq("id", data.gameId)
       .maybeSingle();
     if (error || !game) throw new Error(error?.message || "Game not found");
 
     const avatarId = game.heygen_avatar_id || DEFAULT_HEYGEN_AVATAR_ID;
     const voiceId = game.heygen_voice_id || DEFAULT_HEYGEN_VOICE_ID;
-    const script = (game.commentator_intro_script || `Welcome to the show, I'm ${game.commentator_name || "your AI commentator"}.`).slice(0, 1500);
+    const name = game.commentator_name || "your AI commentator";
+
+    let script: string;
+    let title: string;
+    if (data.kind === "final") {
+      const homeDigit = game.home_score % 10;
+      const awayDigit = game.away_score % 10;
+      const col = (game.home_axis as number[]).indexOf(homeDigit);
+      const row = (game.away_axis as number[]).indexOf(awayDigit);
+      let winnerName: string | null = null;
+      if (col >= 0 && row >= 0) {
+        const { data: sq } = await supabaseAdmin
+          .from("squares")
+          .select("owner_name")
+          .eq("game_id", data.gameId)
+          .eq("row", row)
+          .eq("col", col)
+          .maybeSingle();
+        winnerName = sq?.owner_name ?? null;
+      }
+      const winningTeam =
+        game.home_score === game.away_score
+          ? `${game.home_team} and ${game.away_team} tied it up`
+          : game.home_score > game.away_score
+            ? `${game.home_team} took it`
+            : `${game.away_team} took it`;
+      const winnerLine = winnerName
+        ? `The final square ${awayDigit}-${homeDigit} belongs to ${winnerName}. Congratulations, MVP!`
+        : `The final square ${awayDigit}-${homeDigit} went unclaimed — tough break!`;
+      script = `That's the final buzzer! ${winningTeam}, ${game.away_team} ${game.away_score}, ${game.home_team} ${game.home_score}. ${winnerLine} I'm ${name}, signing off — what a game.`;
+      title = `${game.commentator_name || "Commentator"} Final Recap`;
+    } else {
+      script = game.commentator_intro_script || `Welcome to the show, I'm ${name}.`;
+      title = `${game.commentator_name || "Commentator"} Intro`;
+    }
+    script = script.slice(0, 1500);
 
     const payload = {
       video_inputs: [
@@ -156,7 +200,7 @@ export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
         },
       ],
       dimension: { width: 1280, height: 720 },
-      title: `${game.commentator_name || "Commentator"} Intro`,
+      title,
     };
 
     const res = await fetch("https://api.heygen.com/v2/video/generate", {

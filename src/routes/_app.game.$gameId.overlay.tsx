@@ -18,7 +18,7 @@ import { CommentatorCard } from "@/components/CommentatorCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { winningSquareIndex } from "@/lib/types";
 import { invokeAuthed } from "@/lib/serverFnClient";
-import { generateScoreCommentary } from "@/server/commentator.functions";
+import { generateScoreCommentary, generateHeyGenCommentatorVideo, getHeyGenVideoStatus } from "@/server/commentator.functions";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_app/game/$gameId/overlay")({
@@ -141,6 +141,34 @@ function AuthenticatedOverlayPage() {
     const id = setInterval(() => triggerCommentary.current(), 60_000);
     return () => clearInterval(id);
   }, [isHostUser, commentatorEnabled, game?.id, game?.status]);
+
+  // Final-recap HeyGen video: when the host's game flips to "completed" and
+  // reaction videos are enabled, kick off a final HeyGen render and poll
+  // until it resolves. Fire-and-forget; the URL lands in heygen_video_url
+  // and the CommentatorCard picks it up via realtime.
+  const heygenReactionsEnabled = !!(game as { heygen_reactions_enabled?: boolean } | null)?.heygen_reactions_enabled;
+  const finalKickedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isHostUser || !commentatorEnabled || !heygenReactionsEnabled || !game) return;
+    if (game.status !== "completed") return;
+    if (finalKickedRef.current === game.id) return;
+    finalKickedRef.current = game.id;
+    (async () => {
+      try {
+        await invokeAuthed(generateHeyGenCommentatorVideo, { gameId: game.id, kind: "final" });
+        // Poll status every 8s for up to ~3 minutes.
+        for (let i = 0; i < 24; i++) {
+          await new Promise((r) => setTimeout(r, 8000));
+          const res = await invokeAuthed(getHeyGenVideoStatus, { gameId: game.id });
+          if (res.ok && res.status === "completed") return;
+          if (res.ok && res.status && res.status.startsWith("failed")) return;
+        }
+      } catch (err) {
+        console.error("HeyGen final recap failed", err);
+      }
+    })();
+  }, [isHostUser, commentatorEnabled, heygenReactionsEnabled, game?.id, game?.status]);
+
 
   if (loading) {
     return (
