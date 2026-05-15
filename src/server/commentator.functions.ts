@@ -8,10 +8,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getCommentatorByName, COMMENTATORS } from "@/lib/commentators";
 
-// Hardcoded MVP defaults for HeyGen — overrideable per-game later.
-const DEFAULT_HEYGEN_AVATAR_ID = "Daisy-inskirt-20220818";
-const DEFAULT_HEYGEN_VOICE_ID = "2d5b0e6cf36f460aa7fc47e3eee4ba54";
+// Default to the first preset (Coach Chaos) when nothing is set on the row.
+const DEFAULT_HEYGEN_AVATAR_ID = COMMENTATORS[0].heygenAvatarId;
+const DEFAULT_HEYGEN_VOICE_ID = COMMENTATORS[0].heygenVoiceId;
 
 async function assertHost(supabase: any, gameId: string, userId: string) {
   const { data, error } = await supabase
