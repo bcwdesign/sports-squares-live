@@ -5,11 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/TopBar";
 import { NeonButton } from "@/components/NeonButton";
 import { RecapCard, RECAP_CARD_SIZE, type QuarterResult } from "@/components/RecapCard";
-import { Trophy, Share2, RotateCcw, Image as ImageIcon, Download, X, Mic, Loader2 } from "lucide-react";
+import { Trophy, Share2, RotateCcw, Image as ImageIcon, Download, X, Mic, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { winningSquareIndex } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toPng } from "html-to-image";
+import { useServerFn } from "@tanstack/react-start";
+import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus } from "@/server/commentator.functions";
 
 export const Route = createFileRoute("/_app/game/$gameId/results")({
   head: () => ({ meta: [{ title: "Results — Clutch Squares" }] }),
@@ -26,6 +28,40 @@ function ResultsPage() {
   const [exporting, setExporting] = useState(false);
   const [results, setResults] = useState<QuarterResult[]>([]);
   const recapRef = useRef<HTMLDivElement | null>(null);
+  const [retryingRecap, setRetryingRecap] = useState(false);
+  const recapPollRef = useRef<number | null>(null);
+  const generateRecap = useServerFn(generateHeyGenCommentatorVideo);
+  const pollRecap = useServerFn(getHeyGenVideoStatus);
+
+  useEffect(() => () => {
+    if (recapPollRef.current) window.clearInterval(recapPollRef.current);
+  }, []);
+
+  const retryRecapVideo = async () => {
+    if (!gameId || retryingRecap) return;
+    setRetryingRecap(true);
+    try {
+      await generateRecap({ data: { gameId, kind: "final" } });
+      toast.success("Re-rendering final recap…");
+      if (recapPollRef.current) window.clearInterval(recapPollRef.current);
+      let ticks = 0;
+      recapPollRef.current = window.setInterval(async () => {
+        ticks++;
+        try {
+          const r = (await pollRecap({ data: { gameId } })) as { url?: string | null; status?: string | null };
+          const done = !!r?.url || ticks >= 24 || (typeof r?.status === "string" && /error|failed/i.test(r.status));
+          if (done) {
+            if (recapPollRef.current) window.clearInterval(recapPollRef.current);
+            recapPollRef.current = null;
+          }
+        } catch {/* keep polling */}
+      }, 8000);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't restart recap video");
+    } finally {
+      setRetryingRecap(false);
+    }
+  };
 
   // Load quarter winners from the snapshot table.
   useEffect(() => {
@@ -210,8 +246,22 @@ function ResultsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-3 font-mono text-[10px] uppercase tracking-widest text-destructive">
-                  Recap video failed ({vStatus})
+                <div className="space-y-2">
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-3 font-mono text-[10px] uppercase tracking-widest text-destructive">
+                    Recap video failed ({vStatus})
+                  </div>
+                  {isHost && (
+                    <button onClick={retryRecapVideo} disabled={retryingRecap} className="block w-full">
+                      <NeonButton variant="orange" className="w-full">
+                        {retryingRecap ? (
+                          <Loader2 className="w-4 h-4 inline mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4 inline mr-2" />
+                        )}
+                        {retryingRecap ? "Retrying…" : "Retry recap video"}
+                      </NeonButton>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
