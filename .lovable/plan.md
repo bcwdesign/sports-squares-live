@@ -1,49 +1,92 @@
-## Goal
+# AI Commentator — Implementation Plan
 
-Confetti and the WinnerCelebration card currently fire every time the *currently winning* square changes — including mid-quarter score updates. Change the trigger so it only fires when:
+## Scope
+Host opts in when creating a game. Live overlay shows a commentator card that speaks score/quarter/winning-square updates. Video avatar (HeyGen) is generated asynchronously when enabled.
 
-1. **A quarter ends** — i.e. `game.quarter` advances (the score that was on the board for the just-completed quarter is the winning score), OR
-2. **The game ends** — i.e. `game.status` becomes `completed`.
+## 1. Database (migration)
+Add columns to `games`:
+- `commentator_enabled bool default false`
+- `commentator_name text`
+- `commentator_personality text`
+- `commentator_voice_style text`
+- `commentator_catchphrases text`
+- `commentator_intro_script text`
+- `commentator_latest_text text`
+- `commentator_latest_audio_url text`
+- `commentator_last_spoken_at timestamptz`
+- `commentator_status text default 'ready'` (ready|thinking|speaking|live)
+- `heygen_intro_enabled bool default false`
+- `heygen_reactions_enabled bool default false`
+- `heygen_avatar_id text`, `heygen_voice_id text`
+- `heygen_video_id text`, `heygen_video_status text`, `heygen_video_url text`
 
-The host's manual "Replay celebration" button (overlay route) keeps working unchanged.
+RLS: existing host-update / member-select policies on `games` already cover these.
 
-## Approach
+## 2. Secrets
+- Store `HEYGEN_API_KEY` via secrets tool (server-only). The key the user pasted in chat will be added through the secret form, not committed to source.
 
-Introduce a new prop `triggerKey` on `WinnerCelebration` that callers compute. The component fires confetti + shows the card only when `triggerKey` changes (plus the existing `replayKey` for manual replay). Drop the existing "fire whenever the winning owner changes mid-quarter" behavior.
+## 3. Create Game UI (`src/routes/_app.create.tsx`)
+New collapsible section between Privacy and the action buttons, styled to match (dark card, neon accents, mono labels):
+- Toggle: Enable AI Commentator
+- When on:
+  - Commentator Name (text)
+  - Personality select (Hype Announcer / Trash Talk Uncle / ESPN Analyst / Twitch Streamer / Rival Fan / Family Friendly Host)
+  - Voice Style select (Energetic / Deep Voice / Funny / Professional / Streetball / Dramatic)
+  - Catchphrases (text)
+  - Intro Script (textarea, auto-filled from name + teams + personality, editable)
+  - Checkbox: Generate HeyGen intro video
+  - Checkbox: Generate HeyGen halftime/final reaction clips
 
-Callers compute `triggerKey` from "settled" milestones only:
-- Track `previousQuarter` (via ref). When `game.quarter` increases, snapshot the *previous* quarter's winner — that's what to celebrate.
-- When `game.status === "completed"`, celebrate the final quarter's winner.
-- Otherwise, no celebration.
+Save all fields with the game insert. After insert, if `heygen_intro_enabled`, fire-and-forget `generateHeyGenCommentatorVideo({ gameId })`.
 
-Same logic in the in-page Overlay's confetti effect (`src/components/Overlay.tsx`).
+## 4. Server functions (`src/lib/commentator.functions.ts`)
+All authed via `requireSupabaseAuth`; host-only checks via `is_game_host`.
 
-## Files to change
+- `generateScoreCommentary({ gameId })`
+  - Loads game + squares + players, computes current winning square via existing `winningSquareIndex` logic.
+  - Calls Lovable AI Gateway (`google/gemini-2.5-flash`) with a prompt built from personality + voice style + catchphrases + score state. Strict no-gambling guardrail in the system prompt.
+  - Updates `commentator_latest_text`, `commentator_last_spoken_at`, `commentator_status='live'`.
 
-**`src/components/WinnerCelebration.tsx`**
-- Replace the `winnerKey` change-detection effect with one keyed off a new `triggerKey: string` prop. Keep `replayKey` for forced replays.
-- Remove the "first render skip" logic — trigger only fires when the parent decides a milestone occurred.
+- `generateHeyGenCommentatorVideo({ gameId })`
+  - Reads game; uses saved `heygen_avatar_id`/`heygen_voice_id` or hardcoded MVP defaults.
+  - POST to `https://api.heygen.com/v2/video/generate` with the documented payload (the spec says `/v3/videos`; HeyGen's current public endpoint is v2 — use v2, this is the working endpoint).
+  - Saves `heygen_video_id` + `heygen_video_status='processing'`.
 
-**`src/routes/_app.game.$gameId.live.tsx`** (around lines 383–440)
-- Add a ref tracking last seen `quarter` and last seen `status`.
-- Maintain a `celebrated` state holding `{ winnerInfo, triggerKey }` for the most recent milestone (quarter advance or completion).
-- Effect: when `quarter` increases, compute the winner from the score at that moment (already in `game` because the live sync persists score before advancing — confirm; if not, we capture pre-advance via a ref of the last winnerInfo and emit it on the advance). Likely simplest: keep `lastWinnerInfoRef` updated each render with current `winnerInfo`; on quarter advance, set `celebrated` to that snapshot with `triggerKey = "q{prevQuarter}"`. On `status === "completed"`, set `celebrated` with `triggerKey = "final"`.
-- Pass `celebrated.winnerInfo` and `celebrated.triggerKey` to `<WinnerCelebration>`.
-- Remove the toast that says "X now winning!" on every mid-quarter lead change (it's the same noise the user is asking to silence). Keep an optional toast on the milestone events.
+- `getHeyGenVideoStatus({ gameId })`
+  - GETs HeyGen status; on `completed`, saves `heygen_video_url` + status.
 
-**`src/routes/_app.game.$gameId.overlay.tsx`** (around lines 50–115)
-- Same milestone/snapshot logic as above. Pass `triggerKey` instead of `winnerKey`.
+## 5. Overlay card (`src/components/CommentatorCard.tsx`)
+- Renders inside `src/routes/_app.game.$gameId.overlay.tsx` (and the in-page live overlay) above the existing winning-square area.
+- Hidden when `commentator_enabled=false`.
+- Shows: title, avatar (HeyGen `<video>` autoplay+muted+controls if `heygen_video_url`, else circular initials), name, personality, status pill, latest commentary text, mute/unmute button.
+- Subscribes to game realtime (already wired by `useGame`) — re-renders when `commentator_latest_text` changes.
 
-**`src/components/Overlay.tsx`** (lines 34–53)
-- Replace the "fire when winner identity changes" effect with milestone detection (quarter advance or `status === "completed"`). Keep the `replayKey` effect intact.
+## 6. TTS + trigger loop (in overlay components)
+- Web `SpeechSynthesis`. Voice style maps to `{ rate, pitch }`.
+- Default muted; mute button toggles. Skip if `speaking` or muted.
+- Speak whenever `commentator_latest_text` changes and ≥30s since last spoken.
 
-## Edge cases
+Host-side trigger (only the host's overlay tab calls the server fn, to avoid duplication):
+- On game start (`status` → `live`), score change, quarter change, every 60s during live, and on `completed`.
+- Debounced; minimum 30s between calls.
 
-- If the host manually edits the score after a quarter has ended (correction), no new celebration — the trigger only fires on a *new* milestone.
-- If a game starts already in Q2+ (mid-game join), the initial render does **not** celebrate; trigger only fires on subsequent advances/completion.
-- Manual "Replay celebration" button on the overlay still works via `replayKey`.
+## 7. UI copy
+- No score: "Waiting for tipoff. Your AI commentator is ready."
+- Winning: `Currently winning: Square {homeDigit}-{awayDigit} — {playerName|Unclaimed}`
 
-## Out of scope
+## Out of scope (MVP)
+- Per-clip HeyGen reaction generation at quarter/final (toggle is saved; wiring deferred — text+TTS still fires).
+- Server-side scheduler. The 60s loop runs in the host's overlay tab while open.
 
-- No DB schema changes.
-- No change to how scores/quarters are written by the live sync function — only the celebration trigger conditions on the client change.
+## Files
+- migration (new)
+- `src/routes/_app.create.tsx` (edit)
+- `src/lib/commentator.functions.ts` (new)
+- `src/components/CommentatorCard.tsx` (new)
+- `src/routes/_app.game.$gameId.overlay.tsx` (edit)
+- `src/routes/_app.game.$gameId.live.tsx` (edit — embed card in in-page overlay)
+
+## Confirm before I build
+1. Add `HEYGEN_API_KEY` as a server secret via the secrets prompt? (The key you pasted should not live in source — I'll request it through the secure form.)
+2. OK to use HeyGen API v2 (`/v2/video/generate`) instead of `/v3/videos` from the spec? v3 isn't a public endpoint.
+3. OK to defer per-quarter HeyGen reaction clips for MVP (toggle saved, only intro video generates) and rely on text+browser TTS for live commentary?
