@@ -24,7 +24,9 @@ const PERSONALITIES = COMMENTATOR_NAMES;
 const VOICE_STYLES = ["Energetic", "Deep Voice", "Funny", "Professional", "Streetball", "Dramatic"];
 
 function defaultIntroScript(name: string, away: string, home: string, personality: string) {
-  return `Welcome to ${name}! I'm your ${personality.toLowerCase()} for tonight, calling every bucket as the ${away} take on the ${home}. Grab your square, lock in, and let's run it.`;
+  const preset = getCommentatorByName(personality);
+  const role = preset?.description.toLowerCase() ?? "commentator";
+  return `Welcome to ${name}! I'm ${personality}, your ${role} for tonight, calling every bucket as the ${away} take on the ${home}. Grab your square, lock in, and let's run it.`;
 }
 
 function CreateGame() {
