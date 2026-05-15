@@ -109,7 +109,7 @@ function AuthenticatedOverlayPage() {
 
   // Host-side AI Commentator trigger loop. Only the host's tab calls the
   // server fn so we don't bill multiple times per viewer. Throttled to one
-  // call per ~30s, fires on score/quarter/status changes + 60s interval
+  // call per ~30s, fires on score/quarter/status changes + 180s interval
   // while live.
   const commentatorEnabled = !!(game as { commentator_enabled?: boolean } | null)?.commentator_enabled;
   const isHostUser = !!user && !!game && game.host_id === user.id;
@@ -138,7 +138,7 @@ function AuthenticatedOverlayPage() {
   ]);
   useEffect(() => {
     if (!isHostUser || !commentatorEnabled || !game || game.status !== "live") return;
-    const id = setInterval(() => triggerCommentary.current(), 60_000);
+    const id = setInterval(() => triggerCommentary.current(), 180_000);
     return () => clearInterval(id);
   }, [isHostUser, commentatorEnabled, game?.id, game?.status]);
 
