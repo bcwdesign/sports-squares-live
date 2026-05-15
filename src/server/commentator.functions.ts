@@ -340,7 +340,6 @@ export const getCommentatorVoiceClipStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     // Any authenticated viewer may poll status — read-only.
-    void data;
 
     const apiKey = process.env.HEYGEN_API_KEY;
     if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
