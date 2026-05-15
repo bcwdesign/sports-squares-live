@@ -4,9 +4,9 @@
 // the SAME HeyGen voice the avatar uses (via a short rendered voice clip).
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Mic, Volume2, VolumeX } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
 import { cn } from "@/lib/utils";
 import type { Game } from "@/lib/types";
+import { invokeAuthed } from "@/lib/serverFnClient";
 import {
   generateCommentatorVoiceClip,
   getCommentatorVoiceClipStatus,
