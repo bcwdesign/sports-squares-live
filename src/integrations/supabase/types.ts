@@ -56,6 +56,16 @@ export type Database = {
           away_score: number
           away_team: string
           clock: string
+          commentator_catchphrases: string | null
+          commentator_enabled: boolean
+          commentator_intro_script: string | null
+          commentator_last_spoken_at: string | null
+          commentator_latest_audio_url: string | null
+          commentator_latest_text: string | null
+          commentator_name: string | null
+          commentator_personality: string | null
+          commentator_status: string
+          commentator_voice_style: string | null
           created_at: string
           entry_amount_label: string | null
           external_away_team_id: string | null
@@ -67,6 +77,13 @@ export type Database = {
           game_clock: string | null
           game_date_time: string | null
           game_status: string | null
+          heygen_avatar_id: string | null
+          heygen_intro_enabled: boolean
+          heygen_reactions_enabled: boolean
+          heygen_video_id: string | null
+          heygen_video_status: string | null
+          heygen_video_url: string | null
+          heygen_voice_id: string | null
           home_axis: number[]
           home_score: number
           home_team: string
@@ -90,6 +107,16 @@ export type Database = {
           away_score?: number
           away_team: string
           clock?: string
+          commentator_catchphrases?: string | null
+          commentator_enabled?: boolean
+          commentator_intro_script?: string | null
+          commentator_last_spoken_at?: string | null
+          commentator_latest_audio_url?: string | null
+          commentator_latest_text?: string | null
+          commentator_name?: string | null
+          commentator_personality?: string | null
+          commentator_status?: string
+          commentator_voice_style?: string | null
           created_at?: string
           entry_amount_label?: string | null
           external_away_team_id?: string | null
@@ -101,6 +128,13 @@ export type Database = {
           game_clock?: string | null
           game_date_time?: string | null
           game_status?: string | null
+          heygen_avatar_id?: string | null
+          heygen_intro_enabled?: boolean
+          heygen_reactions_enabled?: boolean
+          heygen_video_id?: string | null
+          heygen_video_status?: string | null
+          heygen_video_url?: string | null
+          heygen_voice_id?: string | null
           home_axis?: number[]
           home_score?: number
           home_team: string
@@ -124,6 +158,16 @@ export type Database = {
           away_score?: number
           away_team?: string
           clock?: string
+          commentator_catchphrases?: string | null
+          commentator_enabled?: boolean
+          commentator_intro_script?: string | null
+          commentator_last_spoken_at?: string | null
+          commentator_latest_audio_url?: string | null
+          commentator_latest_text?: string | null
+          commentator_name?: string | null
+          commentator_personality?: string | null
+          commentator_status?: string
+          commentator_voice_style?: string | null
           created_at?: string
           entry_amount_label?: string | null
           external_away_team_id?: string | null
@@ -135,6 +179,13 @@ export type Database = {
           game_clock?: string | null
           game_date_time?: string | null
           game_status?: string | null
+          heygen_avatar_id?: string | null
+          heygen_intro_enabled?: boolean
+          heygen_reactions_enabled?: boolean
+          heygen_video_id?: string | null
+          heygen_video_status?: string | null
+          heygen_video_url?: string | null
+          heygen_voice_id?: string | null
           home_axis?: number[]
           home_score?: number
           home_team?: string
