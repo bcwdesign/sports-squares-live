@@ -171,7 +171,12 @@ function AuthenticatedOverlayPage() {
 
   return (
     <>
-      <Overlay game={game} squares={squares} replayKey={replayKey} />
+      <Overlay
+        game={game}
+        squares={squares}
+        replayKey={replayKey}
+        rightPanelTop={<CommentatorCard game={game as Parameters<typeof CommentatorCard>[0]["game"]} />}
+      />
       <WinnerCelebration
         winner={celebration?.info ?? null}
         winnerKey={celebration?.key ?? "none"}
