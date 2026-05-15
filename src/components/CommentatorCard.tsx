@@ -4,9 +4,9 @@
 // the SAME HeyGen voice the avatar uses (via a short rendered voice clip).
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Mic, Volume2, VolumeX } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
 import { cn } from "@/lib/utils";
 import type { Game } from "@/lib/types";
+import { invokeAuthed } from "@/lib/serverFnClient";
 import {
   generateCommentatorVoiceClip,
   getCommentatorVoiceClipStatus,
@@ -36,9 +36,6 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
   const requestedTextRef = useRef<string | null>(null);
   const activeJobRef = useRef<{ text: string; videoId: string } | null>(null);
 
-  const generateClip = useServerFn(generateCommentatorVoiceClip);
-  const getClipStatus = useServerFn(getCommentatorVoiceClipStatus);
-
   // When a new commentary line arrives and we're unmuted, render it through
   // HeyGen with the avatar's voice and play just the audio.
   useEffect(() => {
@@ -52,7 +49,10 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
 
     (async () => {
       try {
-        const gen = await generateClip({ data: { gameId: game.id, text } });
+        const gen = await invokeAuthed(generateCommentatorVoiceClip, {
+          gameId: game.id,
+          text,
+        });
         if (cancelled) return;
         if (!gen?.ok || !gen.video_id) {
           setVoiceLoading(false);
@@ -66,8 +66,9 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
           // If a newer line came in, abandon this one.
           if (requestedTextRef.current !== text) return;
           await new Promise((r) => setTimeout(r, 3000));
-          const s = await getClipStatus({
-            data: { gameId: game.id, videoId: gen.video_id },
+          const s = await invokeAuthed(getCommentatorVoiceClipStatus, {
+            gameId: game.id,
+            videoId: gen.video_id,
           });
           if (cancelled) return;
           if (s?.status === "completed" && s.url) {
@@ -95,7 +96,7 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, muted, game.id, game.commentator_latest_text, generateClip, getClipStatus]);
+  }, [enabled, muted, game.id, game.commentator_latest_text]);
 
   // Stop playback immediately when muted.
   useEffect(() => {
