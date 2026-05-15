@@ -14,8 +14,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { Overlay, fireConfetti } from "@/components/Overlay";
 import { WinnerCelebration } from "@/components/WinnerCelebration";
+import { CommentatorCard } from "@/components/CommentatorCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { winningSquareIndex } from "@/lib/types";
+import { invokeAuthed } from "@/lib/serverFnClient";
+import { generateScoreCommentary } from "@/server/commentator.functions";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_app/game/$gameId/overlay")({
