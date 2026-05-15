@@ -48,8 +48,9 @@ function ResultsPage() {
       recapPollRef.current = window.setInterval(async () => {
         ticks++;
         try {
-          const r = await pollRecap({ data: { gameId } });
-          if (r?.url || ticks >= 24 || (r?.status && /error|failed/i.test(r.status))) {
+          const r = (await pollRecap({ data: { gameId } })) as { url?: string | null; status?: string | null };
+          const done = !!r?.url || ticks >= 24 || (typeof r?.status === "string" && /error|failed/i.test(r.status));
+          if (done) {
             if (recapPollRef.current) window.clearInterval(recapPollRef.current);
             recapPollRef.current = null;
           }
