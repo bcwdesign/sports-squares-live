@@ -246,8 +246,22 @@ function ResultsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-3 font-mono text-[10px] uppercase tracking-widest text-destructive">
-                  Recap video failed ({vStatus})
+                <div className="space-y-2">
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-3 font-mono text-[10px] uppercase tracking-widest text-destructive">
+                    Recap video failed ({vStatus})
+                  </div>
+                  {isHost && (
+                    <button onClick={retryRecapVideo} disabled={retryingRecap} className="block w-full">
+                      <NeonButton variant="orange" className="w-full">
+                        {retryingRecap ? (
+                          <Loader2 className="w-4 h-4 inline mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4 inline mr-2" />
+                        )}
+                        {retryingRecap ? "Retrying…" : "Retry recap video"}
+                      </NeonButton>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
