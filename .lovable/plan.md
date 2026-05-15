@@ -1,92 +1,45 @@
-# AI Commentator — Implementation Plan
+# Match the spoken voice to the HeyGen avatar voice
 
-## Scope
-Host opts in when creating a game. Live overlay shows a commentator card that speaks score/quarter/winning-square updates. Video avatar (HeyGen) is generated asynchronously when enabled.
+## Problem
+Right now `CommentatorCard.tsx` reads each new commentary line aloud using the browser's built-in `speechSynthesis` (tuned only by rate/pitch from `voice_style`). That voice has no relationship to the HeyGen voice the avatar uses in the intro/final-recap videos, so the live spoken line and the avatar video sound like two different people.
 
-## 1. Database (migration)
-Add columns to `games`:
-- `commentator_enabled bool default false`
-- `commentator_name text`
-- `commentator_personality text`
-- `commentator_voice_style text`
-- `commentator_catchphrases text`
-- `commentator_intro_script text`
-- `commentator_latest_text text`
-- `commentator_latest_audio_url text`
-- `commentator_last_spoken_at timestamptz`
-- `commentator_status text default 'ready'` (ready|thinking|speaking|live)
-- `heygen_intro_enabled bool default false`
-- `heygen_reactions_enabled bool default false`
-- `heygen_avatar_id text`, `heygen_voice_id text`
-- `heygen_video_id text`, `heygen_video_status text`, `heygen_video_url text`
+## Goal
+When a new `commentator_latest_text` arrives and the user has unmuted, the audio that plays should use the **same HeyGen voice ID** that's assigned to the selected personality (from `src/lib/commentators.ts`).
 
-RLS: existing host-update / member-select policies on `games` already cover these.
+## Approach
+HeyGen exposes a Text-to-Speech endpoint (`POST https://api.heygen.com/v2/audio/generate`, voice-only, no avatar render) that returns an audio URL using a given `voice_id`. It's much faster and cheaper than a full avatar video — appropriate for short live lines.
 
-## 2. Secrets
-- Store `HEYGEN_API_KEY` via secrets tool (server-only). The key the user pasted in chat will be added through the secret form, not committed to source.
+We'll add a new server function that returns a signed audio URL for a given commentary line + game, and have the card play that audio instead of using `speechSynthesis`.
 
-## 3. Create Game UI (`src/routes/_app.create.tsx`)
-New collapsible section between Privacy and the action buttons, styled to match (dark card, neon accents, mono labels):
-- Toggle: Enable AI Commentator
-- When on:
-  - Commentator Name (text)
-  - Personality select (Hype Announcer / Trash Talk Uncle / ESPN Analyst / Twitch Streamer / Rival Fan / Family Friendly Host)
-  - Voice Style select (Energetic / Deep Voice / Funny / Professional / Streetball / Dramatic)
-  - Catchphrases (text)
-  - Intro Script (textarea, auto-filled from name + teams + personality, editable)
-  - Checkbox: Generate HeyGen intro video
-  - Checkbox: Generate HeyGen halftime/final reaction clips
+### 1. New server function — `generateCommentatorVoiceClip`
+File: `src/server/commentator.functions.ts`
 
-Save all fields with the game insert. After insert, if `heygen_intro_enabled`, fire-and-forget `generateHeyGenCommentatorVideo({ gameId })`.
+- Input: `{ gameId: string, text: string }`
+- Auth: `requireSupabaseAuth` + `assertHost` (same as existing fns)
+- Resolve `voice_id` the same way `generateHeyGenCommentatorVideo` does:
+  `game.heygen_voice_id || preset?.heygenVoiceId || DEFAULT_HEYGEN_VOICE_ID`
+- Call HeyGen's audio generation endpoint with `{ voice_id, input_text: text }`
+- Return `{ audio_url: string }`
+- On HeyGen error, return `{ audio_url: null, error }` (recoverable — card will fall back to muted/silent)
 
-## 4. Server functions (`src/lib/commentator.functions.ts`)
-All authed via `requireSupabaseAuth`; host-only checks via `is_game_host`.
+### 2. Update `CommentatorCard.tsx`
+- Remove the `speechSynthesis` block and the `VOICE_STYLE_MAP`.
+- Add a hidden `<audio ref={audioRef} />` element.
+- When `commentator_latest_text` changes AND `!muted` AND text differs from `lastSpokenRef`:
+  - Call the new server fn via `useServerFn`
+  - On success, set `audioRef.current.src = audio_url` and `.play()`
+  - Track `lastSpokenRef` to avoid repeats
+- Mute toggle pauses the audio element instead of cancelling speechSynthesis.
+- Keep all existing visual layout, status pill, recap progress UI exactly as is.
 
-- `generateScoreCommentary({ gameId })`
-  - Loads game + squares + players, computes current winning square via existing `winningSquareIndex` logic.
-  - Calls Lovable AI Gateway (`google/gemini-2.5-flash`) with a prompt built from personality + voice style + catchphrases + score state. Strict no-gambling guardrail in the system prompt.
-  - Updates `commentator_latest_text`, `commentator_last_spoken_at`, `commentator_status='live'`.
+### 3. Notes / non-goals
+- Final recap and intro continue to use the existing avatar video flow (already voice-correct).
+- We do NOT persist the per-line audio URL to the DB — it's generated on demand client-side. (Tradeoff: a viewer reloading mid-line won't hear the previous line, which matches current behavior.)
+- No DB migration, no UI layout changes, no changes to commentator presets.
 
-- `generateHeyGenCommentatorVideo({ gameId })`
-  - Reads game; uses saved `heygen_avatar_id`/`heygen_voice_id` or hardcoded MVP defaults.
-  - POST to `https://api.heygen.com/v2/video/generate` with the documented payload (the spec says `/v3/videos`; HeyGen's current public endpoint is v2 — use v2, this is the working endpoint).
-  - Saves `heygen_video_id` + `heygen_video_status='processing'`.
+## Files touched
+- `src/server/commentator.functions.ts` — add `generateCommentatorVoiceClip`
+- `src/components/CommentatorCard.tsx` — swap TTS for HeyGen audio playback
 
-- `getHeyGenVideoStatus({ gameId })`
-  - GETs HeyGen status; on `completed`, saves `heygen_video_url` + status.
-
-## 5. Overlay card (`src/components/CommentatorCard.tsx`)
-- Renders inside `src/routes/_app.game.$gameId.overlay.tsx` (and the in-page live overlay) above the existing winning-square area.
-- Hidden when `commentator_enabled=false`.
-- Shows: title, avatar (HeyGen `<video>` autoplay+muted+controls if `heygen_video_url`, else circular initials), name, personality, status pill, latest commentary text, mute/unmute button.
-- Subscribes to game realtime (already wired by `useGame`) — re-renders when `commentator_latest_text` changes.
-
-## 6. TTS + trigger loop (in overlay components)
-- Web `SpeechSynthesis`. Voice style maps to `{ rate, pitch }`.
-- Default muted; mute button toggles. Skip if `speaking` or muted.
-- Speak whenever `commentator_latest_text` changes and ≥30s since last spoken.
-
-Host-side trigger (only the host's overlay tab calls the server fn, to avoid duplication):
-- On game start (`status` → `live`), score change, quarter change, every 60s during live, and on `completed`.
-- Debounced; minimum 30s between calls.
-
-## 7. UI copy
-- No score: "Waiting for tipoff. Your AI commentator is ready."
-- Winning: `Currently winning: Square {homeDigit}-{awayDigit} — {playerName|Unclaimed}`
-
-## Out of scope (MVP)
-- Per-clip HeyGen reaction generation at quarter/final (toggle is saved; wiring deferred — text+TTS still fires).
-- Server-side scheduler. The 60s loop runs in the host's overlay tab while open.
-
-## Files
-- migration (new)
-- `src/routes/_app.create.tsx` (edit)
-- `src/lib/commentator.functions.ts` (new)
-- `src/components/CommentatorCard.tsx` (new)
-- `src/routes/_app.game.$gameId.overlay.tsx` (edit)
-- `src/routes/_app.game.$gameId.live.tsx` (edit — embed card in in-page overlay)
-
-## Confirm before I build
-1. Add `HEYGEN_API_KEY` as a server secret via the secrets prompt? (The key you pasted should not live in source — I'll request it through the secure form.)
-2. OK to use HeyGen API v2 (`/v2/video/generate`) instead of `/v3/videos` from the spec? v3 isn't a public endpoint.
-3. OK to defer per-quarter HeyGen reaction clips for MVP (toggle saved, only intro video generates) and rely on text+browser TTS for live commentary?
+## Open question
+HeyGen's TTS endpoint requires the same `HEYGEN_API_KEY` already configured — no new secret needed. If for some reason the workspace's HeyGen plan doesn't include the audio-only endpoint, we'd fall back to either (a) a short avatar video per line (expensive/slow) or (b) keeping browser TTS as a fallback. I'll implement with graceful fallback to silence + a console warning so the UI never breaks.
