@@ -207,7 +207,9 @@ export const getHeyGenVideoStatus = createServerFn({ method: "POST" })
 
     const status: string | undefined = json?.data?.status;
     const url: string | undefined = json?.data?.video_url;
-    const updates: Record<string, any> = { heygen_video_status: status ?? null };
+    const updates: { heygen_video_status: string | null; heygen_video_url?: string } = {
+      heygen_video_status: status ?? null,
+    };
     if (status === "completed" && url) updates.heygen_video_url = url;
     await supabaseAdmin.from("games").update(updates).eq("id", data.gameId);
 
