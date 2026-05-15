@@ -2,7 +2,7 @@
 // available, otherwise an avatar placeholder, the latest commentary line,
 // and a status pill. Mute/unmute toggles browser TTS.
 import { useEffect, useRef, useState } from "react";
-import { Mic, Volume2, VolumeX } from "lucide-react";
+import { Loader2, Mic, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Game } from "@/lib/types";
 
