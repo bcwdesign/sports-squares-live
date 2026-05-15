@@ -323,8 +323,10 @@ function LivePage() {
       { q: 4, clock: "00:00", home: 102, away: 99 },
     ];
     try {
-      for (const step of steps) {
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
         if (demoCancelRef.current) break;
+        const isFinal = i === steps.length - 1;
         const { error } = await supabase
           .from("games")
           .update({
@@ -332,7 +334,7 @@ function LivePage() {
             away_score: step.away,
             quarter: step.q,
             clock: step.clock,
-            status: "live",
+            status: isFinal ? "completed" : "live",
           })
           .eq("id", game.id);
         if (error) throw error;
