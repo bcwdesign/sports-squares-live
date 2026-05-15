@@ -107,6 +107,41 @@ function AuthenticatedOverlayPage() {
     }
   }, [game?.quarter, game?.status]);
 
+  // Host-side AI Commentator trigger loop. Only the host's tab calls the
+  // server fn so we don't bill multiple times per viewer. Throttled to one
+  // call per ~30s, fires on score/quarter/status changes + 60s interval
+  // while live.
+  const commentatorEnabled = !!(game as { commentator_enabled?: boolean } | null)?.commentator_enabled;
+  const isHostUser = !!user && !!game && game.host_id === user.id;
+  const lastTriggerRef = useRef<number>(0);
+  const triggerCommentary = useRef<() => void>(() => {});
+  triggerCommentary.current = () => {
+    if (!isHostUser || !commentatorEnabled || !game) return;
+    const now = Date.now();
+    if (now - lastTriggerRef.current < 30_000) return;
+    lastTriggerRef.current = now;
+    invokeAuthed(generateScoreCommentary, { gameId: game.id }).catch((err) => {
+      console.error("commentary failed", err);
+    });
+  };
+  useEffect(() => {
+    if (!isHostUser || !commentatorEnabled || !game) return;
+    triggerCommentary.current();
+  }, [
+    isHostUser,
+    commentatorEnabled,
+    game?.id,
+    game?.home_score,
+    game?.away_score,
+    game?.quarter,
+    game?.status,
+  ]);
+  useEffect(() => {
+    if (!isHostUser || !commentatorEnabled || !game || game.status !== "live") return;
+    const id = setInterval(() => triggerCommentary.current(), 60_000);
+    return () => clearInterval(id);
+  }, [isHostUser, commentatorEnabled, game?.id, game?.status]);
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-background flex items-center justify-center text-sm font-mono uppercase tracking-widest text-muted-foreground">
