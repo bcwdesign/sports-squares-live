@@ -116,6 +116,36 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
         </div>
       </div>
 
+      {(() => {
+        const vStatus = (game.heygen_video_status || "").toLowerCase();
+        const isFinal = game.status === "completed";
+        const showRecapProgress =
+          isFinal &&
+          !!game.heygen_reactions_enabled &&
+          !game.heygen_video_url &&
+          (vStatus === "" || vStatus === "processing" || vStatus === "pending" || vStatus === "waiting" || vStatus === "unknown");
+        const failed = vStatus.startsWith("error") || vStatus.startsWith("failed");
+        if (!isFinal || !game.heygen_reactions_enabled) return null;
+        if (showRecapProgress) {
+          return (
+            <div className="mt-2 md:mt-3 flex items-center gap-2 rounded-lg border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 px-2.5 py-1.5">
+              <Loader2 className="w-3.5 h-3.5 text-[color:var(--neon-orange)] animate-spin shrink-0" />
+              <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-orange)] truncate">
+                Rendering final recap video… {vStatus ? `(${vStatus})` : "(queued)"}
+              </div>
+            </div>
+          );
+        }
+        if (failed) {
+          return (
+            <div className="mt-2 md:mt-3 rounded-lg border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-widest text-destructive truncate">
+              Recap video failed ({vStatus})
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-border/60">
         <p className="text-xs md:text-sm text-foreground/90 leading-snug min-h-[2.5em]">
           {game.commentator_latest_text || "Waiting for tipoff. Your AI commentator is ready."}
