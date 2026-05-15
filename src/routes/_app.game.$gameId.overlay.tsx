@@ -18,7 +18,7 @@ import { CommentatorCard } from "@/components/CommentatorCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { winningSquareIndex } from "@/lib/types";
 import { invokeAuthed } from "@/lib/serverFnClient";
-import { generateScoreCommentary } from "@/server/commentator.functions";
+import { generateScoreCommentary, generateHeyGenCommentatorVideo, getHeyGenVideoStatus } from "@/server/commentator.functions";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_app/game/$gameId/overlay")({
