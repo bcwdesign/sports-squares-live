@@ -20,14 +20,7 @@ export const Route = createFileRoute("/_app/create")({
   component: CreateGame,
 });
 
-const PERSONALITIES = [
-  "Hype Announcer",
-  "Trash Talk Uncle",
-  "ESPN Analyst",
-  "Twitch Streamer",
-  "Rival Fan",
-  "Family Friendly Host",
-];
+const PERSONALITIES = COMMENTATOR_NAMES;
 const VOICE_STYLES = ["Energetic", "Deep Voice", "Funny", "Professional", "Streetball", "Dramatic"];
 
 function defaultIntroScript(name: string, away: string, home: string, personality: string) {
