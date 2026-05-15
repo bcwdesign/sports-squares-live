@@ -28,11 +28,14 @@ function buildPrompt(g: any, winner: { name: string | null; row: number; col: nu
   const voiceStyle = g.commentator_voice_style || "Energetic";
   const name = g.commentator_name || "Coach Chaos";
   const catchphrases = g.commentator_catchphrases || "";
-  const winnerLine = winner
+  const winnerHolderPhrase = winner
     ? winner.name
-      ? `The currently winning square is ${winner.awayDigit}-${winner.homeDigit}, held by ${winner.name}.`
-      : `The currently winning square is ${winner.awayDigit}-${winner.homeDigit} and it is unclaimed.`
-    : `No score yet — the game is about to tip off.`;
+      ? `square ${winner.awayDigit}-${winner.homeDigit} held by ${winner.name}`
+      : `square ${winner.awayDigit}-${winner.homeDigit} (currently unclaimed)`
+    : null;
+  const requiredMention = winnerHolderPhrase
+    ? `You MUST explicitly say the currently winning square AND the player's name in this exact form: "${winnerHolderPhrase}". Do not abbreviate or omit either piece.`
+    : `No score has been posted yet — hype the upcoming tipoff. Do NOT invent a winning square.`;
   return `You are ${name}, an in-game AI commentator with this style: ${personality}. Your delivery should feel ${voiceStyle.toLowerCase()}. ${catchphrases ? `Optional catchphrase to weave in occasionally: "${catchphrases}".` : ""}
 
 GAME STATE
@@ -40,9 +43,11 @@ GAME STATE
 - Home: ${g.home_team} ${g.home_score}
 - Quarter: ${g.quarter} (${g.status})
 - Clock: ${g.clock}
-- ${winnerLine}
+${winnerHolderPhrase ? `- Currently winning: ${winnerHolderPhrase}` : `- No score yet`}
 
-Write ONE short, energetic commentary line (1–2 sentences max, under 220 characters) for a watch party. Mention the current score AND the currently winning square. Do not mention betting, gambling, wagering, odds, buy-ins, or payouts. Output ONLY the commentary line — no quotes, no prefix.`;
+REQUIRED: ${requiredMention}
+
+Write ONE short, energetic commentary line (1–2 sentences max, under 240 characters) for a watch party. It MUST include the current score AND the winning-square phrase above verbatim (player name included when present). Do not mention betting, gambling, wagering, odds, buy-ins, or payouts. Output ONLY the commentary line — no quotes, no prefix.`;
 }
 
 export const generateScoreCommentary = createServerFn({ method: "POST" })
