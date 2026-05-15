@@ -96,7 +96,7 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, muted, game.id, game.commentator_latest_text, generateClip, getClipStatus]);
+  }, [enabled, muted, game.id, game.commentator_latest_text]);
 
   // Stop playback immediately when muted.
   useEffect(() => {
