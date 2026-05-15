@@ -15,6 +15,8 @@ type Props = {
     commentator_latest_text?: string | null;
     commentator_status?: string | null;
     heygen_video_url?: string | null;
+    heygen_video_status?: string | null;
+    heygen_reactions_enabled?: boolean | null;
   };
   /** Default true so the overlay starts silent (autoplay restrictions). */
   defaultMuted?: boolean;
