@@ -109,7 +109,7 @@ function AuthenticatedOverlayPage() {
 
   // Host-side AI Commentator trigger loop. Only the host's tab calls the
   // server fn so we don't bill multiple times per viewer. Throttled to one
-  // call per ~30s, fires on score/quarter/status changes + 60s interval
+  // call per ~30s, fires on score/quarter/status changes + 180s interval
   // while live.
   const commentatorEnabled = !!(game as { commentator_enabled?: boolean } | null)?.commentator_enabled;
   const isHostUser = !!user && !!game && game.host_id === user.id;
