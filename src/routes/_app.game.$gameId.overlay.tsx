@@ -138,7 +138,7 @@ function AuthenticatedOverlayPage() {
   ]);
   useEffect(() => {
     if (!isHostUser || !commentatorEnabled || !game || game.status !== "live") return;
-    const id = setInterval(() => triggerCommentary.current(), 60_000);
+    const id = setInterval(() => triggerCommentary.current(), 180_000);
     return () => clearInterval(id);
   }, [isHostUser, commentatorEnabled, game?.id, game?.status]);
 
