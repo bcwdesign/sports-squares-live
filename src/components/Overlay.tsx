@@ -21,9 +21,11 @@ export type OverlayProps = {
    * "Replay winner celebration" control.
    */
   replayKey?: number;
+  /** Optional content rendered above the Currently Winning panel. */
+  rightPanelTop?: React.ReactNode;
 };
 
-export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
+export function Overlay({ game, squares, replayKey = 0, rightPanelTop }: OverlayProps) {
   const scoresEntered = game.home_score > 0 || game.away_score > 0;
   const winIdx = scoresEntered ? winningSquareIndex(game, game.home_score, game.away_score) : -1;
   const winRow = winIdx >= 0 ? Math.floor(winIdx / 10) : -1;
@@ -82,6 +84,7 @@ export function Overlay({ game, squares, replayKey = 0 }: OverlayProps) {
           <BoardArea game={game} squares={squares} winIdx={winIdx} />
         </div>
         <div className="md:col-span-4 flex flex-col md:min-h-0">
+          {rightPanelTop}
           <WinnerPanel game={game} winSq={winSq} scoresEntered={scoresEntered} />
         </div>
       </div>
