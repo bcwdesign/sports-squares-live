@@ -8,10 +8,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getCommentatorByName, COMMENTATORS } from "@/lib/commentators";
 
-// Hardcoded MVP defaults for HeyGen — overrideable per-game later.
-const DEFAULT_HEYGEN_AVATAR_ID = "Daisy-inskirt-20220818";
-const DEFAULT_HEYGEN_VOICE_ID = "2d5b0e6cf36f460aa7fc47e3eee4ba54";
+// Default to the first preset (Coach Chaos) when nothing is set on the row.
+const DEFAULT_HEYGEN_AVATAR_ID = COMMENTATORS[0].heygenAvatarId;
+const DEFAULT_HEYGEN_VOICE_ID = COMMENTATORS[0].heygenVoiceId;
 
 async function assertHost(supabase: any, gameId: string, userId: string) {
   const { data, error } = await supabase
@@ -147,15 +148,17 @@ export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
     const { data: game, error } = await supabaseAdmin
       .from("games")
       .select(
-        "commentator_intro_script, commentator_name, heygen_avatar_id, heygen_voice_id, home_team, away_team, home_score, away_score, home_axis, away_axis",
+        "commentator_intro_script, commentator_name, commentator_personality, heygen_avatar_id, heygen_voice_id, home_team, away_team, home_score, away_score, home_axis, away_axis",
       )
       .eq("id", data.gameId)
       .maybeSingle();
     if (error || !game) throw new Error(error?.message || "Game not found");
 
-    const avatarId = game.heygen_avatar_id || DEFAULT_HEYGEN_AVATAR_ID;
-    const voiceId = game.heygen_voice_id || DEFAULT_HEYGEN_VOICE_ID;
-    const name = game.commentator_name || "your AI commentator";
+    const preset =
+      getCommentatorByName(game.commentator_personality) ?? getCommentatorByName(game.commentator_name);
+    const avatarId = game.heygen_avatar_id || preset?.heygenAvatarId || DEFAULT_HEYGEN_AVATAR_ID;
+    const voiceId = game.heygen_voice_id || preset?.heygenVoiceId || DEFAULT_HEYGEN_VOICE_ID;
+    const name = game.commentator_name || preset?.name || "your AI commentator";
 
     let script: string;
     let title: string;

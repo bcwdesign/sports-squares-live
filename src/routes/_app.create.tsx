@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { generateInviteCode } from "@/lib/types";
 import { invokeAuthed } from "@/lib/serverFnClient";
 import { generateHeyGenCommentatorVideo } from "@/server/commentator.functions";
+import { COMMENTATORS, COMMENTATOR_NAMES, getCommentatorByName } from "@/lib/commentators";
 
 export const Route = createFileRoute("/_app/create")({
   head: () => ({
@@ -19,18 +20,13 @@ export const Route = createFileRoute("/_app/create")({
   component: CreateGame,
 });
 
-const PERSONALITIES = [
-  "Hype Announcer",
-  "Trash Talk Uncle",
-  "ESPN Analyst",
-  "Twitch Streamer",
-  "Rival Fan",
-  "Family Friendly Host",
-];
+const PERSONALITIES = COMMENTATOR_NAMES;
 const VOICE_STYLES = ["Energetic", "Deep Voice", "Funny", "Professional", "Streetball", "Dramatic"];
 
 function defaultIntroScript(name: string, away: string, home: string, personality: string) {
-  return `Welcome to ${name}! I'm your ${personality.toLowerCase()} for tonight, calling every bucket as the ${away} take on the ${home}. Grab your square, lock in, and let's run it.`;
+  const preset = getCommentatorByName(personality);
+  const role = preset?.description.toLowerCase() ?? "commentator";
+  return `Welcome to ${name}! I'm ${personality}, your ${role} for tonight, calling every bucket as the ${away} take on the ${home}. Grab your square, lock in, and let's run it.`;
 }
 
 function CreateGame() {
@@ -77,14 +73,17 @@ function CreateGame() {
         commentator_enabled: commentatorEnabled,
       };
       if (commentatorEnabled) {
+        const preset = getCommentatorByName(commPersonality);
         Object.assign(insertPayload, {
-          commentator_name: commName.trim() || "Coach Chaos",
+          commentator_name: commName.trim() || commPersonality,
           commentator_personality: commPersonality,
           commentator_voice_style: commVoice,
           commentator_catchphrases: commCatchphrases.trim() || null,
           commentator_intro_script: introScriptValue,
           heygen_intro_enabled: heygenIntro,
           heygen_reactions_enabled: heygenReactions,
+          heygen_avatar_id: preset?.heygenAvatarId ?? null,
+          heygen_voice_id: preset?.heygenVoiceId ?? null,
         });
       }
       const { data, error } = await supabase
@@ -218,7 +217,21 @@ function CreateGame() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <FieldGroup label="Personality">
-                    <Select value={commPersonality} onChange={setCommPersonality} options={PERSONALITIES} />
+                    <Select
+                      value={commPersonality}
+                      onChange={(v) => {
+                        setCommPersonality(v);
+                        const preset = getCommentatorByName(v);
+                        if (preset) {
+                          setCommName(preset.name);
+                          setCommVoice(preset.voiceStyle);
+                          if (!commCatchphrases.trim() || COMMENTATORS.some((c) => c.catchphrase === commCatchphrases)) {
+                            setCommCatchphrases(preset.catchphrase);
+                          }
+                        }
+                      }}
+                      options={PERSONALITIES}
+                    />
                   </FieldGroup>
                   <FieldGroup label="Voice style">
                     <Select value={commVoice} onChange={setCommVoice} options={VOICE_STYLES} />
