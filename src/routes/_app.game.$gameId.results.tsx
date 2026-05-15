@@ -28,6 +28,39 @@ function ResultsPage() {
   const [exporting, setExporting] = useState(false);
   const [results, setResults] = useState<QuarterResult[]>([]);
   const recapRef = useRef<HTMLDivElement | null>(null);
+  const [retryingRecap, setRetryingRecap] = useState(false);
+  const recapPollRef = useRef<number | null>(null);
+  const generateRecap = useServerFn(generateHeyGenCommentatorVideo);
+  const pollRecap = useServerFn(getHeyGenVideoStatus);
+
+  useEffect(() => () => {
+    if (recapPollRef.current) window.clearInterval(recapPollRef.current);
+  }, []);
+
+  const retryRecapVideo = async () => {
+    if (!gameId || retryingRecap) return;
+    setRetryingRecap(true);
+    try {
+      await generateRecap({ data: { gameId, kind: "final" } });
+      toast.success("Re-rendering final recap…");
+      if (recapPollRef.current) window.clearInterval(recapPollRef.current);
+      let ticks = 0;
+      recapPollRef.current = window.setInterval(async () => {
+        ticks++;
+        try {
+          const r = await pollRecap({ data: { gameId } });
+          if (r?.url || ticks >= 24 || (r?.status && /error|failed/i.test(r.status))) {
+            if (recapPollRef.current) window.clearInterval(recapPollRef.current);
+            recapPollRef.current = null;
+          }
+        } catch {/* keep polling */}
+      }, 8000);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't restart recap video");
+    } finally {
+      setRetryingRecap(false);
+    }
+  };
 
   // Load quarter winners from the snapshot table.
   useEffect(() => {
