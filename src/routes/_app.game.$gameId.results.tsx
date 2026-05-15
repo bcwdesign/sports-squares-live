@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/TopBar";
 import { NeonButton } from "@/components/NeonButton";
 import { RecapCard, RECAP_CARD_SIZE, type QuarterResult } from "@/components/RecapCard";
-import { Trophy, Share2, RotateCcw, Image as ImageIcon, Download, X } from "lucide-react";
+import { Trophy, Share2, RotateCcw, Image as ImageIcon, Download, X, Mic, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { winningSquareIndex } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
