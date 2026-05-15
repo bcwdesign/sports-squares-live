@@ -217,7 +217,21 @@ function CreateGame() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <FieldGroup label="Personality">
-                    <Select value={commPersonality} onChange={setCommPersonality} options={PERSONALITIES} />
+                    <Select
+                      value={commPersonality}
+                      onChange={(v) => {
+                        setCommPersonality(v);
+                        const preset = getCommentatorByName(v);
+                        if (preset) {
+                          setCommName(preset.name);
+                          setCommVoice(preset.voiceStyle);
+                          if (!commCatchphrases.trim() || COMMENTATORS.some((c) => c.catchphrase === commCatchphrases)) {
+                            setCommCatchphrases(preset.catchphrase);
+                          }
+                        }
+                      }}
+                      options={PERSONALITIES}
+                    />
                   </FieldGroup>
                   <FieldGroup label="Voice style">
                     <Select value={commVoice} onChange={setCommVoice} options={VOICE_STYLES} />
