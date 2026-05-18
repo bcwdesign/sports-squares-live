@@ -321,7 +321,7 @@ export const syncGameScore = createServerFn({ method: "POST" })
   });
 
 // Internal sync routine — used by both manual sync and connect-then-sync.
-async function runSync(gameId: string): Promise<{
+export async function runSync(gameId: string, source: "host" | "cron" | "manual" = "host"): Promise<{
   synced: boolean;
   reason?: string;
   home_score?: number;
