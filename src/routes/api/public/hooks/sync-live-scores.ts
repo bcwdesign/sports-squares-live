@@ -8,13 +8,14 @@
 // double-writes when the host browser is also polling.
 
 import { createFileRoute } from "@tanstack/react-router";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { runSync } from "@/server/balldontlie.functions";
 
 export const Route = createFileRoute("/api/public/hooks/sync-live-scores")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { runSync } = await import("@/server/balldontlie.functions");
+
         const required = process.env.CRON_SECRET;
         if (required) {
           const got = request.headers.get("x-cron-secret");
