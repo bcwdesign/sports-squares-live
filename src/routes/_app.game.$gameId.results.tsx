@@ -11,7 +11,7 @@ import { winningSquareIndex } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toPng } from "html-to-image";
 import { useServerFn } from "@tanstack/react-start";
-import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus } from "@/server/commentator.functions";
+import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus } from "@/lib/commentator.functions";
 
 export const Route = createFileRoute("/_app/game/$gameId/results")({
   head: () => ({ meta: [{ title: "Results — Clutch Squares" }] }),

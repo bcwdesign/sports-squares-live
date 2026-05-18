@@ -10,7 +10,7 @@ import { invokeAuthed } from "@/lib/serverFnClient";
 import {
   generateCommentatorVoiceClip,
   getCommentatorVoiceClipStatus,
-} from "@/server/commentator.functions";
+} from "@/lib/commentator.functions";
 
 type Props = {
   game: Game & {

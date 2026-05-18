@@ -27,8 +27,8 @@ import {
   setAutoSync,
   syncGameScore,
   manualScoreOverride,
-  type NormalizedLiveGame,
-} from "@/server/balldontlie.functions";
+} from "@/lib/balldontlie.functions";
+import type { NormalizedLiveGame } from "@/lib/balldontlie.types";
 import { invokeAuthed } from "@/lib/serverFnClient";
 import type { Game } from "@/lib/types";
 

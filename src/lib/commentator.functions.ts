@@ -1,55 +1,15 @@
-// AI Commentator server functions.
-// - generateScoreCommentary: builds + saves the next live commentary line.
-// - generateHeyGenCommentatorVideo: kicks off a HeyGen avatar video.
-// - getHeyGenVideoStatus: polls HeyGen for video completion.
-//
-// All require an authenticated host of the game.
+// AI Commentator server functions. Thin file: createServerFn only.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getCommentatorByName, COMMENTATORS } from "@/lib/commentators";
-
-// Default to the first preset (Coach Chaos) when nothing is set on the row.
-const DEFAULT_HEYGEN_AVATAR_ID = COMMENTATORS[0].heygenAvatarId;
-const DEFAULT_HEYGEN_VOICE_ID = COMMENTATORS[0].heygenVoiceId;
-
-async function assertHost(supabase: any, gameId: string, userId: string) {
-  const { data, error } = await supabase
-    .from("games")
-    .select("host_id")
-    .eq("id", gameId)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data || data.host_id !== userId) throw new Error("Forbidden: host only");
-}
-
-function buildPrompt(g: any, winner: { name: string | null; row: number; col: number; homeDigit: number; awayDigit: number } | null) {
-  const personality = g.commentator_personality || "Hype Announcer";
-  const voiceStyle = g.commentator_voice_style || "Energetic";
-  const name = g.commentator_name || "Coach Chaos";
-  const catchphrases = g.commentator_catchphrases || "";
-  const winnerHolderPhrase = winner
-    ? winner.name
-      ? `square ${winner.awayDigit}-${winner.homeDigit} held by ${winner.name}`
-      : `square ${winner.awayDigit}-${winner.homeDigit} (currently unclaimed)`
-    : null;
-  const requiredMention = winnerHolderPhrase
-    ? `You MUST explicitly say the currently winning square AND the player's name in this exact form: "${winnerHolderPhrase}". Do not abbreviate or omit either piece.`
-    : `No score has been posted yet — hype the upcoming tipoff. Do NOT invent a winning square.`;
-  return `You are ${name}, an in-game AI commentator with this style: ${personality}. Your delivery should feel ${voiceStyle.toLowerCase()}. ${catchphrases ? `Optional catchphrase to weave in occasionally: "${catchphrases}".` : ""}
-
-GAME STATE
-- Away: ${g.away_team} ${g.away_score}
-- Home: ${g.home_team} ${g.home_score}
-- Quarter: ${g.quarter} (${g.status})
-- Clock: ${g.clock}
-${winnerHolderPhrase ? `- Currently winning: ${winnerHolderPhrase}` : `- No score yet`}
-
-REQUIRED: ${requiredMention}
-
-Write ONE short, energetic commentary line (1–2 sentences max, under 240 characters) for a watch party. It MUST include the current score AND the winning-square phrase above verbatim (player name included when present). Do not mention betting, gambling, wagering, odds, buy-ins, or payouts. Output ONLY the commentary line — no quotes, no prefix.`;
-}
+import {
+  assertHost,
+  buildCommentaryPrompt,
+  supabaseAdmin,
+  DEFAULT_HEYGEN_AVATAR_ID,
+  DEFAULT_HEYGEN_VOICE_ID,
+} from "./commentator.server";
+import { getCommentatorByName } from "@/lib/commentators";
 
 export const generateScoreCommentary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -66,7 +26,6 @@ export const generateScoreCommentary = createServerFn({ method: "POST" })
     if (gErr || !game) throw new Error(gErr?.message || "Game not found");
     if (!game.commentator_enabled) return { ok: false, reason: "disabled" as const };
 
-    // Compute winning square.
     let winner: { name: string | null; row: number; col: number; homeDigit: number; awayDigit: number } | null = null;
     const scoresEntered = game.home_score > 0 || game.away_score > 0;
     if (scoresEntered) {
@@ -86,13 +45,12 @@ export const generateScoreCommentary = createServerFn({ method: "POST" })
       }
     }
 
-    // Mark thinking.
     await supabaseAdmin
       .from("games")
       .update({ commentator_status: "thinking" })
       .eq("id", data.gameId);
 
-    const prompt = buildPrompt(game, winner);
+    const prompt = buildCommentaryPrompt(game, winner);
 
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
@@ -268,16 +226,6 @@ export const getHeyGenVideoStatus = createServerFn({ method: "POST" })
     return { ok: true as const, status: status ?? null, url: url ?? null };
   });
 
-// ---------------------------------------------------------------------------
-// Per-line voice clip generation. Used by CommentatorCard to play each new
-// commentary line in the SAME HeyGen voice the avatar uses, instead of the
-// browser's built-in speech synthesis (which sounds nothing like the avatar).
-//
-// HeyGen has no public stand-alone TTS, so we render a tiny avatar video and
-// play just its audio track. Latency: ~15-45s. Acceptable since live lines
-// fire every 30-60s.
-// ---------------------------------------------------------------------------
-
 export const generateCommentatorVoiceClip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -289,9 +237,6 @@ export const generateCommentatorVoiceClip = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    // Any authenticated viewer of the overlay may request a voice clip —
-    // it's a read-only render, no game state is mutated.
-
     const apiKey = process.env.HEYGEN_API_KEY;
     if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
 
@@ -314,7 +259,6 @@ export const generateCommentatorVoiceClip = createServerFn({ method: "POST" })
           voice: { type: "text", input_text: data.text.slice(0, 500), voice_id: voiceId },
         },
       ],
-      // Smallest supported render to minimize latency — we only use the audio.
       dimension: { width: 720, height: 480 },
       title: "Commentator voice line",
     };
@@ -339,8 +283,6 @@ export const getCommentatorVoiceClipStatus = createServerFn({ method: "POST" })
     z.object({ gameId: z.string().uuid(), videoId: z.string().min(1) }).parse(input),
   )
   .handler(async ({ data }) => {
-    // Any authenticated viewer may poll status — read-only.
-
     const apiKey = process.env.HEYGEN_API_KEY;
     if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
 

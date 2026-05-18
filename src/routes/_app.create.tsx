@@ -7,7 +7,7 @@ import { ArrowLeft, Mic } from "lucide-react";
 import { toast } from "sonner";
 import { generateInviteCode } from "@/lib/types";
 import { invokeAuthed } from "@/lib/serverFnClient";
-import { generateHeyGenCommentatorVideo } from "@/server/commentator.functions";
+import { generateHeyGenCommentatorVideo } from "@/lib/commentator.functions";
 import { COMMENTATORS, COMMENTATOR_NAMES, getCommentatorByName } from "@/lib/commentators";
 
 export const Route = createFileRoute("/_app/create")({
