@@ -21,6 +21,7 @@ import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
+import { Route as ApiPublicHooksSyncLiveScoresRouteImport } from './routes/api/public/hooks/sync-live-scores'
 import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
 import { Route as AppGameGameIdOverlayRouteImport } from './routes/_app.game.$gameId.overlay'
 import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$gameId.lobby'
@@ -86,6 +87,12 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicHooksSyncLiveScoresRoute =
+  ApiPublicHooksSyncLiveScoresRouteImport.update({
+    id: '/api/public/hooks/sync-live-scores',
+    path: '/api/public/hooks/sync-live-scores',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppGameGameIdResultsRoute = AppGameGameIdResultsRouteImport.update({
   id: '/game/$gameId/results',
   path: '/game/$gameId/results',
@@ -129,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
   '/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/game/$gameId/results': typeof AppGameGameIdResultsRoute
+  '/api/public/hooks/sync-live-scores': typeof ApiPublicHooksSyncLiveScoresRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -147,6 +155,7 @@ export interface FileRoutesByTo {
   '/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
   '/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/game/$gameId/results': typeof AppGameGameIdResultsRoute
+  '/api/public/hooks/sync-live-scores': typeof ApiPublicHooksSyncLiveScoresRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -167,6 +176,7 @@ export interface FileRoutesById {
   '/_app/game/$gameId/lobby': typeof AppGameGameIdLobbyRoute
   '/_app/game/$gameId/overlay': typeof AppGameGameIdOverlayRoute
   '/_app/game/$gameId/results': typeof AppGameGameIdResultsRoute
+  '/api/public/hooks/sync-live-scores': typeof ApiPublicHooksSyncLiveScoresRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/game/$gameId/lobby'
     | '/game/$gameId/overlay'
     | '/game/$gameId/results'
+    | '/api/public/hooks/sync-live-scores'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/game/$gameId/lobby'
     | '/game/$gameId/overlay'
     | '/game/$gameId/results'
+    | '/api/public/hooks/sync-live-scores'
   id:
     | '__root__'
     | '/'
@@ -224,6 +236,7 @@ export interface FileRouteTypes {
     | '/_app/game/$gameId/lobby'
     | '/_app/game/$gameId/overlay'
     | '/_app/game/$gameId/results'
+    | '/api/public/hooks/sync-live-scores'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -234,6 +247,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   JoinInviteCodeRoute: typeof JoinInviteCodeRoute
   OverlayTokenRoute: typeof OverlayTokenRoute
+  ApiPublicHooksSyncLiveScoresRoute: typeof ApiPublicHooksSyncLiveScoresRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -322,6 +336,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/hooks/sync-live-scores': {
+      id: '/api/public/hooks/sync-live-scores'
+      path: '/api/public/hooks/sync-live-scores'
+      fullPath: '/api/public/hooks/sync-live-scores'
+      preLoaderRoute: typeof ApiPublicHooksSyncLiveScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/game/$gameId/results': {
       id: '/_app/game/$gameId/results'
       path: '/game/$gameId/results'
@@ -396,7 +417,17 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   JoinInviteCodeRoute: JoinInviteCodeRoute,
   OverlayTokenRoute: OverlayTokenRoute,
+  ApiPublicHooksSyncLiveScoresRoute: ApiPublicHooksSyncLiveScoresRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
