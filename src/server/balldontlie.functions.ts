@@ -317,7 +317,7 @@ export const syncGameScore = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!gameRow) throw new Error("Game not found.");
     if (gameRow.host_id !== userId) throw new Error("Only the host can trigger a sync.");
-    return runSync(data.gameId);
+    return runSync(data.gameId, "host");
   });
 
 // Internal sync routine — used by both manual sync and connect-then-sync.
