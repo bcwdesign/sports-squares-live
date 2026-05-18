@@ -438,6 +438,16 @@ export async function runSync(gameId: string, source: "host" | "cron" | "manual"
     g.period !== match.period;
 
   if (changed) {
+    console.log(
+      `[score-sync] game=${gameId} src=${source} ${g.home_score}-${g.away_score} -> ${finalHomeScore}-${finalAwayScore} P${match.period ?? "?"} ${new Date().toISOString()}`,
+    );
+  } else {
+    console.log(
+      `[score-sync] game=${gameId} src=${source} no-op (${finalHomeScore}-${finalAwayScore}) ${new Date().toISOString()}`,
+    );
+  }
+
+  if (changed) {
     await supabaseAdmin.from("score_events").insert([
       {
         game_id: gameId,
