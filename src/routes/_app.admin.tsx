@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { ShieldCheck, Users, Gamepad2, Trophy, Activity, Radio, Building2, MessageSquare, ArrowLeft, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { invokeAuthed } from "@/lib/serverFnClient";
-import { getAdminOverview, type AdminOverview } from "@/server/admin.functions";
+import { getAdminOverview } from "@/lib/admin.functions";
+import type { AdminOverview } from "@/lib/admin.types";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
 
