@@ -317,11 +317,11 @@ export const syncGameScore = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!gameRow) throw new Error("Game not found.");
     if (gameRow.host_id !== userId) throw new Error("Only the host can trigger a sync.");
-    return runSync(data.gameId);
+    return runSync(data.gameId, "host");
   });
 
 // Internal sync routine — used by both manual sync and connect-then-sync.
-async function runSync(gameId: string): Promise<{
+export async function runSync(gameId: string, source: "host" | "cron" | "manual" = "host"): Promise<{
   synced: boolean;
   reason?: string;
   home_score?: number;
@@ -436,6 +436,16 @@ async function runSync(gameId: string): Promise<{
     g.home_score !== finalHomeScore ||
     g.away_score !== finalAwayScore ||
     g.period !== match.period;
+
+  if (changed) {
+    console.log(
+      `[score-sync] game=${gameId} src=${source} ${g.home_score}-${g.away_score} -> ${finalHomeScore}-${finalAwayScore} P${match.period ?? "?"} ${new Date().toISOString()}`,
+    );
+  } else {
+    console.log(
+      `[score-sync] game=${gameId} src=${source} no-op (${finalHomeScore}-${finalAwayScore}) ${new Date().toISOString()}`,
+    );
+  }
 
   if (changed) {
     await supabaseAdmin.from("score_events").insert([
