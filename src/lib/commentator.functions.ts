@@ -92,7 +92,7 @@ export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
     z
       .object({
         gameId: z.string().uuid(),
-        kind: z.enum(["intro", "final"]).optional().default("intro"),
+        kind: z.enum(["intro", "quarter", "final"]).optional().default("intro"),
       })
       .parse(input),
   )
