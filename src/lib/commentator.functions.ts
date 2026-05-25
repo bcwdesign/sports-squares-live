@@ -106,7 +106,7 @@ export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
     const { data: game, error } = await supabaseAdmin
       .from("games")
       .select(
-        "commentator_intro_script, commentator_name, commentator_personality, heygen_avatar_id, heygen_voice_id, home_team, away_team, home_score, away_score, home_axis, away_axis",
+        "commentator_intro_script, commentator_latest_text, commentator_name, commentator_personality, heygen_avatar_id, heygen_voice_id, home_team, away_team, home_score, away_score, quarter, home_axis, away_axis",
       )
       .eq("id", data.gameId)
       .maybeSingle();
@@ -147,6 +147,11 @@ export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
         : `The final square ${awayDigit}-${homeDigit} went unclaimed — tough break!`;
       script = `That's the final buzzer! ${winningTeam}, ${game.away_team} ${game.away_score}, ${game.home_team} ${game.home_score}. ${winnerLine} I'm ${name}, signing off — what a game.`;
       title = `${game.commentator_name || "Commentator"} Final Recap`;
+    } else if (data.kind === "quarter") {
+      script =
+        game.commentator_latest_text?.trim() ||
+        `End of quarter ${game.quarter}. ${game.away_team} ${game.away_score}, ${game.home_team} ${game.home_score}.`;
+      title = `${game.commentator_name || "Commentator"} Q${game.quarter} Recap`;
     } else {
       script = game.commentator_intro_script || `Welcome to the show, I'm ${name}.`;
       title = `${game.commentator_name || "Commentator"} Intro`;
