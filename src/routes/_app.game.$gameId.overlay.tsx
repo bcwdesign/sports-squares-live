@@ -175,7 +175,6 @@ function AuthenticatedOverlayPage() {
   // reaction videos are enabled, kick off a final HeyGen render and poll
   // until it resolves. Fire-and-forget; the URL lands in heygen_video_url
   // and the CommentatorCard picks it up via realtime.
-  const heygenReactionsEnabled = !!(game as { heygen_reactions_enabled?: boolean } | null)?.heygen_reactions_enabled;
   const finalKickedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isHostUser || !commentatorEnabled || !heygenReactionsEnabled || !game) return;
