@@ -1,16 +1,12 @@
 // AI Commentator card shown on the live overlay. Renders HeyGen video when
 // available, otherwise an avatar placeholder, the latest commentary line,
-// and a status pill. When unmuted, each new commentary line is spoken using
-// the SAME HeyGen voice the avatar uses (via a short rendered voice clip).
+// and a status pill. Routine commentary plays via the browser Web Speech
+// API (TTS). End-of-quarter / end-of-game HeyGen videos still appear in the
+// inline video player when their URLs land via realtime.
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mic, Volume2, VolumeX } from "lucide-react";
+import { Mic, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Game } from "@/lib/types";
-import { invokeAuthed } from "@/lib/serverFnClient";
-import {
-  generateCommentatorVoiceClip,
-  getCommentatorVoiceClipStatus,
-} from "@/lib/commentator.functions";
 
 type Props = {
   game: Game & {
@@ -28,82 +24,78 @@ type Props = {
   defaultMuted?: boolean;
 };
 
+// Map a commentator voice style to TTS rate/pitch.
+function voiceParamsFor(style: string | null | undefined): { rate: number; pitch: number; prefer: RegExp | null } {
+  const s = (style || "").toLowerCase();
+  if (s.includes("deep")) return { rate: 0.92, pitch: 0.6, prefer: /male|daniel|fred/i };
+  if (s.includes("professional")) return { rate: 1.0, pitch: 1.0, prefer: /female|samantha|karen/i };
+  if (s.includes("energetic")) return { rate: 1.15, pitch: 1.15, prefer: null };
+  if (s.includes("funny")) return { rate: 1.1, pitch: 1.3, prefer: null };
+  if (s.includes("dramatic")) return { rate: 0.95, pitch: 0.85, prefer: /male/i };
+  return { rate: 1.05, pitch: 1.0, prefer: null };
+}
+
+function pickVoice(prefer: RegExp | null): SpeechSynthesisVoice | null {
+  if (typeof window === "undefined" || !window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const english = voices.filter((v) => v.lang?.toLowerCase().startsWith("en"));
+  const pool = english.length ? english : voices;
+  if (prefer) {
+    const match = pool.find((v) => prefer.test(v.name));
+    if (match) return match;
+  }
+  return pool[0] ?? null;
+}
+
 export function CommentatorCard({ game, defaultMuted = true }: Props) {
   const enabled = !!game.commentator_enabled;
   const [muted, setMuted] = useState(defaultMuted);
-  const [voiceLoading, setVoiceLoading] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const requestedTextRef = useRef<string | null>(null);
-  const activeJobRef = useRef<{ text: string; videoId: string } | null>(null);
+  const lastSpokenRef = useRef<string | null>(null);
 
-  // When a new commentary line arrives and we're unmuted, render it through
-  // HeyGen with the avatar's voice and play just the audio.
+  // Speak new commentary lines via the browser's Web Speech API.
   useEffect(() => {
     if (!enabled || muted) return;
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
     const text = game.commentator_latest_text?.trim();
-    if (!text || text === requestedTextRef.current) return;
-    requestedTextRef.current = text;
+    if (!text || text === lastSpokenRef.current) return;
+    lastSpokenRef.current = text;
 
-    let cancelled = false;
-    setVoiceLoading(true);
+    const synth = window.speechSynthesis;
+    synth.cancel();
 
-    (async () => {
-      try {
-        const gen = await invokeAuthed(generateCommentatorVoiceClip, {
-          gameId: game.id,
-          text,
-        });
-        if (cancelled) return;
-        if (!gen?.ok || !gen.video_id) {
-          setVoiceLoading(false);
-          return;
-        }
-        activeJobRef.current = { text, videoId: gen.video_id };
+    const { rate, pitch, prefer } = voiceParamsFor(game.commentator_voice_style);
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = rate;
+    utter.pitch = pitch;
+    const voice = pickVoice(prefer);
+    if (voice) utter.voice = voice;
+    synth.speak(utter);
+  }, [enabled, muted, game.commentator_latest_text, game.commentator_voice_style]);
 
-        // Poll up to ~90s for the clip to render.
-        const start = Date.now();
-        while (!cancelled && Date.now() - start < 90_000) {
-          // If a newer line came in, abandon this one.
-          if (requestedTextRef.current !== text) return;
-          await new Promise((r) => setTimeout(r, 3000));
-          const s = await invokeAuthed(getCommentatorVoiceClipStatus, {
-            gameId: game.id,
-            videoId: gen.video_id,
-          });
-          if (cancelled) return;
-          if (s?.status === "completed" && s.url) {
-            if (requestedTextRef.current !== text) return;
-            const el = audioRef.current;
-            if (el) {
-              el.src = s.url;
-              el.play().catch(() => {
-                /* autoplay may still be blocked; user can unmute again */
-              });
-            }
-            break;
-          }
-          if (s?.status && (s.status.startsWith("failed") || s.status.startsWith("error"))) {
-            break;
-          }
-        }
-      } catch (err) {
-        console.warn("Commentator voice clip failed", err);
-      } finally {
-        if (!cancelled) setVoiceLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled, muted, game.id, game.commentator_latest_text]);
-
-  // Stop playback immediately when muted.
+  // Warm up the voice list (some browsers populate asynchronously).
   useEffect(() => {
-    if (muted && audioRef.current) {
-      audioRef.current.pause();
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    const synth = window.speechSynthesis;
+    const handler = () => synth.getVoices();
+    synth.addEventListener?.("voiceschanged", handler);
+    handler();
+    return () => synth.removeEventListener?.("voiceschanged", handler);
+  }, []);
+
+  // Stop playback immediately when muted or unmounted.
+  useEffect(() => {
+    if (muted && typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
     }
   }, [muted]);
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   if (!enabled) return null;
 
@@ -128,9 +120,6 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
       <div className="flex items-center justify-between mb-2 md:mb-3">
         <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           <Mic className="w-3 h-3 text-[color:var(--neon-blue)]" /> AI Commentator
-          {voiceLoading && !muted && (
-            <Loader2 className="w-3 h-3 animate-spin text-[color:var(--neon-orange)]" />
-          )}
         </div>
         <button
           onClick={() => setMuted((m) => !m)}
@@ -186,7 +175,6 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
         if (showRecapProgress) {
           return (
             <div className="mt-2 md:mt-3 flex items-center gap-2 rounded-lg border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 px-2.5 py-1.5">
-              <Loader2 className="w-3.5 h-3.5 text-[color:var(--neon-orange)] animate-spin shrink-0" />
               <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-orange)] truncate">
                 Rendering final recap video… {vStatus ? `(${vStatus})` : "(queued)"}
               </div>
@@ -208,9 +196,6 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
           {game.commentator_latest_text || "Waiting for tipoff. Your AI commentator is ready."}
         </p>
       </div>
-
-      {/* Hidden audio element plays the HeyGen-rendered voice clip. */}
-      <audio ref={audioRef} hidden preload="auto" />
     </div>
   );
 }
