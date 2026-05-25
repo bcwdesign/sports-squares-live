@@ -138,9 +138,38 @@ function AuthenticatedOverlayPage() {
   ]);
   useEffect(() => {
     if (!isHostUser || !commentatorEnabled || !game || game.status !== "live") return;
-    const id = setInterval(() => triggerCommentary.current(), 180_000);
+    const id = setInterval(() => triggerCommentary.current(), 90_000);
     return () => clearInterval(id);
   }, [isHostUser, commentatorEnabled, game?.id, game?.status]);
+
+  // End-of-quarter HeyGen video: when the quarter advances mid-game, render
+  // a short HeyGen recap. TTS keeps the talk track flowing while it renders.
+  const heygenReactionsEnabled = !!(game as { heygen_reactions_enabled?: boolean } | null)?.heygen_reactions_enabled;
+  const lastQuarterKickedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isHostUser || !commentatorEnabled || !heygenReactionsEnabled || !game) return;
+    if (game.status === "completed") return;
+    const prevQ = prevQuarterRef.current;
+    if (prevQ === null || game.quarter <= prevQ) return;
+    const key = `${game.id}:q${game.quarter}`;
+    if (lastQuarterKickedRef.current === key) return;
+    lastQuarterKickedRef.current = key;
+    (async () => {
+      try {
+        // Refresh commentary so the HeyGen script reflects the quarter end.
+        await invokeAuthed(generateScoreCommentary, { gameId: game.id }).catch(() => {});
+        await invokeAuthed(generateHeyGenCommentatorVideo, { gameId: game.id, kind: "quarter" });
+        for (let i = 0; i < 24; i++) {
+          await new Promise((r) => setTimeout(r, 8000));
+          const res = await invokeAuthed(getHeyGenVideoStatus, { gameId: game.id });
+          if (res.ok && res.status === "completed") return;
+          if (res.ok && res.status && res.status.startsWith("failed")) return;
+        }
+      } catch (err) {
+        console.error("HeyGen quarter recap failed", err);
+      }
+    })();
+  }, [isHostUser, commentatorEnabled, heygenReactionsEnabled, game?.id, game?.quarter, game?.status]);
 
   // Final-recap HeyGen video: when the host's game flips to "completed" and
   // reaction videos are enabled, kick off a final HeyGen render and poll
