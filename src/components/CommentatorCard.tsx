@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Game } from "@/lib/types";
+import { enqueueCommentary, stopAllCommentary } from "@/lib/clutchcaster-tts";
 
 type Props = {
   game: Game & {
@@ -24,78 +25,55 @@ type Props = {
   defaultMuted?: boolean;
 };
 
-// Map a commentator voice style to TTS rate/pitch.
-function voiceParamsFor(style: string | null | undefined): { rate: number; pitch: number; prefer: RegExp | null } {
-  const s = (style || "").toLowerCase();
-  if (s.includes("deep")) return { rate: 0.92, pitch: 0.6, prefer: /male|daniel|fred/i };
-  if (s.includes("professional")) return { rate: 1.0, pitch: 1.0, prefer: /female|samantha|karen/i };
-  if (s.includes("energetic")) return { rate: 1.15, pitch: 1.15, prefer: null };
-  if (s.includes("funny")) return { rate: 1.1, pitch: 1.3, prefer: null };
-  if (s.includes("dramatic")) return { rate: 0.95, pitch: 0.85, prefer: /male/i };
-  return { rate: 1.05, pitch: 1.0, prefer: null };
-}
-
-function pickVoice(prefer: RegExp | null): SpeechSynthesisVoice | null {
-  if (typeof window === "undefined" || !window.speechSynthesis) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return null;
-  const english = voices.filter((v) => v.lang?.toLowerCase().startsWith("en"));
-  const pool = english.length ? english : voices;
-  if (prefer) {
-    const match = pool.find((v) => prefer.test(v.name));
-    if (match) return match;
-  }
-  return pool[0] ?? null;
-}
-
 export function CommentatorCard({ game, defaultMuted = true }: Props) {
   const enabled = !!game.commentator_enabled;
   const [muted, setMuted] = useState(defaultMuted);
   const lastSpokenRef = useRef<string | null>(null);
+  const prevScoreRef = useRef<{ home: number; away: number } | null>(null);
+  const prevQuarterRef = useRef<number | null>(null);
+  const prevStatusRef = useRef<string | null>(null);
 
-  // Speak new commentary lines via the browser's Web Speech API.
+  // Speak new commentary lines via ElevenLabs (with browser TTS fallback),
+  // routed through the throttled/prioritized queue so we never overlap or spam.
   useEffect(() => {
     if (!enabled || muted) return;
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
     const text = game.commentator_latest_text?.trim();
     if (!text || text === lastSpokenRef.current) return;
     lastSpokenRef.current = text;
 
-    const synth = window.speechSynthesis;
-    synth.cancel();
-
-    const { rate, pitch, prefer } = voiceParamsFor(game.commentator_voice_style);
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = rate;
-    utter.pitch = pitch;
-    const voice = pickVoice(prefer);
-    if (voice) utter.voice = voice;
-    synth.speak(utter);
-  }, [enabled, muted, game.commentator_latest_text, game.commentator_voice_style]);
-
-  // Warm up the voice list (some browsers populate asynchronously).
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    const synth = window.speechSynthesis;
-    const handler = () => synth.getVoices();
-    synth.addEventListener?.("voiceschanged", handler);
-    handler();
-    return () => synth.removeEventListener?.("voiceschanged", handler);
-  }, []);
-
-  // Stop playback immediately when muted or unmounted.
-  useEffect(() => {
-    if (muted && typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    // Infer priority from what changed since the last render.
+    let priority: "winner" | "score" | "quarter" | "hype" = "hype";
+    if (prevStatusRef.current && prevStatusRef.current !== "completed" && game.status === "completed") {
+      priority = "winner";
+    } else if (
+      prevScoreRef.current &&
+      (prevScoreRef.current.home !== game.home_score || prevScoreRef.current.away !== game.away_score)
+    ) {
+      priority = "score";
+    } else if (prevQuarterRef.current !== null && game.quarter !== prevQuarterRef.current) {
+      priority = "quarter";
     }
-  }, [muted]);
+    prevScoreRef.current = { home: game.home_score, away: game.away_score };
+    prevQuarterRef.current = game.quarter;
+    prevStatusRef.current = game.status;
+
+    enqueueCommentary(text, priority, { styleHint: game.commentator_voice_style });
+  }, [
+    enabled,
+    muted,
+    game.commentator_latest_text,
+    game.commentator_voice_style,
+    game.home_score,
+    game.away_score,
+    game.quarter,
+    game.status,
+  ]);
+
+  // Stop playback when muted or unmounted.
   useEffect(() => {
-    return () => {
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
+    if (muted) stopAllCommentary();
+  }, [muted]);
+  useEffect(() => () => stopAllCommentary(), []);
 
   if (!enabled) return null;
 
