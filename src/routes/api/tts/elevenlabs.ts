@@ -1,12 +1,16 @@
 // Server route: streams ElevenLabs TTS audio back to the browser as audio/mpeg.
 //
-// SECURITY: ELEVENLABS_API_KEY is read from process.env on the server only.
-// It is never sent to the browser. The route returns raw MP3 bytes so the
-// frontend can play them via `new Audio()` and revoke the object URL on end.
+// SECURITY:
+// - ELEVENLABS_API_KEY is read from process.env on the server only and is
+//   never sent to the browser.
+// - The route requires a valid Supabase Bearer token in the Authorization
+//   header before it will spend any ElevenLabs credits, so anonymous
+//   internet callers cannot drain quota.
 //
 // To swap voices, change DEFAULT_ELEVENLABS_VOICE_ID below or set the
 // ELEVENLABS_VOICE_ID environment variable on the server.
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
 
 // ============================================================================
 // PASTE YOUR ELEVENLABS VOICE ID HERE (server-side default).
@@ -22,10 +26,34 @@ const DEFAULT_ELEVENLABS_VOICE_ID =
 // structure is in place to diverge later.
 const ALLOWED_VOICE_IDS = new Set<string>([DEFAULT_ELEVENLABS_VOICE_ID]);
 
+async function verifyAuth(request: Request): Promise<string | null> {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const token = authHeader.slice("Bearer ".length).trim();
+  if (!token) return null;
+
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return null;
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error } = await supabase.auth.getClaims(token);
+  if (error || !data?.claims?.sub) return null;
+  return data.claims.sub as string;
+}
+
 export const Route = createFileRoute("/api/tts/elevenlabs")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Require an authenticated Supabase user before consuming any quota.
+        const userId = await verifyAuth(request);
+        if (!userId) {
+          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         let body: { text?: unknown; voiceId?: unknown };
         try {
           body = await request.json();

@@ -102,9 +102,19 @@ export async function playElevenLabsTTS(
   if (!line) return;
 
   try {
+    // Attach the user's bearer token so the server route can verify
+    // the caller is authenticated before consuming ElevenLabs credits.
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) throw new Error("not authenticated");
+
     const res = await fetch("/api/tts/elevenlabs", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
       body: JSON.stringify({ text: line, voiceId: opts.voiceId }),
     });
     if (!res.ok) throw new Error(`tts ${res.status}`);
