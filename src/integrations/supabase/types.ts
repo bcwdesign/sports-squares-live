@@ -95,7 +95,12 @@ export type Database = {
           max_squares_per_user: number
           name: string
           period: number | null
+          prize_description: string | null
+          prize_enabled: boolean
+          prize_timing: string | null
+          prize_type: string | null
           quarter: number
+          requires_age_verification: boolean
           score_source: string
           share_token: string
           sport: string
@@ -146,7 +151,12 @@ export type Database = {
           max_squares_per_user?: number
           name: string
           period?: number | null
+          prize_description?: string | null
+          prize_enabled?: boolean
+          prize_timing?: string | null
+          prize_type?: string | null
           quarter?: number
+          requires_age_verification?: boolean
           score_source?: string
           share_token?: string
           sport?: string
@@ -197,7 +207,12 @@ export type Database = {
           max_squares_per_user?: number
           name?: string
           period?: number | null
+          prize_description?: string | null
+          prize_enabled?: boolean
+          prize_timing?: string | null
+          prize_type?: string | null
           quarter?: number
+          requires_age_verification?: boolean
           score_source?: string
           share_token?: string
           sport?: string
@@ -266,6 +281,7 @@ export type Database = {
       }
       quarter_results: {
         Row: {
+          age_verified_at: string | null
           away_digit: number
           away_score: number
           created_at: string
@@ -274,11 +290,13 @@ export type Database = {
           home_score: number
           id: string
           is_final: boolean
+          prize_claimed: boolean
           quarter: number
           winner_name: string | null
           winner_user_id: string | null
         }
         Insert: {
+          age_verified_at?: string | null
           away_digit: number
           away_score: number
           created_at?: string
@@ -287,11 +305,13 @@ export type Database = {
           home_score: number
           id?: string
           is_final?: boolean
+          prize_claimed?: boolean
           quarter: number
           winner_name?: string | null
           winner_user_id?: string | null
         }
         Update: {
+          age_verified_at?: string | null
           away_digit?: number
           away_score?: number
           created_at?: string
@@ -300,6 +320,7 @@ export type Database = {
           home_score?: number
           id?: string
           is_final?: boolean
+          prize_claimed?: boolean
           quarter?: number
           winner_name?: string | null
           winner_user_id?: string | null
