@@ -13,6 +13,7 @@ import { toPng } from "html-to-image";
 import { useServerFn } from "@tanstack/react-start";
 import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus } from "@/lib/commentator.functions";
 import { startArgosVerification, getPrizeClaim } from "@/lib/argos.functions";
+import { invokeAuthed } from "@/lib/serverFnClient";
 import { ShieldCheck, ShieldAlert, ShieldQuestion } from "lucide-react";
 
 
