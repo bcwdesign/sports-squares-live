@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toPng } from "html-to-image";
 import { useServerFn } from "@tanstack/react-start";
 import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus } from "@/lib/commentator.functions";
+import { startArgosVerification, getPrizeClaim } from "@/lib/argos.functions";
+import { ShieldCheck, ShieldAlert, ShieldQuestion } from "lucide-react";
+
 
 export const Route = createFileRoute("/_app/game/$gameId/results")({
   head: () => ({ meta: [{ title: "Results — Clutch Squares" }] }),
