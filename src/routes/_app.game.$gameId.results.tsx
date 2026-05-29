@@ -483,8 +483,6 @@ function AgeVerificationGate({
 }) {
   const [claim, setClaim] = useState<ClaimState>(null);
   const [starting, setStarting] = useState(false);
-  const start = useServerFn(startArgosVerification);
-  const fetchClaim = useServerFn(getPrizeClaim);
 
   const needsVerification =
     !!game.prize_enabled &&
@@ -493,7 +491,7 @@ function AgeVerificationGate({
   useEffect(() => {
     if (!needsVerification) return;
     let active = true;
-    fetchClaim({ data: { gameId, quarter: finalQuarter } })
+    invokeAuthed(getPrizeClaim, { gameId, quarter: finalQuarter })
       .then((c) => {
         if (active) setClaim(c);
       })
@@ -501,7 +499,7 @@ function AgeVerificationGate({
     return () => {
       active = false;
     };
-  }, [needsVerification, gameId, finalQuarter, fetchClaim]);
+  }, [needsVerification, gameId, finalQuarter]);
 
   if (!needsVerification) return null;
 
@@ -512,16 +510,14 @@ function AgeVerificationGate({
     if (starting) return;
     setStarting(true);
     try {
-      const res = await start({
-        data: {
-          gameId,
-          quarter: finalQuarter,
-          returnUrl: window.location.href,
-        },
+      const res = await invokeAuthed(startArgosVerification, {
+        gameId,
+        quarter: finalQuarter,
+        returnUrl: window.location.href,
       });
       if ("alreadyVerified" in res && res.alreadyVerified) {
         toast.success("Already verified — your prize is ready to claim");
-        const c = await fetchClaim({ data: { gameId, quarter: finalQuarter } });
+        const c = await invokeAuthed(getPrizeClaim, { gameId, quarter: finalQuarter });
         setClaim(c);
         return;
       }
