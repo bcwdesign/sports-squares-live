@@ -281,6 +281,11 @@ export type Database = {
       }
       quarter_results: {
         Row: {
+          age_verification_provider: string | null
+          age_verification_required: boolean
+          age_verification_status: string
+          age_verification_submission_id: string | null
+          age_verified: boolean
           age_verified_at: string | null
           away_digit: number
           away_score: number
@@ -290,12 +295,18 @@ export type Database = {
           home_score: number
           id: string
           is_final: boolean
+          prize_claim_status: string
           prize_claimed: boolean
           quarter: number
           winner_name: string | null
           winner_user_id: string | null
         }
         Insert: {
+          age_verification_provider?: string | null
+          age_verification_required?: boolean
+          age_verification_status?: string
+          age_verification_submission_id?: string | null
+          age_verified?: boolean
           age_verified_at?: string | null
           away_digit: number
           away_score: number
@@ -305,12 +316,18 @@ export type Database = {
           home_score: number
           id?: string
           is_final?: boolean
+          prize_claim_status?: string
           prize_claimed?: boolean
           quarter: number
           winner_name?: string | null
           winner_user_id?: string | null
         }
         Update: {
+          age_verification_provider?: string | null
+          age_verification_required?: boolean
+          age_verification_status?: string
+          age_verification_submission_id?: string | null
+          age_verified?: boolean
           age_verified_at?: string | null
           away_digit?: number
           away_score?: number
@@ -320,6 +337,7 @@ export type Database = {
           home_score?: number
           id?: string
           is_final?: boolean
+          prize_claim_status?: string
           prize_claimed?: boolean
           quarter?: number
           winner_name?: string | null
