@@ -81,7 +81,13 @@ function CreateGame() {
         max_squares_per_user: maxSquares,
         entry_amount_label: entryLabel.trim() || null,
         commentator_enabled: commentatorEnabled,
+        prize_enabled: prizeEnabled,
+        prize_type: prizeEnabled ? prizeType : null,
+        prize_description: prizeEnabled ? (prizeDescription.trim() || null) : null,
+        prize_timing: prizeEnabled ? prizeTiming : null,
+        requires_age_verification: prizeEnabled && requiresAgeVerification,
       };
+
       if (commentatorEnabled) {
         const preset = getCommentatorByName(commPersonality);
         Object.assign(insertPayload, {
