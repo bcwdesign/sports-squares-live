@@ -195,7 +195,85 @@ function CreateGame() {
             </div>
           </FieldGroup>
 
+          {/* Prize Mode section */}
+          <div className="rounded-2xl border border-border bg-[color:var(--surface)]/60 p-4 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-display font-bold flex items-center gap-2">
+                  🏆 Prize Mode
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Attach a real-world prize to one or every quarter.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPrizeEnabled((v) => !v)}
+                aria-pressed={prizeEnabled}
+                aria-label="Enable quarterly prizes"
+                className={`relative w-12 h-7 rounded-full border transition flex-shrink-0 ${
+                  prizeEnabled
+                    ? "bg-[color:var(--neon-green)] border-[color:var(--neon-green)]"
+                    : "bg-muted border-border"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-background transition-transform ${
+                    prizeEnabled ? "translate-x-5" : ""
+                  }`}
+                />
+              </button>
+            </div>
+
+            {prizeEnabled && (
+              <div className="space-y-4 pt-2 border-t border-border/60">
+                <FieldGroup label="Prize type">
+                  <div className="grid grid-cols-4 gap-2">
+                    {(["food", "alcohol", "money", "gift"] as const).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setPrizeType(t)}
+                        className={`py-3 rounded-xl border font-display font-bold capitalize transition ${
+                          prizeType === t
+                            ? "bg-[color:var(--neon-blue)] border-[color:var(--neon-blue)] text-background"
+                            : "bg-[color:var(--surface)] border-border hover:border-[color:var(--neon-blue)]/60"
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </FieldGroup>
+
+                <FieldGroup label="Prize description">
+                  <Input
+                    value={prizeDescription}
+                    onChange={setPrizeDescription}
+                    placeholder="Example: Free wings, $25 gift card, $100 cash prize"
+                    maxLength={120}
+                  />
+                </FieldGroup>
+
+                <FieldGroup label="Prize timing">
+                  <Select
+                    value={prizeTiming}
+                    onChange={(v) => setPrizeTiming(v as typeof prizeTiming)}
+                    options={["q1", "q2", "q3", "final", "every_quarter"]}
+                  />
+                </FieldGroup>
+
+                {requiresAgeVerification && (
+                  <div className="px-4 py-3 rounded-xl border border-[color:var(--neon-red,theme(colors.red.500))]/40 bg-red-500/10 text-red-400 text-sm">
+                    ⚠️ Age verification required before prize can be claimed.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* AI Commentator section */}
+
           <div className="rounded-2xl border border-border bg-[color:var(--surface)]/60 p-4 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
