@@ -256,12 +256,19 @@ function CreateGame() {
                 </FieldGroup>
 
                 <FieldGroup label="Prize timing">
-                  <Select
+                  <select
                     value={prizeTiming}
-                    onChange={(v) => setPrizeTiming(v as typeof prizeTiming)}
-                    options={["q1", "q2", "q3", "final", "every_quarter"]}
-                  />
+                    onChange={(e) => setPrizeTiming(e.target.value as typeof prizeTiming)}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-[color:var(--surface)] focus:outline-none focus:border-[color:var(--neon-blue)] text-foreground"
+                  >
+                    <option value="q1">Q1 Winner</option>
+                    <option value="q2">Q2 Winner</option>
+                    <option value="q3">Q3 Winner</option>
+                    <option value="final">Final Winner</option>
+                    <option value="every_quarter">Every Quarter</option>
+                  </select>
                 </FieldGroup>
+
 
                 {requiresAgeVerification && (
                   <div className="px-4 py-3 rounded-xl border border-[color:var(--neon-red,theme(colors.red.500))]/40 bg-red-500/10 text-red-400 text-sm">
