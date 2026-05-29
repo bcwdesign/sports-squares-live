@@ -294,6 +294,20 @@ function ResultsPage() {
           )}
         </div>
 
+        {/* Age verification / prize claim — only for alcohol or money prizes when this user is the final winner */}
+        {youWon && (
+          <AgeVerificationGate
+            gameId={gameId}
+            game={game as typeof game & {
+              prize_enabled?: boolean | null;
+              prize_type?: string | null;
+              prize_description?: string | null;
+            }}
+            finalQuarter={(results.find((r) => r.is_final)?.quarter ?? Math.min(4, game.quarter)) as number}
+          />
+        )}
+
+
         {/* All claimed squares stats */}
         <div className="rounded-2xl border border-border bg-[color:var(--surface)] p-4 mb-6">
           <div className="font-display font-bold text-sm mb-3">Game Stats</div>
