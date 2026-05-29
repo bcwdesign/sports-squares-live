@@ -466,3 +466,122 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+// Age verification block, rendered only for alcohol/money prizes when the
+// current user is the winner. Food and gift prizes never see this section.
+type ClaimState = Awaited<ReturnType<typeof getPrizeClaim>>;
+
+function AgeVerificationGate({
+  gameId,
+  game,
+  finalQuarter,
+}: {
+  gameId: string;
+  game: { prize_enabled?: boolean | null; prize_type?: string | null; prize_description?: string | null };
+  finalQuarter: number;
+}) {
+  const [claim, setClaim] = useState<ClaimState>(null);
+  const [starting, setStarting] = useState(false);
+  const start = useServerFn(startArgosVerification);
+  const fetchClaim = useServerFn(getPrizeClaim);
+
+  const needsVerification =
+    !!game.prize_enabled &&
+    (game.prize_type === "alcohol" || game.prize_type === "money");
+
+  useEffect(() => {
+    if (!needsVerification) return;
+    let active = true;
+    fetchClaim({ data: { gameId, quarter: finalQuarter } })
+      .then((c) => {
+        if (active) setClaim(c);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [needsVerification, gameId, finalQuarter, fetchClaim]);
+
+  if (!needsVerification) return null;
+
+  const status = claim?.age_verification_status ?? "not_started";
+  const verified = !!claim?.age_verified;
+
+  const onStart = async () => {
+    if (starting) return;
+    setStarting(true);
+    try {
+      const res = await start({
+        data: {
+          gameId,
+          quarter: finalQuarter,
+          returnUrl: window.location.href,
+        },
+      });
+      if ("alreadyVerified" in res && res.alreadyVerified) {
+        toast.success("Already verified — your prize is ready to claim");
+        const c = await fetchClaim({ data: { gameId, quarter: finalQuarter } });
+        setClaim(c);
+        return;
+      }
+      // Redirect to the Argos hosted ID Check flow.
+      window.location.href = res.redirectUrl;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't start verification");
+      setStarting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border-2 border-[color:var(--neon-orange)]/40 bg-[color:var(--surface)]/90 p-5 mb-6 shadow-[var(--shadow-card)]">
+      <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
+        <ShieldCheck className="w-3.5 h-3.5 text-[color:var(--neon-orange)]" />
+        Age Verification Required
+      </div>
+      <div className="text-sm text-foreground/85 mb-4">
+        {game.prize_type === "alcohol"
+          ? "This prize includes alcohol. Verify you're of legal drinking age to claim it."
+          : "This prize involves cash. Verify your identity to claim it."}
+        {game.prize_description ? <span className="block text-xs text-muted-foreground mt-2">Prize: {game.prize_description}</span> : null}
+      </div>
+
+      {verified ? (
+        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 px-3 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-green)]">
+          <ShieldCheck className="w-4 h-4 shrink-0" />
+          Verified — prize ready to claim
+        </div>
+      ) : status === "failed" || status === "cancelled" ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-3 font-mono text-[10px] uppercase tracking-widest text-destructive">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            Verification {status}. Try again to claim your prize.
+          </div>
+          <button onClick={onStart} disabled={starting} className="block w-full">
+            <NeonButton variant="orange" className="w-full">
+              {starting ? "Opening Argos…" : "Verify Age to Claim Prize"}
+            </NeonButton>
+          </button>
+        </div>
+      ) : status === "pending" ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 rounded-lg border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 px-3 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-orange)]">
+            <ShieldQuestion className="w-4 h-4 shrink-0" />
+            Verification in progress…
+          </div>
+          <button onClick={onStart} disabled={starting} className="block w-full">
+            <NeonButton variant="ghost" className="w-full">
+              {starting ? "Opening Argos…" : "Re-open Verification"}
+            </NeonButton>
+          </button>
+        </div>
+      ) : (
+        <button onClick={onStart} disabled={starting} className="block w-full">
+          <NeonButton variant="orange" className="w-full">
+            {starting ? "Opening Argos…" : "Verify Age to Claim Prize"}
+          </NeonButton>
+        </button>
+      )}
+    </div>
+  );
+}
+
