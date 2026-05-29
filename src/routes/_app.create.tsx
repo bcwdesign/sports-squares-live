@@ -40,6 +40,16 @@ function CreateGame() {
   const [entryLabel, setEntryLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Prize Mode state (optional, disabled by default)
+  const [prizeEnabled, setPrizeEnabled] = useState(false);
+  const [prizeType, setPrizeType] = useState<"food" | "alcohol" | "money" | "gift">("food");
+  const [prizeDescription, setPrizeDescription] = useState("");
+  const [prizeTiming, setPrizeTiming] =
+    useState<"q1" | "q2" | "q3" | "final" | "every_quarter">("final");
+  const requiresAgeVerification = prizeType === "alcohol" || prizeType === "money";
+
+
+
   // Commentator state
   const [commentatorEnabled, setCommentatorEnabled] = useState(false);
   const [commName, setCommName] = useState("Coach Chaos");
