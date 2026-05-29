@@ -131,18 +131,19 @@ export const getPrizeClaim = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const { data: qr, error } = await supabaseAdmin
-      .from("quarter_results")
-      .select(
-        "id, winner_user_id, age_verification_required, age_verified, age_verification_provider, age_verification_status, age_verification_submission_id, prize_claim_status",
-      )
-      .eq("game_id", data.gameId)
-      .eq("quarter", data.quarter)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!qr) return null;
-    return {
-      ...qr,
-      isWinner: qr.winner_user_id === userId,
-    };
+    try {
+      const { data: qr, error } = await supabaseAdmin
+        .from("quarter_results")
+        .select(
+          "id, winner_user_id, age_verification_required, age_verified, age_verification_provider, age_verification_status, age_verification_submission_id, prize_claim_status",
+        )
+        .eq("game_id", data.gameId)
+        .eq("quarter", data.quarter)
+        .maybeSingle();
+      if (error || !qr) return null;
+      return { ...qr, isWinner: qr.winner_user_id === userId };
+    } catch (e) {
+      console.error("getPrizeClaim failed:", e);
+      return null;
+    }
   });
