@@ -22,6 +22,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as ApiTtsElevenlabsRouteImport } from './routes/api/tts/elevenlabs'
+import { Route as ApiArgosWebhookRouteImport } from './routes/api/argos/webhook'
 import { Route as ApiPublicHooksSyncLiveScoresRouteImport } from './routes/api/public/hooks/sync-live-scores'
 import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
 import { Route as AppGameGameIdOverlayRouteImport } from './routes/_app.game.$gameId.overlay'
@@ -93,6 +94,11 @@ const ApiTtsElevenlabsRoute = ApiTtsElevenlabsRouteImport.update({
   path: '/api/tts/elevenlabs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiArgosWebhookRoute = ApiArgosWebhookRouteImport.update({
+  id: '/api/argos/webhook',
+  path: '/api/argos/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksSyncLiveScoresRoute =
   ApiPublicHooksSyncLiveScoresRouteImport.update({
     id: '/api/public/hooks/sync-live-scores',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/venue': typeof AppVenueRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
+  '/api/argos/webhook': typeof ApiArgosWebhookRoute
   '/api/tts/elevenlabs': typeof ApiTtsElevenlabsRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/venue': typeof AppVenueRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
+  '/api/argos/webhook': typeof ApiArgosWebhookRoute
   '/api/tts/elevenlabs': typeof ApiTtsElevenlabsRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/_app/venue': typeof AppVenueRoute
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
+  '/api/argos/webhook': typeof ApiArgosWebhookRoute
   '/api/tts/elevenlabs': typeof ApiTtsElevenlabsRoute
   '/_app/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/_app/game/$gameId/live': typeof AppGameGameIdLiveRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/venue'
     | '/join/$inviteCode'
     | '/overlay/$token'
+    | '/api/argos/webhook'
     | '/api/tts/elevenlabs'
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/venue'
     | '/join/$inviteCode'
     | '/overlay/$token'
+    | '/api/argos/webhook'
     | '/api/tts/elevenlabs'
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/_app/venue'
     | '/join/$inviteCode'
     | '/overlay/$token'
+    | '/api/argos/webhook'
     | '/api/tts/elevenlabs'
     | '/_app/game/$gameId/invite'
     | '/_app/game/$gameId/live'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   JoinInviteCodeRoute: typeof JoinInviteCodeRoute
   OverlayTokenRoute: typeof OverlayTokenRoute
+  ApiArgosWebhookRoute: typeof ApiArgosWebhookRoute
   ApiTtsElevenlabsRoute: typeof ApiTtsElevenlabsRoute
   ApiPublicHooksSyncLiveScoresRoute: typeof ApiPublicHooksSyncLiveScoresRoute
 }
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTtsElevenlabsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/argos/webhook': {
+      id: '/api/argos/webhook'
+      path: '/api/argos/webhook'
+      fullPath: '/api/argos/webhook'
+      preLoaderRoute: typeof ApiArgosWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/sync-live-scores': {
       id: '/api/public/hooks/sync-live-scores'
       path: '/api/public/hooks/sync-live-scores'
@@ -437,9 +457,19 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   JoinInviteCodeRoute: JoinInviteCodeRoute,
   OverlayTokenRoute: OverlayTokenRoute,
+  ApiArgosWebhookRoute: ApiArgosWebhookRoute,
   ApiTtsElevenlabsRoute: ApiTtsElevenlabsRoute,
   ApiPublicHooksSyncLiveScoresRoute: ApiPublicHooksSyncLiveScoresRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
