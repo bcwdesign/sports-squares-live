@@ -1,7 +1,8 @@
 // Public cron endpoint backing /api/public/hooks/sync-live-scores.
 // Thin file: createServerFn declaration + imports only.
 
-import { createServerFn, getRequestHeader } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { runSync, supabaseAdminForSync } from "./sync-live-scores.server";
 
 export const syncLiveScoresFn = createServerFn({ method: "POST" }).handler(
