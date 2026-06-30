@@ -8,6 +8,8 @@ import { Mic, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Game } from "@/lib/types";
 import { enqueueCommentary, stopAllCommentary } from "@/lib/clutchcaster-tts";
+import { invokeAuthed } from "@/lib/serverFnClient";
+import { refreshHeyGenVideoUrl } from "@/lib/commentator.functions";
 
 type Props = {
   game: Game & {
