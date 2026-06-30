@@ -2,10 +2,24 @@
 // Thin file: createServerFn declaration + imports only.
 
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { runSync, supabaseAdminForSync } from "./sync-live-scores.server";
 
 export const syncLiveScoresFn = createServerFn({ method: "POST" }).handler(
   async () => {
+    // Fail-closed auth: this server fn is independently callable, so verify
+    // the cron secret here too — do not rely on the route handler alone.
+    const required = process.env.CRON_SECRET;
+    if (!required) {
+      console.error("[score-sync/cron] CRON_SECRET not configured");
+      return { ok: false as const, error: "unavailable" };
+    }
+    const provided = getRequestHeader("x-cron-secret");
+    if (provided !== required) {
+      console.warn("[score-sync/cron] unauthorized direct invocation blocked");
+      return { ok: false as const, error: "unauthorized" };
+    }
+
     const { data: games, error } = await supabaseAdminForSync
       .from("games")
       .select("id, status, auto_sync_enabled, external_provider, external_game_id")
