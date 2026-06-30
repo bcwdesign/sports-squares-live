@@ -130,9 +130,11 @@ export const getPrizeClaim = createServerFn({ method: "GET" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { userId } = context;
+    const { userId, supabase } = context;
     try {
-      const { data: qr, error } = await supabaseAdmin
+      // Use the user-scoped client so RLS ("Members can view quarter results")
+      // gates access. Non-members get no row back.
+      const { data: qr, error } = await supabase
         .from("quarter_results")
         .select(
           "id, winner_user_id, age_verification_required, age_verified, age_verification_provider, age_verification_status, age_verification_submission_id, prize_claim_status",
@@ -141,7 +143,23 @@ export const getPrizeClaim = createServerFn({ method: "GET" })
         .eq("quarter", data.quarter)
         .maybeSingle();
       if (error || !qr) return null;
-      return { ...qr, isWinner: qr.winner_user_id === userId };
+      const isWinner = qr.winner_user_id === userId;
+      // Only the winner sees the sensitive verification submission id and
+      // raw status fields. Other members get a minimal public summary.
+      if (!isWinner) {
+        return {
+          id: qr.id,
+          winner_user_id: qr.winner_user_id,
+          age_verification_required: qr.age_verification_required,
+          age_verified: qr.age_verified,
+          age_verification_provider: null,
+          age_verification_status: null,
+          age_verification_submission_id: null,
+          prize_claim_status: qr.prize_claim_status,
+          isWinner: false,
+        };
+      }
+      return { ...qr, isWinner: true };
     } catch (e) {
       console.error("getPrizeClaim failed:", e);
       return null;
