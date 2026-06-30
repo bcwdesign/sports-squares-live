@@ -231,6 +231,51 @@ export const getHeyGenVideoStatus = createServerFn({ method: "POST" })
     return { ok: true as const, status: status ?? null, url: url ?? null };
   });
 
+// Re-fetch a fresh signed HeyGen video URL. HeyGen serves video files via
+// CloudFront with a ~7-day Expires param, so previously stored URLs 403 after
+// the link expires and the <video> element silently fails. Any authenticated
+// game member can refresh — there's nothing privileged about reading the URL,
+// and the host isn't always the viewer on the results page.
+export const refreshHeyGenVideoUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ gameId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isMember, error: mErr } = await supabase.rpc("is_game_member", {
+      _game_id: data.gameId,
+      _user_id: userId,
+    });
+    if (mErr) throw new Error(mErr.message);
+    if (!isMember) throw new Error("Forbidden");
+
+    const apiKey = process.env.HEYGEN_API_KEY;
+    if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
+
+    const { data: game } = await supabaseAdmin
+      .from("games")
+      .select("heygen_video_id")
+      .eq("id", data.gameId)
+      .maybeSingle();
+    if (!game?.heygen_video_id) return { ok: false as const, url: null };
+
+    const res = await fetch(
+      `https://api.heygen.com/v1/video_status.get?video_id=${encodeURIComponent(game.heygen_video_id)}`,
+      { headers: { "X-Api-Key": apiKey } },
+    );
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`HeyGen status ${res.status}`);
+    const status: string | undefined = json?.data?.status;
+    const url: string | undefined = json?.data?.video_url;
+    if (status === "completed" && url) {
+      await supabaseAdmin
+        .from("games")
+        .update({ heygen_video_status: status, heygen_video_url: url })
+        .eq("id", data.gameId);
+    }
+    return { ok: true as const, url: url ?? null, status: status ?? null };
+  });
+
+
 export const generateCommentatorVoiceClip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>

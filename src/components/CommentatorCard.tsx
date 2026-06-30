@@ -8,6 +8,8 @@ import { Mic, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Game } from "@/lib/types";
 import { enqueueCommentary, stopAllCommentary } from "@/lib/clutchcaster-tts";
+import { invokeAuthed } from "@/lib/serverFnClient";
+import { refreshHeyGenVideoUrl } from "@/lib/commentator.functions";
 
 type Props = {
   game: Game & {
@@ -111,6 +113,7 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
       <div className="flex items-start gap-3">
         {game.heygen_video_url ? (
           <video
+            key={game.heygen_video_url}
             src={game.heygen_video_url}
             autoPlay
             muted
@@ -118,6 +121,20 @@ export function CommentatorCard({ game, defaultMuted = true }: Props) {
             playsInline
             controls
             className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover bg-black"
+            onError={async (e) => {
+              // HeyGen signed URL likely expired — refresh and swap src.
+              try {
+                const res = await invokeAuthed(refreshHeyGenVideoUrl, { gameId: game.id });
+                if (res?.ok && res.url) {
+                  const v = e.currentTarget;
+                  v.src = res.url;
+                  v.load();
+                  v.play().catch(() => {});
+                }
+              } catch (err) {
+                console.error("refresh heygen url failed", err);
+              }
+            }}
           />
         ) : (
           <div

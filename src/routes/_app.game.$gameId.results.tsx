@@ -11,7 +11,7 @@ import { winningSquareIndex } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toPng } from "html-to-image";
 import { useServerFn } from "@tanstack/react-start";
-import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus } from "@/lib/commentator.functions";
+import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus, refreshHeyGenVideoUrl } from "@/lib/commentator.functions";
 import { startArgosVerification, getPrizeClaim } from "@/lib/argos.functions";
 import { invokeAuthed } from "@/lib/serverFnClient";
 import { ShieldCheck, ShieldAlert, ShieldQuestion } from "lucide-react";
@@ -236,11 +236,27 @@ function ResultsPage() {
               </div>
               {g.heygen_video_url ? (
                 <video
+                  key={g.heygen_video_url}
                   src={g.heygen_video_url}
                   autoPlay
                   controls
                   playsInline
                   className="w-full rounded-xl bg-black aspect-video object-cover"
+                  onError={async (e) => {
+                    // HeyGen CloudFront URLs expire (~7 days). Re-fetch a fresh
+                    // signed URL and swap the src so playback recovers.
+                    try {
+                      const res = await invokeAuthed(refreshHeyGenVideoUrl, { gameId });
+                      if (res?.ok && res.url) {
+                        const v = e.currentTarget;
+                        v.src = res.url;
+                        v.load();
+                        v.play().catch(() => {});
+                      }
+                    } catch (err) {
+                      console.error("refresh heygen url failed", err);
+                    }
+                  }}
                 />
               ) : processing ? (
                 <div className="flex items-center gap-2 rounded-lg border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 px-3 py-3">
