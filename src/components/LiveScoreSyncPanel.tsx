@@ -239,6 +239,7 @@ export function LiveScoreSyncPanel({ game }: Props) {
       {connectOpen && (
         <ConnectModal
           gameId={game.id}
+          sport={sport}
           onClose={() => setConnectOpen(false)}
         />
       )}
@@ -254,10 +255,19 @@ export function LiveScoreSyncPanel({ game }: Props) {
 }
 
 // ============================================================================
-// Connect modal — fetches live NBA games and lets the host pick one.
+// Connect modal — lists provider games for the game's sport (live NBA games,
+// or upcoming/current NFL matchups) and lets the host pick one.
 // ============================================================================
 
-function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void }) {
+function ConnectModal({
+  gameId,
+  sport,
+  onClose,
+}: {
+  gameId: string;
+  sport: SportKey;
+  onClose: () => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [games, setGames] = useState<NormalizedLiveGame[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -269,7 +279,10 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
       setLoading(true);
       setError(null);
       try {
-        const res = await invokeAuthed(fetchLiveNbaGames, undefined as never);
+        const res =
+          sport === "NFL"
+            ? await invokeAuthed(fetchUpcomingNflGames, { daysAhead: 14 })
+            : await invokeAuthed(fetchLiveNbaGames, undefined as never);
         if (cancelledRef.current) return;
         if (res.error) {
           setError(res.error);
@@ -279,7 +292,7 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
         }
       } catch (e) {
         if (!cancelledRef.current) {
-          setError(e instanceof Error ? e.message : "Failed to load live games.");
+          setError(e instanceof Error ? e.message : "Failed to load games.");
         }
       } finally {
         if (!cancelledRef.current) setLoading(false);
@@ -289,7 +302,8 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
     return () => {
       cancelledRef.current = true;
     };
-  }, []);
+  }, [sport]);
+
 
   const onSelect = async (g: NormalizedLiveGame) => {
     setSelecting(g.external_game_id);
