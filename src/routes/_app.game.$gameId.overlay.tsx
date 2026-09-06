@@ -12,6 +12,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
+import { useLiveScoreAutoSync } from "@/hooks/useLiveScoreAutoSync";
 import { Overlay, fireConfetti } from "@/components/Overlay";
 import { WinnerCelebration } from "@/components/WinnerCelebration";
 import { CommentatorCard } from "@/components/CommentatorCard";
