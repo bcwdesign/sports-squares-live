@@ -23,3 +23,6 @@ Two things are needed: the Google sign-in method has to be switched on for the a
 ## Verify
 
 Load the sign-in page, click "Continue with Google", complete consent, and confirm the app lands on the dashboard with the account signed in.
+
+Also confirm account-linking behavior: sign up first with email/password, then sign in with Google using the same email, and verify you end up as the same user (same `user.id`) and the same profile/dashboard data appears.
+
