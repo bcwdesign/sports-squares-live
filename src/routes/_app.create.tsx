@@ -523,8 +523,8 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 }
 
 function Input({
-  value, onChange, placeholder, maxLength, required, type = "text",
-}: { value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number; required?: boolean; type?: string }) {
+  value, onChange, placeholder, maxLength, required, type = "text", readOnly,
+}: { value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number; required?: boolean; type?: string; readOnly?: boolean }) {
   return (
     <input
       type={type}
@@ -533,8 +533,11 @@ function Input({
       placeholder={placeholder}
       maxLength={maxLength}
       required={required}
-      className="w-full px-4 py-3 rounded-xl border border-border bg-[color:var(--surface)] focus:outline-none focus:border-[color:var(--neon-blue)]"
+      readOnly={readOnly}
+      className={`w-full px-4 py-3 rounded-xl border border-border bg-[color:var(--surface)] focus:outline-none focus:border-[color:var(--neon-blue)] ${readOnly ? "opacity-70 cursor-not-allowed" : ""}`}
     />
+  );
+
   );
 }
 
