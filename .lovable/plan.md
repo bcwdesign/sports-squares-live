@@ -1,31 +1,25 @@
-## Goal
+# Make "Continue with Google" work
 
-- Routine commentary (every 90s + on score updates) speaks via the browser's built-in TTS — no HeyGen call, no render wait, no API cost.
-- At the end of each quarter and at the final buzzer, also kick off a HeyGen avatar video. While HeyGen renders, the same commentary line plays through TTS so viewers aren't waiting in silence.
-- The existing final recap video flow (and the in-card video player) keeps working exactly as it does today.
+Two things are needed: the Google sign-in method has to be switched on for the app's backend, and the sign-in code needs one small correction.
 
-## Changes
+## What's wrong today
 
-### 1. `src/components/CommentatorCard.tsx`
-- Replace the HeyGen voice-clip effect (`generateCommentatorVoiceClip` + `getCommentatorVoiceClipStatus` polling + hidden `<audio>` element) with the browser Web Speech API (`window.speechSynthesis` + `SpeechSynthesisUtterance`).
-- When `commentator_latest_text` changes and the card is unmuted, cancel any in-flight utterance and speak the new line. Pick a voice loosely matched to `commentator_voice_style` (deep / professional / energetic / funny / dramatic → rate + pitch tweaks; pick first matching `window.speechSynthesis.getVoices()` entry when possible).
-- On mute toggle or unmount, call `speechSynthesis.cancel()`.
-- Drop the `voiceLoading` spinner (no async render to wait for) and the `invokeAuthed` import. Keep the mute/unmute button and all visual layout.
-- **Do not touch** the `<video src={game.heygen_video_url} …>` block or the "Rendering final recap video…" progress UI — that path is what shows the end-of-game HeyGen video.
+1. Google sign-in is not enabled as a login method yet, so the first click fails with an "unsupported provider" style error.
+2. After Google finishes, the app sends people straight to `/dashboard`, which is a protected page. On a full-page return the login session isn't ready yet, so the guard can bounce the user back to the sign-in screen.
 
-### 2. `src/lib/commentator.functions.ts`
-- Extend the `kind` enum on `generateHeyGenCommentatorVideo` from `["intro","final"]` to `["intro","quarter","final"]`.
-- For `kind: "quarter"`, build the script from the current `commentator_latest_text` (fallback: a short generic "End of quarter N — {away_team} {score}, {home_team} {score}" line). Title: `"{commentator_name} Q{n} Recap"`.
-- Final/intro behavior unchanged.
+## The fix
 
-### 3. `src/routes/_app.game.$gameId.overlay.tsx`
-- Change the periodic interval from **180s → 90s**.
-- Keep the host-only throttled `generateScoreCommentary` trigger on score/quarter/status changes (this populates `commentator_latest_text`, which TTS will then read).
-- Add a new effect: when `game.quarter` advances (using the existing `prevQuarterRef` signal) AND `heygen_reactions_enabled`, fire `generateScoreCommentary` first, then `generateHeyGenCommentatorVideo({ kind: "quarter" })`, then poll `getHeyGenVideoStatus` like the final-recap effect does. Guard with a `lastQuarterKickedRef` so it fires once per quarter transition.
-- Leave the existing `status === "completed"` → `kind: "final"` effect untouched.
+1. Enable Google as a managed sign-in method (no Google Cloud account or keys needed from you — Lovable's managed credentials are used).
+2. In the sign-in code, send people back to the site's home address after Google, then forward them to the dashboard (or wherever they were headed) once the session is confirmed.
+3. Keep email/password and guest sign-in exactly as they are.
 
-## Result
+## Technical details
 
-- Talk track is continuous (TTS speaks each new line instantly).
-- Quarter breaks and the final buzzer still produce a HeyGen avatar video that lands in the same `heygen_video_url` slot the card already renders.
-- No schema changes, no new secrets, no server-only code moved.
+- Call `supabase--configure_social_auth` with `providers: ["google"]` in the same change (do not disable email).
+- `src/contexts/AuthContext.tsx`: change `signInWithGoogle` `redirect_uri` from `${window.location.origin}/dashboard` to `window.location.origin`.
+- `src/routes/auth.tsx`: store the intended same-origin path (existing `search.redirect`) in `sessionStorage` before starting Google; the existing `useEffect` that navigates once `user` is set then reads it and routes there, defaulting to `/dashboard`.
+- No database or schema changes.
+
+## Verify
+
+Load the sign-in page, click "Continue with Google", complete consent, and confirm the app lands on the dashboard with the account signed in.
