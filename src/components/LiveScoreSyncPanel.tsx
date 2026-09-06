@@ -344,7 +344,7 @@ function ConnectModal({
           <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-blue)]">
             BALLDONTLIE
           </div>
-          <div className="font-display font-bold text-xl mt-1">Pick a Live NBA Game</div>
+          <div className="font-display font-bold text-xl mt-1">Pick an {sport} Game</div>
           <p className="text-xs text-muted-foreground mt-1">
             Scores will sync automatically into your Squares board, overlay, and winner detection.
           </p>
@@ -354,7 +354,7 @@ function ConnectModal({
           {loading && (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              <span className="font-mono text-xs uppercase tracking-widest">Loading live games...</span>
+              <span className="font-mono text-xs uppercase tracking-widest">Loading {sport} games...</span>
             </div>
           )}
           {!loading && error && (
