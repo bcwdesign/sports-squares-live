@@ -22,15 +22,22 @@ import {
 import { toast } from "sonner";
 import {
   fetchLiveNbaGames,
+  fetchUpcomingNflGames,
   connectLiveScore,
   disconnectLiveScore,
   setAutoSync,
   syncGameScore,
   manualScoreOverride,
 } from "@/lib/balldontlie.functions";
-import type { NormalizedLiveGame } from "@/lib/balldontlie.types";
+import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
+import { LIVE_STATE_LABEL } from "@/lib/balldontlie.types";
 import { invokeAuthed } from "@/lib/serverFnClient";
 import type { Game } from "@/lib/types";
+
+function sportOf(game: { sport?: string | null }): SportKey {
+  return (game.sport ?? "NBA").toUpperCase() === "NFL" ? "NFL" : "NBA";
+}
+
 
 type Props = {
   game: Game & {
@@ -49,6 +56,7 @@ type Props = {
 };
 
 export function LiveScoreSyncPanel({ game }: Props) {
+  const sport = sportOf(game);
   const connected =
     game.external_provider === "balldontlie" && !!game.external_game_id;
   const autoSyncOn = !!game.auto_sync_enabled;
@@ -70,28 +78,35 @@ export function LiveScoreSyncPanel({ game }: Props) {
   const [disconnecting, setDisconnecting] = useState(false);
 
   // ---- Auto-sync polling (host only) --------------------------------------
-  // 10s when status is live, 60s for scheduled/pre-game, off for final.
-  // Determined from the upstream game_status string (BALLDONTLIE returns
-  // strings like "Final", "Halftime", "Q3 04:21", etc.).
+  // 10s in progress, 60s scheduled/pre-game, 5min for postponed/delayed/
+  // suspended, off for final. Requests never overlap.
   useEffect(() => {
     if (!connected || !autoSyncOn) return;
 
     const status = (game.game_status ?? "").toLowerCase();
     if (status.includes("final")) return; // stop
+    if (status.includes("cancel") || status.includes("abandon")) return;
 
-    const intervalMs =
-      status.includes("scheduled") || status.includes("pre")
+    const stalled =
+      status.includes("postpon") || status.includes("delay") || status.includes("suspend");
+    const intervalMs = stalled
+      ? 300_000
+      : status.includes("scheduled") || status.includes("pre") || status === ""
         ? 60_000
         : 10_000;
 
     let cancelled = false;
+    let running = false;
     const tick = async () => {
-      if (cancelled) return;
+      if (cancelled || running) return;
+      running = true;
       try {
         await invokeAuthed(syncGameScore, { gameId: game.id });
       } catch (e) {
         // Silent — error surfaces via last_score_sync_error on the row.
         console.warn("auto-sync failed:", e);
+      } finally {
+        running = false;
       }
     };
     const id = setInterval(tick, intervalMs);
@@ -100,6 +115,7 @@ export function LiveScoreSyncPanel({ game }: Props) {
       clearInterval(id);
     };
   }, [connected, autoSyncOn, game.id, game.game_status]);
+
 
   const onSyncNow = async () => {
     setSyncing(true);
@@ -130,7 +146,7 @@ export function LiveScoreSyncPanel({ game }: Props) {
   };
 
   const onDisconnect = async () => {
-    if (!window.confirm("Disconnect the live NBA feed? Score control returns to manual.")) return;
+    if (!window.confirm(`Disconnect the live ${sport} feed? Score control returns to manual.`)) return;
     setDisconnecting(true);
     try {
       await invokeAuthed(disconnectLiveScore, { gameId: game.id });
@@ -174,7 +190,7 @@ export function LiveScoreSyncPanel({ game }: Props) {
             onClick={() => setConnectOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-blue)]/40 bg-[color:var(--neon-blue)]/10 text-[color:var(--neon-blue)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-blue)]/20 transition"
           >
-            <Plug className="w-3.5 h-3.5" /> Connect NBA Live Score
+            <Plug className="w-3.5 h-3.5" /> Connect {sport} Live Score
           </button>
         ) : (
           <>
@@ -224,6 +240,7 @@ export function LiveScoreSyncPanel({ game }: Props) {
       {connectOpen && (
         <ConnectModal
           gameId={game.id}
+          sport={sport}
           onClose={() => setConnectOpen(false)}
         />
       )}
@@ -239,10 +256,19 @@ export function LiveScoreSyncPanel({ game }: Props) {
 }
 
 // ============================================================================
-// Connect modal — fetches live NBA games and lets the host pick one.
+// Connect modal — lists provider games for the game's sport (live NBA games,
+// or upcoming/current NFL matchups) and lets the host pick one.
 // ============================================================================
 
-function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void }) {
+function ConnectModal({
+  gameId,
+  sport,
+  onClose,
+}: {
+  gameId: string;
+  sport: SportKey;
+  onClose: () => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [games, setGames] = useState<NormalizedLiveGame[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -254,7 +280,10 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
       setLoading(true);
       setError(null);
       try {
-        const res = await invokeAuthed(fetchLiveNbaGames, undefined as never);
+        const res =
+          sport === "NFL"
+            ? await invokeAuthed(fetchUpcomingNflGames, { daysAhead: 14 })
+            : await invokeAuthed(fetchLiveNbaGames, undefined as never);
         if (cancelledRef.current) return;
         if (res.error) {
           setError(res.error);
@@ -264,7 +293,7 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
         }
       } catch (e) {
         if (!cancelledRef.current) {
-          setError(e instanceof Error ? e.message : "Failed to load live games.");
+          setError(e instanceof Error ? e.message : "Failed to load games.");
         }
       } finally {
         if (!cancelledRef.current) setLoading(false);
@@ -274,7 +303,8 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
     return () => {
       cancelledRef.current = true;
     };
-  }, []);
+  }, [sport]);
+
 
   const onSelect = async (g: NormalizedLiveGame) => {
     setSelecting(g.external_game_id);
@@ -315,7 +345,7 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
           <div className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-blue)]">
             BALLDONTLIE
           </div>
-          <div className="font-display font-bold text-xl mt-1">Pick a Live NBA Game</div>
+          <div className="font-display font-bold text-xl mt-1">Pick an {sport} Game</div>
           <p className="text-xs text-muted-foreground mt-1">
             Scores will sync automatically into your Squares board, overlay, and winner detection.
           </p>
@@ -325,7 +355,7 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
           {loading && (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              <span className="font-mono text-xs uppercase tracking-widest">Loading live games...</span>
+              <span className="font-mono text-xs uppercase tracking-widest">Loading {sport} games...</span>
             </div>
           )}
           {!loading && error && (
@@ -353,7 +383,11 @@ function ConnectModal({ gameId, onClose }: { gameId: string; onClose: () => void
                           {g.home_team_abbreviation || g.home_team_name}
                         </div>
                         <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
-                          {g.game_status ?? "Live"}
+                          {g.week ? `Week ${g.week} · ` : ""}
+                          {g.start_time
+                            ? `${new Date(g.start_time).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · `
+                            : ""}
+                          {g.game_status || LIVE_STATE_LABEL[g.status_state]}
                           {g.period ? ` · Q${g.period}` : ""}
                           {g.game_clock ? ` · ${g.game_clock}` : ""}
                         </div>

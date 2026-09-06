@@ -8,9 +8,9 @@ export const Route = createFileRoute("/join/$inviteCode")({
   head: () => ({
     meta: [
       { title: "Join Game — Clutch Squares" },
-      { name: "description", content: "You've been invited to a Clutch Squares NBA game. Sign in to claim your squares before tip-off and play live with friends." },
+      { name: "description", content: "You've been invited to a Clutch Squares game. Sign in to claim your squares before tip-off and play live with friends." },
       { property: "og:title", content: "Join Game — Clutch Squares" },
-      { property: "og:description", content: "You've been invited to a Clutch Squares NBA game. Claim your squares before tip-off." },
+      { property: "og:description", content: "You've been invited to a Clutch Squares game. Claim your squares before tip-off." },
     ],
   }),
   component: JoinByCode,

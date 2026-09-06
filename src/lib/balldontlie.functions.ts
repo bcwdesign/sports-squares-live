@@ -6,7 +6,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { callBalldontlieLive, runSync } from "./balldontlie.server";
+import { callBalldontlieLive, fetchUpcomingNflSchedule, runSync } from "./balldontlie.server";
 import type { NormalizedLiveGame } from "./balldontlie.types";
 
 // Re-export the type for client convenience. Type-only re-exports are safe.
@@ -21,6 +21,19 @@ export const fetchLiveNbaGames = createServerFn({ method: "POST" })
     }
     return { games: result.data, error: null, code: null };
   });
+
+/** NFL schedule for the game picker: today + the next two weeks. */
+export const fetchUpcomingNflGames = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ daysAhead: z.number().int().min(1).max(30).optional() }).optional())
+  .handler(async ({ data }) => {
+    const result = await fetchUpcomingNflSchedule(data?.daysAhead ?? 14);
+    if (!result.ok) {
+      return { games: [] as NormalizedLiveGame[], error: result.error, code: result.code };
+    }
+    return { games: result.data, error: null, code: null };
+  });
+
 
 export const connectLiveScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

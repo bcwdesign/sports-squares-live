@@ -9,6 +9,9 @@ import { generateInviteCode } from "@/lib/types";
 import { invokeAuthed } from "@/lib/serverFnClient";
 import { generateHeyGenCommentatorVideo } from "@/lib/commentator.functions";
 import { COMMENTATORS, COMMENTATOR_NAMES, getCommentatorByName } from "@/lib/commentators";
+import { NflGamePicker } from "@/components/NflGamePicker";
+import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
+
 
 export const Route = createFileRoute("/_app/create")({
   head: () => ({
@@ -26,19 +29,37 @@ const VOICE_STYLES = ["Energetic", "Deep Voice", "Funny", "Professional", "Stree
 function defaultIntroScript(name: string, away: string, home: string, personality: string) {
   const preset = getCommentatorByName(personality);
   const role = preset?.description.toLowerCase() ?? "commentator";
-  return `Welcome to ${name}! I'm ${personality}, your ${role} for tonight, calling every bucket as the ${away} take on the ${home}. Grab your square, lock in, and let's run it.`;
+  return `Welcome to ${name}! I'm ${personality}, your ${role} for tonight, calling every score as the ${away} take on the ${home}. Grab your square, lock in, and let's run it.`;
+}
+
+const SPORT_DEFAULTS: Record<SportKey, { name: string; away: string; home: string }> = {
+  NBA: { name: "NBA Finals Watch Party", away: "Mavericks", home: "Celtics" },
+  NFL: { name: "NFL Watch Party", away: "Eagles", home: "Cowboys" },
+};
+
+/** Convert an ISO timestamp into a value the datetime-local input accepts. */
+function toLocalInputValue(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function CreateGame() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState("NBA Finals Watch Party");
+  const [sport, setSport] = useState<SportKey>("NBA");
+  const [name, setName] = useState(SPORT_DEFAULTS.NBA.name);
+  const [nameEdited, setNameEdited] = useState(false);
   const [homeTeam, setHomeTeam] = useState("Celtics");
   const [awayTeam, setAwayTeam] = useState("Mavericks");
   const [dateTime, setDateTime] = useState("");
   const [maxSquares, setMaxSquares] = useState(10);
   const [entryLabel, setEntryLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [apiGame, setApiGame] = useState<NormalizedLiveGame | null>(null);
+
 
   // Prize Mode state (optional, disabled by default)
   const [prizeEnabled, setPrizeEnabled] = useState(false);
@@ -64,6 +85,29 @@ function CreateGame() {
   const introScriptValue =
     commIntroEdited ? commIntro : defaultIntroScript(name, awayTeam, homeTeam, commPersonality);
 
+  const changeSport = (next: SportKey) => {
+    if (next === sport) return;
+    setSport(next);
+    setApiGame(null);
+    const d = SPORT_DEFAULTS[next];
+    setHomeTeam(d.home);
+    setAwayTeam(d.away);
+    setDateTime("");
+    if (!nameEdited) setName(d.name);
+  };
+
+  const selectApiGame = (g: NormalizedLiveGame) => {
+    setApiGame(g);
+    setHomeTeam(g.home_team_name || g.home_team_abbreviation);
+    setAwayTeam(g.away_team_name || g.away_team_abbreviation);
+    setDateTime(toLocalInputValue(g.start_time));
+    if (!nameEdited) {
+      setName(`${g.away_team_abbreviation || g.away_team_name} @ ${g.home_team_abbreviation || g.home_team_name} Squares`);
+    }
+  };
+
+  const clearApiGame = () => setApiGame(null);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -73,7 +117,7 @@ function CreateGame() {
       const insertPayload: Record<string, unknown> = {
         host_id: user.id,
         name: name.trim(),
-        sport: "NBA",
+        sport,
         home_team: homeTeam.trim(),
         away_team: awayTeam.trim(),
         game_date_time: dateTime ? new Date(dateTime).toISOString() : null,
@@ -87,6 +131,21 @@ function CreateGame() {
         prize_timing: prizeEnabled ? prizeTiming : null,
         requires_age_verification: prizeEnabled && requiresAgeVerification,
       };
+
+      if (apiGame) {
+        Object.assign(insertPayload, {
+          external_provider: "balldontlie",
+          external_game_id: apiGame.external_game_id,
+          external_home_team_id: apiGame.home_team_id || null,
+          external_away_team_id: apiGame.away_team_id || null,
+          external_home_team_name: apiGame.home_team_name || null,
+          external_away_team_name: apiGame.away_team_name || null,
+          game_status: apiGame.game_status,
+          score_source: "api",
+          auto_sync_enabled: true,
+        });
+      }
+
 
       if (commentatorEnabled) {
         const preset = getCommentatorByName(commPersonality);
@@ -139,23 +198,88 @@ function CreateGame() {
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
         <form onSubmit={submit} className="space-y-5">
           <FieldGroup label="Game name">
-            <Input value={name} onChange={setName} placeholder="NBA Finals Watch Party" maxLength={60} required />
+            <Input
+              value={name}
+              onChange={(v) => {
+                setName(v);
+                setNameEdited(true);
+              }}
+              placeholder={SPORT_DEFAULTS[sport].name}
+              maxLength={60}
+              required
+            />
           </FieldGroup>
 
           <FieldGroup label="Sport">
-            <div className="px-4 py-3 rounded-xl border border-border bg-[color:var(--surface)] font-display font-bold">
-              🏀 NBA
+            <div className="grid grid-cols-2 gap-3" role="group" aria-label="Choose sport">
+              {(["NBA", "NFL"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => changeSport(s)}
+                  aria-pressed={sport === s}
+                  className={`px-4 py-3 rounded-xl border font-display font-bold flex items-center justify-center gap-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--neon-blue)] ${
+                    sport === s
+                      ? "bg-[color:var(--neon-blue)] border-[color:var(--neon-blue)] text-background"
+                      : "bg-[color:var(--surface)] border-border hover:border-[color:var(--neon-blue)]/60"
+                  }`}
+                >
+                  <span aria-hidden="true">{s === "NBA" ? "🏀" : "🏈"}</span> {s}
+                </button>
+              ))}
             </div>
           </FieldGroup>
 
+          {sport === "NFL" && (
+            <NflGamePicker
+              selectedId={apiGame?.external_game_id ?? null}
+              onSelect={selectApiGame}
+            />
+          )}
+
+          {apiGame && (
+            <div className="rounded-xl border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 px-4 py-3 flex items-center justify-between gap-3">
+              <div className="text-sm">
+                <span className="font-display font-bold">
+                  {apiGame.away_team_abbreviation} @ {apiGame.home_team_abbreviation}
+                </span>
+                <div className="text-xs text-muted-foreground">
+                  Live scores connected — teams and kickoff are locked to this matchup.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={clearApiGame}
+                className="shrink-0 px-3 py-1.5 rounded-md border border-border text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-foreground/40 transition"
+              >
+                Edit manually
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <FieldGroup label="Away team">
-              <Input value={awayTeam} onChange={setAwayTeam} placeholder="Mavericks" maxLength={30} required />
+              <Input
+                value={awayTeam}
+                onChange={setAwayTeam}
+                placeholder={SPORT_DEFAULTS[sport].away}
+                maxLength={30}
+                required
+                readOnly={!!apiGame}
+              />
             </FieldGroup>
             <FieldGroup label="Home team">
-              <Input value={homeTeam} onChange={setHomeTeam} placeholder="Celtics" maxLength={30} required />
+              <Input
+                value={homeTeam}
+                onChange={setHomeTeam}
+                placeholder={SPORT_DEFAULTS[sport].home}
+                maxLength={30}
+                required
+                readOnly={!!apiGame}
+              />
             </FieldGroup>
           </div>
+
 
           <FieldGroup label="Game date & time (optional)">
             <input
@@ -399,8 +523,8 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 }
 
 function Input({
-  value, onChange, placeholder, maxLength, required, type = "text",
-}: { value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number; required?: boolean; type?: string }) {
+  value, onChange, placeholder, maxLength, required, type = "text", readOnly,
+}: { value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number; required?: boolean; type?: string; readOnly?: boolean }) {
   return (
     <input
       type={type}
@@ -409,9 +533,11 @@ function Input({
       placeholder={placeholder}
       maxLength={maxLength}
       required={required}
-      className="w-full px-4 py-3 rounded-xl border border-border bg-[color:var(--surface)] focus:outline-none focus:border-[color:var(--neon-blue)]"
+      readOnly={readOnly}
+      className={`w-full px-4 py-3 rounded-xl border border-border bg-[color:var(--surface)] focus:outline-none focus:border-[color:var(--neon-blue)] ${readOnly ? "opacity-70 cursor-not-allowed" : ""}`}
     />
   );
+
 }
 
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {

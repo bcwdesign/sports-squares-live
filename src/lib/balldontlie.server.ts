@@ -1,57 +1,78 @@
-// Server-only helpers for the BALLDONTLIE NBA live score integration.
+// Server-only helpers for the BALLDONTLIE live score integration (NBA + NFL).
 // The .server.ts extension is enforced by TanStack's import-protection
 // plugin: any client-side import of this file fails the build. Safe to
 // hold supabaseAdmin + secret API key reads here.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import type { NormalizedLiveGame } from "./balldontlie.types";
+import type { LiveGameState, NormalizedLiveGame, SportKey } from "./balldontlie.types";
+import { normalizeNflGame } from "./balldontlie.normalize";
 
-const BALLDONTLIE_BASE = "https://api.balldontlie.io/v1";
+const NBA_BASE = "https://api.balldontlie.io/v1";
+const NFL_BASE = "https://api.balldontlie.io/nfl/v1";
 
 // In-memory min-interval guard: gameId -> last successful sync timestamp.
 // Cleared on Worker recycle. Best-effort, not distributed.
 const lastSyncByGame = new Map<string, number>();
 const MIN_SYNC_INTERVAL_MS = 5_000;
 
-type FetchResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; code: "no_key" | "rate_limited" | "unavailable" | "no_live_games" };
+// Prevents duplicate overlapping syncs for the same game within one worker.
+const inFlight = new Set<string>();
 
-export async function callBalldontlieLive(): Promise<FetchResult<NormalizedLiveGame[]>> {
-  const apiKey = process.env.BALLDONTLIE_API_KEY;
-  if (!apiKey) {
-    return { ok: false, code: "no_key", error: "BALLDONTLIE_API_KEY is not configured on the server." };
-  }
+type ErrorCode = "no_key" | "rate_limited" | "unavailable" | "no_live_games" | "unauthorized";
 
+type FetchResult<T> = { ok: true; data: T } | { ok: false; error: string; code: ErrorCode };
+
+function nbaKey(): string | undefined {
+  return process.env.BALLDONTLIE_API_KEY;
+}
+
+// The account may use one key across products, so fall back to the NBA key.
+function nflKey(): string | undefined {
+  return process.env.BALLDONTLIE_NFL_API_KEY || process.env.BALLDONTLIE_API_KEY;
+}
+
+/** Never echoes the key or upstream body — safe for user-facing messages. */
+async function callProvider(url: string, apiKey: string): Promise<FetchResult<unknown>> {
   let res: Response;
   try {
-    res = await fetch(`${BALLDONTLIE_BASE}/box_scores/live`, {
-      method: "GET",
-      headers: { Authorization: apiKey },
-    });
+    res = await fetch(url, { method: "GET", headers: { Authorization: apiKey } });
   } catch (e) {
-    console.error("BALLDONTLIE network error:", e);
+    console.error("BALLDONTLIE network error:", e instanceof Error ? e.message : "unknown");
     return { ok: false, code: "unavailable", error: "Could not reach the BALLDONTLIE API." };
   }
-
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, code: "unauthorized", error: "BALLDONTLIE rejected the server credentials." };
+  }
   if (res.status === 429) {
-    return { ok: false, code: "rate_limited", error: "BALLDONTLIE rate limit reached. Try again shortly." };
+    return { ok: false, code: "rate_limited", error: "BALLDONTLIE rate limit reached. Try again in a minute." };
   }
   if (!res.ok) {
     return { ok: false, code: "unavailable", error: `BALLDONTLIE returned HTTP ${res.status}.` };
   }
-
-  let payload: unknown;
   try {
-    payload = await res.json();
+    return { ok: true, data: await res.json() };
   } catch {
-    return { ok: false, code: "unavailable", error: "BALLDONTLIE returned invalid JSON." };
+    return { ok: false, code: "unavailable", error: "BALLDONTLIE returned invalid data." };
+  }
+}
+
+// ============================================================================
+// NBA
+// ============================================================================
+
+export async function callBalldontlieLive(): Promise<FetchResult<NormalizedLiveGame[]>> {
+  const apiKey = nbaKey();
+  if (!apiKey) {
+    return { ok: false, code: "no_key", error: "The NBA score feed is not configured on the server." };
   }
 
-  const root = payload as { data?: unknown[] } | null;
+  const result = await callProvider(`${NBA_BASE}/box_scores/live`, apiKey);
+  if (!result.ok) return result;
+
+  const root = result.data as { data?: unknown[] } | null;
   const list = Array.isArray(root?.data) ? root!.data! : [];
-  const normalized: NormalizedLiveGame[] = list
-    .map((item) => normalizeBoxScore(item))
+  const normalized = list
+    .map((item) => normalizeNbaBoxScore(item))
     .filter((g): g is NormalizedLiveGame => g !== null);
 
   if (normalized.length === 0) {
@@ -60,7 +81,7 @@ export async function callBalldontlieLive(): Promise<FetchResult<NormalizedLiveG
   return { ok: true, data: normalized };
 }
 
-function normalizeBoxScore(item: unknown): NormalizedLiveGame | null {
+function normalizeNbaBoxScore(item: unknown): NormalizedLiveGame | null {
   if (!item || typeof item !== "object") return null;
   const obj = item as Record<string, unknown>;
   const home = (obj.home_team ?? null) as Record<string, unknown> | null;
@@ -76,11 +97,7 @@ function normalizeBoxScore(item: unknown): NormalizedLiveGame | null {
 
   const period = typeof obj.period === "number" ? obj.period : null;
   const gameClock =
-    typeof obj.time === "string"
-      ? obj.time
-      : typeof obj.clock === "string"
-        ? obj.clock
-        : null;
+    typeof obj.time === "string" ? obj.time : typeof obj.clock === "string" ? obj.clock : null;
   const gameStatus =
     typeof obj.status === "string"
       ? obj.status
@@ -88,7 +105,15 @@ function normalizeBoxScore(item: unknown): NormalizedLiveGame | null {
         ? obj.game_status
         : null;
 
+  const lowered = (gameStatus ?? "").toLowerCase();
+  const state: LiveGameState = lowered.includes("final")
+    ? "final"
+    : lowered.includes("scheduled") || lowered.includes("pre")
+      ? "scheduled"
+      : "in_progress";
+
   return {
+    sport: "NBA",
     external_game_id: externalId,
     home_team_id: homeId,
     home_team_name: String(home.full_name ?? home.name ?? ""),
@@ -106,13 +131,87 @@ function normalizeBoxScore(item: unknown): NormalizedLiveGame | null {
     period,
     game_clock: gameClock,
     game_status: gameStatus,
+    status_state: state,
+    start_time: typeof obj.date === "string" ? obj.date : null,
   };
 }
 
-export async function runSync(
-  gameId: string,
-  source: "host" | "cron" | "manual" = "host",
-): Promise<{
+// ============================================================================
+// NFL
+// ============================================================================
+
+function isoDate(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Upcoming/current NFL games: today plus the next two weeks, all season
+ * types. One filtered request per page — never a whole-season download.
+ */
+export async function fetchUpcomingNflSchedule(daysAhead = 14): Promise<FetchResult<NormalizedLiveGame[]>> {
+  const apiKey = nflKey();
+  if (!apiKey) {
+    return { ok: false, code: "no_key", error: "The NFL score feed is not configured on the server." };
+  }
+
+  const params = new URLSearchParams();
+  const today = new Date();
+  for (let i = 0; i <= daysAhead; i++) {
+    const d = new Date(today.getTime() + i * 86_400_000);
+    params.append("dates[]", isoDate(d));
+  }
+  for (const st of [1, 2, 3]) params.append("season_types[]", String(st));
+  params.set("per_page", "100");
+
+  const collected: NormalizedLiveGame[] = [];
+  let cursor: string | null = null;
+  // Cursor pagination, hard-capped so a bad response can't loop.
+  for (let page = 0; page < 5; page++) {
+    const url = `${NFL_BASE}/games?${params.toString()}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+    const res = await callProvider(url, apiKey);
+    if (!res.ok) return res;
+    const root = res.data as { data?: unknown[]; meta?: { next_cursor?: unknown } } | null;
+    const list = Array.isArray(root?.data) ? root!.data! : [];
+    for (const item of list) {
+      const g = normalizeNflGame(item);
+      if (!g) continue;
+      if (g.status_state === "canceled" || g.status_state === "abandoned") continue;
+      collected.push(g);
+    }
+    const next = root?.meta?.next_cursor;
+    cursor = next === undefined || next === null || next === "" ? null : String(next);
+    if (!cursor) break;
+  }
+
+  collected.sort((a, b) => (a.start_time ?? "").localeCompare(b.start_time ?? ""));
+
+  if (collected.length === 0) {
+    return { ok: false, code: "no_live_games", error: "No NFL games scheduled in the next two weeks." };
+  }
+  return { ok: true, data: collected };
+}
+
+/** Fetch one exact NFL game by provider id. */
+export async function fetchNflGameById(externalId: string): Promise<FetchResult<NormalizedLiveGame>> {
+  const apiKey = nflKey();
+  if (!apiKey) {
+    return { ok: false, code: "no_key", error: "The NFL score feed is not configured on the server." };
+  }
+  const res = await callProvider(`${NFL_BASE}/games/${encodeURIComponent(externalId)}`, apiKey);
+  if (!res.ok) return res;
+  const root = res.data as { data?: unknown } | null;
+  const g = normalizeNflGame(root?.data ?? root);
+  if (!g) {
+    return { ok: false, code: "no_live_games", error: "That NFL game is no longer available upstream." };
+  }
+  return { ok: true, data: g };
+}
+
+// ============================================================================
+// Shared sync
+// ============================================================================
+
+export type SyncResult = {
   synced: boolean;
   reason?: string;
   home_score?: number;
@@ -120,17 +219,34 @@ export async function runSync(
   period?: number | null;
   game_clock?: string | null;
   game_status?: string | null;
-}> {
+  status_state?: LiveGameState;
+};
+
+export async function runSync(
+  gameId: string,
+  source: "host" | "cron" | "manual" = "host",
+): Promise<SyncResult> {
   const now = Date.now();
   const last = lastSyncByGame.get(gameId) ?? 0;
   if (now - last < MIN_SYNC_INTERVAL_MS) {
     return { synced: false, reason: "Skipped — synced very recently." };
   }
+  if (inFlight.has(gameId)) {
+    return { synced: false, reason: "Skipped — a sync is already running." };
+  }
+  inFlight.add(gameId);
+  try {
+    return await doSync(gameId, source);
+  } finally {
+    inFlight.delete(gameId);
+  }
+}
 
+async function doSync(gameId: string, source: string): Promise<SyncResult> {
   const { data: g, error: gErr } = await supabaseAdmin
     .from("games")
     .select(
-      "id, external_provider, external_game_id, period, home_score, away_score, home_team, away_team, external_home_team_id, external_away_team_id, external_home_team_name, external_away_team_name",
+      "id, sport, external_provider, external_game_id, period, home_score, away_score, home_team, away_team, external_home_team_id, external_away_team_id, external_home_team_name, external_away_team_name",
     )
     .eq("id", gameId)
     .maybeSingle();
@@ -141,27 +257,36 @@ export async function runSync(
     return { synced: false, reason: "No live provider connected." };
   }
 
-  const result = await callBalldontlieLive();
-  if (!result.ok) {
-    await supabaseAdmin
-      .from("games")
-      .update({ last_score_sync_error: result.error, last_score_sync_at: new Date().toISOString() })
-      .eq("id", gameId);
-    return { synced: false, reason: result.error };
+  const sport: SportKey = (g.sport ?? "NBA").toUpperCase() === "NFL" ? "NFL" : "NBA";
+
+  let match: NormalizedLiveGame | null = null;
+  let failure: string | null = null;
+
+  if (sport === "NFL") {
+    const res = await fetchNflGameById(g.external_game_id);
+    if (res.ok) match = res.data;
+    else failure = res.error;
+  } else {
+    const res = await callBalldontlieLive();
+    if (!res.ok) failure = res.error;
+    else {
+      match = res.data.find((x) => x.external_game_id === g.external_game_id) ?? null;
+      if (!match) failure = "No matching live game found upstream (it may have ended).";
+    }
   }
 
-  const match = result.data.find((x) => x.external_game_id === g.external_game_id);
   if (!match) {
-    const msg = "No matching live game found upstream (it may have ended).";
     await supabaseAdmin
       .from("games")
-      .update({ last_score_sync_error: msg, last_score_sync_at: new Date().toISOString() })
+      .update({
+        last_score_sync_error: failure ?? "Upstream game unavailable.",
+        last_score_sync_at: new Date().toISOString(),
+      })
       .eq("id", gameId);
-    return { synced: false, reason: msg };
+    return { synced: false, reason: failure ?? "Upstream game unavailable." };
   }
 
-  const upstreamStatus = (match.game_status ?? "").toLowerCase();
-  const completed = upstreamStatus.includes("final");
+  const completed = match.status_state === "final";
 
   // Home/Away orientation guard.
   const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().trim();
@@ -202,7 +327,12 @@ export async function runSync(
       last_score_sync_error: null,
       ...(typeof match.period === "number" ? { quarter: match.period } : {}),
       ...(match.game_clock ? { clock: match.game_clock } : {}),
-      ...(completed ? { status: "completed" as const } : { status: "live" as const }),
+      // Only 'final' completes the game — postponed/delayed/suspended stay live.
+      ...(completed
+        ? { status: "completed" as const }
+        : match.status_state === "in_progress"
+          ? { status: "live" as const }
+          : {}),
     })
     .eq("id", gameId);
   if (updErr) {
@@ -210,19 +340,11 @@ export async function runSync(
   }
 
   const changed =
-    g.home_score !== finalHomeScore ||
-    g.away_score !== finalAwayScore ||
-    g.period !== match.period;
+    g.home_score !== finalHomeScore || g.away_score !== finalAwayScore || g.period !== match.period;
 
-  if (changed) {
-    console.log(
-      `[score-sync] game=${gameId} src=${source} ${g.home_score}-${g.away_score} -> ${finalHomeScore}-${finalAwayScore} P${match.period ?? "?"} ${new Date().toISOString()}`,
-    );
-  } else {
-    console.log(
-      `[score-sync] game=${gameId} src=${source} no-op (${finalHomeScore}-${finalAwayScore}) ${new Date().toISOString()}`,
-    );
-  }
+  console.log(
+    `[score-sync] game=${gameId} sport=${sport} src=${source} ${changed ? `${g.home_score}-${g.away_score} -> ` : "no-op "}${finalHomeScore}-${finalAwayScore} P${match.period ?? "?"} state=${match.status_state} ${new Date().toISOString()}`,
+  );
 
   if (changed) {
     await supabaseAdmin.from("score_events").insert([
@@ -250,5 +372,6 @@ export async function runSync(
     period: match.period,
     game_clock: match.game_clock,
     game_status: match.game_status,
+    status_state: match.status_state,
   };
 }

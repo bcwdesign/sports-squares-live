@@ -8,9 +8,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Clutch Squares — Play. Compete. Win with friends." },
-      { name: "description", content: "Join or create live NBA Squares games. Play with friends, pick your square, win when your numbers hit." },
+      { name: "description", content: "Join or create live NBA and NFL Squares games. Play with friends, pick your square, win when your numbers hit." },
       { property: "og:title", content: "Clutch Squares — Play. Compete. Win with friends." },
-      { property: "og:description", content: "Join or create live NBA Squares games. Play with friends, pick your square, win when your numbers hit." },
+      { property: "og:description", content: "Join or create live NBA and NFL Squares games. Play with friends, pick your square, win when your numbers hit." },
     ],
   }),
   component: Landing,
@@ -37,15 +37,15 @@ function Landing() {
           <div className="max-w-3xl mx-auto text-center animate-fade-in">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[color:var(--neon-orange)]/40 bg-[color:var(--neon-orange)]/10 text-[color:var(--neon-orange)] font-mono text-[10px] uppercase tracking-widest mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--neon-orange)] animate-pulse" />
-              NBA · Live Now
+              NBA & NFL · Live Now
             </div>
             <h1 className="font-display font-bold text-5xl sm:text-7xl tracking-tight leading-[0.95]">
               <span className="text-[color:var(--neon-blue)]">CLUTCH</span>{" "}
               <span className="text-[color:var(--neon-green)]">SQUARES</span>
-              <span className="sr-only"> — Play NBA Squares with Friends</span>
+              <span className="sr-only"> — Play NBA & NFL Squares with Friends</span>
             </h1>
             <p className="text-muted-foreground mt-5 text-lg sm:text-xl max-w-xl mx-auto">
-              Play NBA Squares with friends. Compete. Win.
+              Play NBA & NFL Squares with friends. Compete. Win.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-8 max-w-md mx-auto">
