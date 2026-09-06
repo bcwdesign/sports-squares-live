@@ -32,6 +32,7 @@ import {
 import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
 import { LIVE_STATE_LABEL } from "@/lib/balldontlie.types";
 import { invokeAuthed } from "@/lib/serverFnClient";
+import { useLiveScoreAutoSync } from "@/hooks/useLiveScoreAutoSync";
 import type { Game } from "@/lib/types";
 
 function sportOf(game: { sport?: string | null }): SportKey {
