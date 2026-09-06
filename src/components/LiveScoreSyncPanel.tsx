@@ -22,15 +22,21 @@ import {
 import { toast } from "sonner";
 import {
   fetchLiveNbaGames,
+  fetchUpcomingNflGames,
   connectLiveScore,
   disconnectLiveScore,
   setAutoSync,
   syncGameScore,
   manualScoreOverride,
 } from "@/lib/balldontlie.functions";
-import type { NormalizedLiveGame } from "@/lib/balldontlie.types";
+import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
 import { invokeAuthed } from "@/lib/serverFnClient";
 import type { Game } from "@/lib/types";
+
+function sportOf(game: { sport?: string | null }): SportKey {
+  return (game.sport ?? "NBA").toUpperCase() === "NFL" ? "NFL" : "NBA";
+}
+
 
 type Props = {
   game: Game & {
