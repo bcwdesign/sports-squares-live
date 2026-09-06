@@ -40,9 +40,12 @@ function AuthPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate({ to: search.redirect || "/dashboard" });
+      const postOAuthPath = sessionStorage.getItem("oauth_redirect_path");
+      sessionStorage.removeItem("oauth_redirect_path");
+      navigate({ to: postOAuthPath || search.redirect || "/dashboard" });
     }
   }, [user, loading, navigate, search.redirect]);
+
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -70,12 +73,16 @@ function AuthPage() {
 
   const google = async () => {
     try {
+      if (search.redirect) {
+        sessionStorage.setItem("oauth_redirect_path", search.redirect);
+      }
       await signInWithGoogle();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Google sign-in failed";
       toast.error(msg);
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col">
