@@ -29,19 +29,37 @@ const VOICE_STYLES = ["Energetic", "Deep Voice", "Funny", "Professional", "Stree
 function defaultIntroScript(name: string, away: string, home: string, personality: string) {
   const preset = getCommentatorByName(personality);
   const role = preset?.description.toLowerCase() ?? "commentator";
-  return `Welcome to ${name}! I'm ${personality}, your ${role} for tonight, calling every bucket as the ${away} take on the ${home}. Grab your square, lock in, and let's run it.`;
+  return `Welcome to ${name}! I'm ${personality}, your ${role} for tonight, calling every score as the ${away} take on the ${home}. Grab your square, lock in, and let's run it.`;
+}
+
+const SPORT_DEFAULTS: Record<SportKey, { name: string; away: string; home: string }> = {
+  NBA: { name: "NBA Finals Watch Party", away: "Mavericks", home: "Celtics" },
+  NFL: { name: "NFL Watch Party", away: "Eagles", home: "Cowboys" },
+};
+
+/** Convert an ISO timestamp into a value the datetime-local input accepts. */
+function toLocalInputValue(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function CreateGame() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState("NBA Finals Watch Party");
+  const [sport, setSport] = useState<SportKey>("NBA");
+  const [name, setName] = useState(SPORT_DEFAULTS.NBA.name);
+  const [nameEdited, setNameEdited] = useState(false);
   const [homeTeam, setHomeTeam] = useState("Celtics");
   const [awayTeam, setAwayTeam] = useState("Mavericks");
   const [dateTime, setDateTime] = useState("");
   const [maxSquares, setMaxSquares] = useState(10);
   const [entryLabel, setEntryLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [apiGame, setApiGame] = useState<NormalizedLiveGame | null>(null);
+
 
   // Prize Mode state (optional, disabled by default)
   const [prizeEnabled, setPrizeEnabled] = useState(false);
