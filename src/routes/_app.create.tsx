@@ -198,23 +198,88 @@ function CreateGame() {
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
         <form onSubmit={submit} className="space-y-5">
           <FieldGroup label="Game name">
-            <Input value={name} onChange={setName} placeholder="NBA Finals Watch Party" maxLength={60} required />
+            <Input
+              value={name}
+              onChange={(v) => {
+                setName(v);
+                setNameEdited(true);
+              }}
+              placeholder={SPORT_DEFAULTS[sport].name}
+              maxLength={60}
+              required
+            />
           </FieldGroup>
 
           <FieldGroup label="Sport">
-            <div className="px-4 py-3 rounded-xl border border-border bg-[color:var(--surface)] font-display font-bold">
-              🏀 NBA
+            <div className="grid grid-cols-2 gap-3" role="group" aria-label="Choose sport">
+              {(["NBA", "NFL"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => changeSport(s)}
+                  aria-pressed={sport === s}
+                  className={`px-4 py-3 rounded-xl border font-display font-bold flex items-center justify-center gap-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--neon-blue)] ${
+                    sport === s
+                      ? "bg-[color:var(--neon-blue)] border-[color:var(--neon-blue)] text-background"
+                      : "bg-[color:var(--surface)] border-border hover:border-[color:var(--neon-blue)]/60"
+                  }`}
+                >
+                  <span aria-hidden="true">{s === "NBA" ? "🏀" : "🏈"}</span> {s}
+                </button>
+              ))}
             </div>
           </FieldGroup>
 
+          {sport === "NFL" && (
+            <NflGamePicker
+              selectedId={apiGame?.external_game_id ?? null}
+              onSelect={selectApiGame}
+            />
+          )}
+
+          {apiGame && (
+            <div className="rounded-xl border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 px-4 py-3 flex items-center justify-between gap-3">
+              <div className="text-sm">
+                <span className="font-display font-bold">
+                  {apiGame.away_team_abbreviation} @ {apiGame.home_team_abbreviation}
+                </span>
+                <div className="text-xs text-muted-foreground">
+                  Live scores connected — teams and kickoff are locked to this matchup.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={clearApiGame}
+                className="shrink-0 px-3 py-1.5 rounded-md border border-border text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-foreground/40 transition"
+              >
+                Edit manually
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <FieldGroup label="Away team">
-              <Input value={awayTeam} onChange={setAwayTeam} placeholder="Mavericks" maxLength={30} required />
+              <Input
+                value={awayTeam}
+                onChange={setAwayTeam}
+                placeholder={SPORT_DEFAULTS[sport].away}
+                maxLength={30}
+                required
+                readOnly={!!apiGame}
+              />
             </FieldGroup>
             <FieldGroup label="Home team">
-              <Input value={homeTeam} onChange={setHomeTeam} placeholder="Celtics" maxLength={30} required />
+              <Input
+                value={homeTeam}
+                onChange={setHomeTeam}
+                placeholder={SPORT_DEFAULTS[sport].home}
+                maxLength={30}
+                required
+                readOnly={!!apiGame}
+              />
             </FieldGroup>
           </div>
+
 
           <FieldGroup label="Game date & time (optional)">
             <input
