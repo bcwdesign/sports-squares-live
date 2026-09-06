@@ -150,7 +150,7 @@ function TopBranding({ game }: { game: Game }) {
         <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
         <div className="flex flex-col items-center min-w-[80px]">
           <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-            {game.status === "completed" ? "Final" : `Q${game.quarter}`}
+            {game.status === "completed" ? "Final" : periodShort(game)}
           </div>
           <div className="font-mono font-black text-xl text-[color:var(--neon-orange)] tabular-nums">
             {game.status === "completed" ? "—" : game.clock}
@@ -164,7 +164,7 @@ function TopBranding({ game }: { game: Game }) {
         <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
         <div className="flex flex-col items-center min-w-[120px]">
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            {game.status === "completed" ? "Final" : `Quarter ${game.quarter}`}
+            {game.status === "completed" ? "Final" : periodLong(game)}
           </div>
           <div className="font-mono font-black text-3xl text-[color:var(--neon-orange)] tabular-nums">
             {game.status === "completed" ? "—" : game.clock}
@@ -333,7 +333,7 @@ function WinnerPanel({
             hasWinner ? "bg-[color:var(--neon-orange)] text-background" : "bg-muted text-muted-foreground",
           )}
         >
-          Q{game.quarter}
+          {periodShort(game)}
         </div>
       </div>
 
