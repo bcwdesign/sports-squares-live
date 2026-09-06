@@ -145,7 +145,7 @@ export function LiveScoreSyncPanel({ game }: Props) {
   };
 
   const onDisconnect = async () => {
-    if (!window.confirm("Disconnect the live NBA feed? Score control returns to manual.")) return;
+    if (!window.confirm(`Disconnect the live ${sport} feed? Score control returns to manual.`)) return;
     setDisconnecting(true);
     try {
       await invokeAuthed(disconnectLiveScore, { gameId: game.id });
