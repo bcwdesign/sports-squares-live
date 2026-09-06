@@ -34,6 +34,15 @@ function AuthenticatedOverlayPage() {
   const [replayKey, setReplayKey] = useState(0);
   const [showHud, setShowHud] = useState(true);
 
+  // Keep the NBA/NFL live feed flowing while the host watches the overlay
+  // full screen — this is what advances the quarter and flips the game to
+  // "completed", which in turn fires the quarter + final HeyGen recaps below.
+  useLiveScoreAutoSync(
+    game as Parameters<typeof useLiveScoreAutoSync>[0],
+    !!user && !!game && game.host_id === user.id,
+  );
+
+
   // Auto-hide the floating HUD after a few seconds of no mouse movement so it
   // doesn't get in the way during the watch party.
   useEffect(() => {
