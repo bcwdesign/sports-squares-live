@@ -189,7 +189,7 @@ export function LiveScoreSyncPanel({ game }: Props) {
             onClick={() => setConnectOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-blue)]/40 bg-[color:var(--neon-blue)]/10 text-[color:var(--neon-blue)] text-[11px] font-mono uppercase tracking-widest hover:bg-[color:var(--neon-blue)]/20 transition"
           >
-            <Plug className="w-3.5 h-3.5" /> Connect NBA Live Score
+            <Plug className="w-3.5 h-3.5" /> Connect {sport} Live Score
           </button>
         ) : (
           <>
