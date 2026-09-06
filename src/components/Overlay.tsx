@@ -134,7 +134,14 @@ function TopBranding({ game }: { game: Game }) {
             <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-destructive animate-pulse" />
             <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest text-destructive font-bold">Live</span>
           </div>
-          <div className="hidden sm:block font-mono text-xs uppercase tracking-widest text-muted-foreground">{game.sport}</div>
+          <div className="hidden sm:flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <span>{game.sport}</span>
+            {feedConnected(game) && (
+              <span className="px-2 py-0.5 rounded-full border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[10px] text-[color:var(--neon-green)]">
+                Auto Feed
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
