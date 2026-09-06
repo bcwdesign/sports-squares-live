@@ -36,7 +36,7 @@ function toState(raw: unknown, statusText: string): LiveGameState {
 /** Only accept a genuine MM:SS clock; never invent one. */
 function extractClock(statusText: string): string | null {
   const m = statusText.match(/\b(\d{1,2}):([0-5]\d)\b/);
-  return m ? `${m[1]}:${m[2]}` : null;
+  return m ? `${Number(m[1])}:${m[2]}` : null;
 }
 
 function num(v: unknown): number | null {
