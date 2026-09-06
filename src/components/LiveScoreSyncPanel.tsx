@@ -382,7 +382,11 @@ function ConnectModal({
                           {g.home_team_abbreviation || g.home_team_name}
                         </div>
                         <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
-                          {g.game_status ?? "Live"}
+                          {g.week ? `Week ${g.week} · ` : ""}
+                          {g.start_time
+                            ? `${new Date(g.start_time).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · `
+                            : ""}
+                          {g.game_status || LIVE_STATE_LABEL[g.status_state]}
                           {g.period ? ` · Q${g.period}` : ""}
                           {g.game_clock ? ` · ${g.game_clock}` : ""}
                         </div>
