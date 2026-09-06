@@ -9,6 +9,9 @@ import { generateInviteCode } from "@/lib/types";
 import { invokeAuthed } from "@/lib/serverFnClient";
 import { generateHeyGenCommentatorVideo } from "@/lib/commentator.functions";
 import { COMMENTATORS, COMMENTATOR_NAMES, getCommentatorByName } from "@/lib/commentators";
+import { NflGamePicker } from "@/components/NflGamePicker";
+import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
+
 
 export const Route = createFileRoute("/_app/create")({
   head: () => ({
