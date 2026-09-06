@@ -94,6 +94,22 @@ export function Overlay({ game, squares, replayKey = 0, rightPanelTop }: Overlay
   );
 }
 
+/** Short period label: OT past regulation, otherwise Q1–Q4. */
+function periodShort(game: Game): string {
+  return game.quarter >= 5 ? "OT" : `Q${game.quarter}`;
+}
+
+/** Long period label used on the desktop scoreboard. */
+function periodLong(game: Game): string {
+  return game.quarter >= 5 ? "Overtime" : `Quarter ${game.quarter}`;
+}
+
+/** True when this game is wired to a BALLDONTLIE live feed (NBA or NFL). */
+function feedConnected(game: Game): boolean {
+  const g = game as Game & { external_provider?: string | null; external_game_id?: string | null };
+  return g.external_provider === "balldontlie" && !!g.external_game_id;
+}
+
 function TopBranding({ game }: { game: Game }) {
   return (
     <div className="relative px-4 md:px-8 pt-4 md:pt-6 pb-3 flex flex-col md:block gap-3">
@@ -118,7 +134,14 @@ function TopBranding({ game }: { game: Game }) {
             <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-destructive animate-pulse" />
             <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest text-destructive font-bold">Live</span>
           </div>
-          <div className="hidden sm:block font-mono text-xs uppercase tracking-widest text-muted-foreground">{game.sport}</div>
+          <div className="hidden sm:flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <span>{game.sport}</span>
+            {feedConnected(game) && (
+              <span className="px-2 py-0.5 rounded-full border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[10px] text-[color:var(--neon-green)]">
+                Auto Feed
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -127,7 +150,7 @@ function TopBranding({ game }: { game: Game }) {
         <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
         <div className="flex flex-col items-center min-w-[80px]">
           <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-            {game.status === "completed" ? "Final" : `Q${game.quarter}`}
+            {game.status === "completed" ? "Final" : periodShort(game)}
           </div>
           <div className="font-mono font-black text-xl text-[color:var(--neon-orange)] tabular-nums">
             {game.status === "completed" ? "—" : game.clock}
@@ -141,7 +164,7 @@ function TopBranding({ game }: { game: Game }) {
         <ScoreSide team={game.away_team} score={game.away_score} color="var(--neon-blue)" align="right" />
         <div className="flex flex-col items-center min-w-[120px]">
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            {game.status === "completed" ? "Final" : `Quarter ${game.quarter}`}
+            {game.status === "completed" ? "Final" : periodLong(game)}
           </div>
           <div className="font-mono font-black text-3xl text-[color:var(--neon-orange)] tabular-nums">
             {game.status === "completed" ? "—" : game.clock}
@@ -310,7 +333,7 @@ function WinnerPanel({
             hasWinner ? "bg-[color:var(--neon-orange)] text-background" : "bg-muted text-muted-foreground",
           )}
         >
-          Q{game.quarter}
+          {periodShort(game)}
         </div>
       </div>
 

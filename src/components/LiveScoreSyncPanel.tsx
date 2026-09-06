@@ -32,6 +32,7 @@ import {
 import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
 import { LIVE_STATE_LABEL } from "@/lib/balldontlie.types";
 import { invokeAuthed } from "@/lib/serverFnClient";
+import { useLiveScoreAutoSync } from "@/hooks/useLiveScoreAutoSync";
 import type { Game } from "@/lib/types";
 
 function sportOf(game: { sport?: string | null }): SportKey {
@@ -78,43 +79,10 @@ export function LiveScoreSyncPanel({ game }: Props) {
   const [disconnecting, setDisconnecting] = useState(false);
 
   // ---- Auto-sync polling (host only) --------------------------------------
-  // 10s in progress, 60s scheduled/pre-game, 5min for postponed/delayed/
-  // suspended, off for final. Requests never overlap.
-  useEffect(() => {
-    if (!connected || !autoSyncOn) return;
+  // Shared with the overlay screen so the feed keeps flowing there too.
+  useLiveScoreAutoSync(game);
 
-    const status = (game.game_status ?? "").toLowerCase();
-    if (status.includes("final")) return; // stop
-    if (status.includes("cancel") || status.includes("abandon")) return;
 
-    const stalled =
-      status.includes("postpon") || status.includes("delay") || status.includes("suspend");
-    const intervalMs = stalled
-      ? 300_000
-      : status.includes("scheduled") || status.includes("pre") || status === ""
-        ? 60_000
-        : 10_000;
-
-    let cancelled = false;
-    let running = false;
-    const tick = async () => {
-      if (cancelled || running) return;
-      running = true;
-      try {
-        await invokeAuthed(syncGameScore, { gameId: game.id });
-      } catch (e) {
-        // Silent — error surfaces via last_score_sync_error on the row.
-        console.warn("auto-sync failed:", e);
-      } finally {
-        running = false;
-      }
-    };
-    const id = setInterval(tick, intervalMs);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [connected, autoSyncOn, game.id, game.game_status]);
 
 
   const onSyncNow = async () => {
