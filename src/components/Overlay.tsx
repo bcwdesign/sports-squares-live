@@ -94,6 +94,22 @@ export function Overlay({ game, squares, replayKey = 0, rightPanelTop }: Overlay
   );
 }
 
+/** Short period label: OT past regulation, otherwise Q1–Q4. */
+function periodShort(game: Game): string {
+  return game.quarter >= 5 ? "OT" : `Q${game.quarter}`;
+}
+
+/** Long period label used on the desktop scoreboard. */
+function periodLong(game: Game): string {
+  return game.quarter >= 5 ? "Overtime" : `Quarter ${game.quarter}`;
+}
+
+/** True when this game is wired to a BALLDONTLIE live feed (NBA or NFL). */
+function feedConnected(game: Game): boolean {
+  const g = game as Game & { external_provider?: string | null; external_game_id?: string | null };
+  return g.external_provider === "balldontlie" && !!g.external_game_id;
+}
+
 function TopBranding({ game }: { game: Game }) {
   return (
     <div className="relative px-4 md:px-8 pt-4 md:pt-6 pb-3 flex flex-col md:block gap-3">
