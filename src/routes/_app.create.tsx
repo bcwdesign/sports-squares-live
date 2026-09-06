@@ -85,6 +85,29 @@ function CreateGame() {
   const introScriptValue =
     commIntroEdited ? commIntro : defaultIntroScript(name, awayTeam, homeTeam, commPersonality);
 
+  const changeSport = (next: SportKey) => {
+    if (next === sport) return;
+    setSport(next);
+    setApiGame(null);
+    const d = SPORT_DEFAULTS[next];
+    setHomeTeam(d.home);
+    setAwayTeam(d.away);
+    setDateTime("");
+    if (!nameEdited) setName(d.name);
+  };
+
+  const selectApiGame = (g: NormalizedLiveGame) => {
+    setApiGame(g);
+    setHomeTeam(g.home_team_name || g.home_team_abbreviation);
+    setAwayTeam(g.away_team_name || g.away_team_abbreviation);
+    setDateTime(toLocalInputValue(g.start_time));
+    if (!nameEdited) {
+      setName(`${g.away_team_abbreviation || g.away_team_name} @ ${g.home_team_abbreviation || g.home_team_name} Squares`);
+    }
+  };
+
+  const clearApiGame = () => setApiGame(null);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -94,7 +117,7 @@ function CreateGame() {
       const insertPayload: Record<string, unknown> = {
         host_id: user.id,
         name: name.trim(),
-        sport: "NBA",
+        sport,
         home_team: homeTeam.trim(),
         away_team: awayTeam.trim(),
         game_date_time: dateTime ? new Date(dateTime).toISOString() : null,
@@ -108,6 +131,21 @@ function CreateGame() {
         prize_timing: prizeEnabled ? prizeTiming : null,
         requires_age_verification: prizeEnabled && requiresAgeVerification,
       };
+
+      if (apiGame) {
+        Object.assign(insertPayload, {
+          external_provider: "balldontlie",
+          external_game_id: apiGame.external_game_id,
+          external_home_team_id: apiGame.home_team_id || null,
+          external_away_team_id: apiGame.away_team_id || null,
+          external_home_team_name: apiGame.home_team_name || null,
+          external_away_team_name: apiGame.away_team_name || null,
+          game_status: apiGame.game_status,
+          score_source: "api",
+          auto_sync_enabled: true,
+        });
+      }
+
 
       if (commentatorEnabled) {
         const preset = getCommentatorByName(commPersonality);
