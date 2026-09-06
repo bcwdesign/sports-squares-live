@@ -30,6 +30,7 @@ import {
   manualScoreOverride,
 } from "@/lib/balldontlie.functions";
 import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
+import { LIVE_STATE_LABEL } from "@/lib/balldontlie.types";
 import { invokeAuthed } from "@/lib/serverFnClient";
 import type { Game } from "@/lib/types";
 
