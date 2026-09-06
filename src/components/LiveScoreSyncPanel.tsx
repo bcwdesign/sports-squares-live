@@ -55,6 +55,7 @@ type Props = {
 };
 
 export function LiveScoreSyncPanel({ game }: Props) {
+  const sport = sportOf(game);
   const connected =
     game.external_provider === "balldontlie" && !!game.external_game_id;
   const autoSyncOn = !!game.auto_sync_enabled;
@@ -76,28 +77,35 @@ export function LiveScoreSyncPanel({ game }: Props) {
   const [disconnecting, setDisconnecting] = useState(false);
 
   // ---- Auto-sync polling (host only) --------------------------------------
-  // 10s when status is live, 60s for scheduled/pre-game, off for final.
-  // Determined from the upstream game_status string (BALLDONTLIE returns
-  // strings like "Final", "Halftime", "Q3 04:21", etc.).
+  // 10s in progress, 60s scheduled/pre-game, 5min for postponed/delayed/
+  // suspended, off for final. Requests never overlap.
   useEffect(() => {
     if (!connected || !autoSyncOn) return;
 
     const status = (game.game_status ?? "").toLowerCase();
     if (status.includes("final")) return; // stop
+    if (status.includes("cancel") || status.includes("abandon")) return;
 
-    const intervalMs =
-      status.includes("scheduled") || status.includes("pre")
+    const stalled =
+      status.includes("postpon") || status.includes("delay") || status.includes("suspend");
+    const intervalMs = stalled
+      ? 300_000
+      : status.includes("scheduled") || status.includes("pre") || status === ""
         ? 60_000
         : 10_000;
 
     let cancelled = false;
+    let running = false;
     const tick = async () => {
-      if (cancelled) return;
+      if (cancelled || running) return;
+      running = true;
       try {
         await invokeAuthed(syncGameScore, { gameId: game.id });
       } catch (e) {
         // Silent — error surfaces via last_score_sync_error on the row.
         console.warn("auto-sync failed:", e);
+      } finally {
+        running = false;
       }
     };
     const id = setInterval(tick, intervalMs);
@@ -106,6 +114,7 @@ export function LiveScoreSyncPanel({ game }: Props) {
       clearInterval(id);
     };
   }, [connected, autoSyncOn, game.id, game.game_status]);
+
 
   const onSyncNow = async () => {
     setSyncing(true);
