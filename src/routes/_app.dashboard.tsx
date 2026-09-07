@@ -30,18 +30,7 @@ function Dashboard() {
   const [showJoin, setShowJoin] = useState(false);
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "super_admin")
-      .maybeSingle()
-      .then(({ data }) => setIsSuperAdmin(!!data));
-  }, [user]);
+  const { isSuperAdmin, canHost } = useUserRoles();
 
   useEffect(() => {
     if (!user) return;
