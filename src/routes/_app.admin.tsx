@@ -6,6 +6,7 @@ import { invokeAuthed } from "@/lib/serverFnClient";
 import { getAdminOverview } from "@/lib/admin.functions";
 import type { AdminOverview } from "@/lib/admin.types";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { HostManagement } from "@/components/admin/HostManagement";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/admin")({
@@ -25,7 +26,7 @@ function AdminPage() {
   const [data, setData] = useState<AdminOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
-  const [tab, setTab] = useState<"games" | "users" | "winners">("games");
+  const [tab, setTab] = useState<"games" | "users" | "winners" | "hosts">("games");
 
   useEffect(() => {
     if (!user) return;
@@ -102,7 +103,7 @@ function AdminPage() {
           <>
             <StatsGrid stats={data.stats} />
 
-            <div className="mt-8 mb-4 flex items-center gap-2">
+            <div className="mt-8 mb-4 flex flex-wrap items-center gap-2">
               <TabButton active={tab === "games"} onClick={() => setTab("games")}>
                 <Gamepad2 className="w-3.5 h-3.5 inline mr-1.5" /> Games ({data.games.length})
               </TabButton>
@@ -112,11 +113,15 @@ function AdminPage() {
               <TabButton active={tab === "winners"} onClick={() => setTab("winners")}>
                 <Trophy className="w-3.5 h-3.5 inline mr-1.5" /> Winners ({data.winners.length})
               </TabButton>
+              <TabButton active={tab === "hosts"} onClick={() => setTab("hosts")}>
+                <ShieldCheck className="w-3.5 h-3.5 inline mr-1.5" /> Hosts
+              </TabButton>
             </div>
 
             {tab === "games" && <GamesTable games={data.games} />}
             {tab === "users" && <UsersTable users={data.users} />}
             {tab === "winners" && <WinnersTable winners={data.winners} />}
+            {tab === "hosts" && <HostManagement />}
           </>
         )}
       </main>

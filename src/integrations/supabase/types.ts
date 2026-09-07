@@ -353,6 +353,33 @@ export type Database = {
           },
         ]
       }
+      role_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          performed_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          performed_by?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          performed_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       score_drafts: {
         Row: {
           away: string
@@ -549,10 +576,15 @@ export type Database = {
     Functions: {
       admin_recent_winners: { Args: never; Returns: Json }
       admin_stats: { Args: never; Returns: Json }
+      can_admin_game: {
+        Args: { _game_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_claim_square: {
         Args: { _game_id: string; _user_id: string }
         Returns: boolean
       }
+      can_host: { Args: { _user_id: string }; Returns: boolean }
       get_overlay_by_token: { Args: { _token: string }; Returns: Json }
       has_role: {
         Args: {
@@ -571,7 +603,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "super_admin" | "admin" | "user"
+      app_role: "super_admin" | "admin" | "user" | "host"
       game_status: "lobby" | "locked" | "live" | "completed"
     }
     CompositeTypes: {
@@ -700,7 +732,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "admin", "user"],
+      app_role: ["super_admin", "admin", "user", "host"],
       game_status: ["lobby", "locked", "live", "completed"],
     },
   },
