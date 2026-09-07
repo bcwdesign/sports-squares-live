@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRoles } from "@/hooks/useUserRoles";
 import { NeonButton } from "@/components/NeonButton";
 import { Plus, KeyRound, LogOut, Trophy, UserCog, ShieldCheck } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
