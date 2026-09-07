@@ -2,8 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRoles } from "@/hooks/useUserRoles";
 import { NeonButton } from "@/components/NeonButton";
-import { ArrowLeft, Mic } from "lucide-react";
+import { ArrowLeft, Mic, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { generateInviteCode } from "@/lib/types";
 import { invokeAuthed } from "@/lib/serverFnClient";
@@ -48,6 +49,7 @@ function toLocalInputValue(iso: string | null) {
 
 function CreateGame() {
   const { user } = useAuth();
+  const { canHost, loading: rolesLoading } = useUserRoles();
   const navigate = useNavigate();
   const [sport, setSport] = useState<SportKey>("NBA");
   const [name, setName] = useState(SPORT_DEFAULTS.NBA.name);
@@ -183,6 +185,31 @@ function CreateGame() {
       setSubmitting(false);
     }
   };
+
+  if (rolesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!canHost) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md text-center rounded-xl border border-border bg-[color:var(--surface)] p-8">
+          <ShieldAlert className="w-10 h-10 mx-auto mb-3 text-[color:var(--neon-orange)]" aria-hidden="true" />
+          <h1 className="font-display font-bold text-2xl mb-2">Hosting access required</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            You can join and play in existing games. Creating a new Squares game currently requires Host access.
+          </p>
+          <Link to="/dashboard">
+            <NeonButton variant="ghost" className="w-full">Back to dashboard</NeonButton>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

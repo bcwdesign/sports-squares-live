@@ -172,11 +172,20 @@ function Dashboard() {
 
         {/* Primary CTAs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-          <Link to="/create">
-            <NeonButton variant="green" className="w-full !py-4">
-              <Plus className="w-4 h-4 inline mr-2" /> Create New Game
-            </NeonButton>
-          </Link>
+          {canHost ? (
+            <Link to="/create">
+              <NeonButton variant="green" className="w-full !py-4">
+                <Plus className="w-4 h-4 inline mr-2" /> Create New Game
+              </NeonButton>
+            </Link>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-background/30 p-4 text-center">
+              <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Hosting access required</div>
+              <p className="text-xs text-muted-foreground">
+                You can join and play in existing games. Creating a new Squares game requires Host access.
+              </p>
+            </div>
+          )}
           <button onClick={() => setShowJoin((v) => !v)}>
             <NeonButton variant="ghost" className="w-full !py-4">
               <KeyRound className="w-4 h-4 inline mr-2" /> Join with Code
