@@ -4,8 +4,8 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import type { Game, Square } from "@/lib/types";
+import { getOverlayByToken } from "@/lib/overlay.functions";
 import { Overlay } from "@/components/Overlay";
 
 export const Route = createFileRoute("/overlay/$token")({
