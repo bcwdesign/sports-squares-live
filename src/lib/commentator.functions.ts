@@ -241,12 +241,14 @@ export const refreshHeyGenVideoUrl = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ gameId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: isMember, error: mErr } = await supabase.rpc("is_game_member", {
-      _game_id: data.gameId,
-      _user_id: userId,
-    });
+    // RLS scopes this select to games the caller hosts or has joined.
+    const { data: memberGame, error: mErr } = await supabase
+      .from("games")
+      .select("id")
+      .eq("id", data.gameId)
+      .maybeSingle();
     if (mErr) throw new Error(mErr.message);
-    if (!isMember) throw new Error("Forbidden");
+    if (!memberGame) throw new Error("Forbidden");
 
     const apiKey = process.env.HEYGEN_API_KEY;
     if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
