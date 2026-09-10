@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { joinGameByCode } from "@/lib/overlay.functions";
+import { invokeAuthed } from "@/lib/serverFnClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
