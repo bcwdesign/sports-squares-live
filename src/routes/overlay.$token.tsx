@@ -25,15 +25,16 @@ function PublicOverlayPage() {
     let active = true;
 
     const fetchOnce = async () => {
-      const { data: payload, error: err } = await supabase.rpc("get_overlay_by_token", {
-        _token: token,
-      });
-      if (!active) return;
-      if (err) {
-        setError(err.message);
+      let payload: OverlayPayload = null;
+      try {
+        payload = (await getOverlayByToken({ data: { token } })) as OverlayPayload;
+      } catch (e) {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : "Could not load watch party");
         setLoading(false);
         return;
       }
+      if (!active) return;
       if (!payload) {
         setError("This overlay link is invalid or has been revoked.");
         setLoading(false);
