@@ -4,8 +4,8 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import type { Game, Square } from "@/lib/types";
+import { getOverlayByToken } from "@/lib/overlay.functions";
 import { Overlay } from "@/components/Overlay";
 
 export const Route = createFileRoute("/overlay/$token")({
@@ -25,15 +25,16 @@ function PublicOverlayPage() {
     let active = true;
 
     const fetchOnce = async () => {
-      const { data: payload, error: err } = await supabase.rpc("get_overlay_by_token", {
-        _token: token,
-      });
-      if (!active) return;
-      if (err) {
-        setError(err.message);
+      let payload: OverlayPayload = null;
+      try {
+        payload = (await getOverlayByToken({ data: { token } })) as OverlayPayload;
+      } catch (e) {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : "Could not load watch party");
         setLoading(false);
         return;
       }
+      if (!active) return;
       if (!payload) {
         setError("This overlay link is invalid or has been revoked.");
         setLoading(false);

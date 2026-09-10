@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { joinGameByCode } from "@/lib/overlay.functions";
+import { invokeAuthed } from "@/lib/serverFnClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -32,25 +33,12 @@ function JoinByCode() {
 
     const join = async () => {
       const code = inviteCode.toUpperCase();
-      const { data: game, error } = await supabase
-        .from("games")
-        .select("*")
-        .eq("invite_code", code)
-        .maybeSingle();
-      if (error || !game) {
-        toast.error("Invalid invite code");
-        navigate({ to: "/dashboard" });
-        return;
-      }
-      setStatus(`Joining ${game.name}...`);
-      const { error: insErr } = await supabase.from("game_players").insert({
-        game_id: game.id,
-        user_id: user.id,
-        display_name: profile.display_name,
-        avatar_url: profile.avatar_url,
-      });
-      if (insErr && !insErr.message.includes("duplicate")) {
-        toast.error(insErr.message);
+      let game: { id: string; name: string; status: string };
+      try {
+        setStatus("Joining game...");
+        game = await invokeAuthed(joinGameByCode, { code });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Invalid invite code");
         navigate({ to: "/dashboard" });
         return;
       }

@@ -8,6 +8,8 @@ import { Plus, KeyRound, LogOut, Trophy, UserCog, ShieldCheck } from "lucide-rea
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
 import type { Game } from "@/lib/types";
+import { joinGameByCode } from "@/lib/overlay.functions";
+import { invokeAuthed } from "@/lib/serverFnClient";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -78,22 +80,7 @@ function Dashboard() {
     if (cleaned.length < 4) return toast.error("Enter a valid code");
     setJoining(true);
     try {
-      const { data: game, error } = await supabase
-        .from("games")
-        .select("*")
-        .eq("invite_code", cleaned)
-        .maybeSingle();
-      if (error) throw error;
-      if (!game) throw new Error("No game found with that code");
-
-      // Insert player (idempotent via unique constraint)
-      const { error: insErr } = await supabase.from("game_players").insert({
-        game_id: game.id,
-        user_id: user.id,
-        display_name: profile.display_name,
-        avatar_url: profile.avatar_url,
-      });
-      if (insErr && !insErr.message.includes("duplicate")) throw insErr;
+      const game = await invokeAuthed(joinGameByCode, { code: cleaned });
 
       toast.success(`Joined ${game.name}`);
       navigate({ to: "/game/$gameId/lobby", params: { gameId: game.id } });
