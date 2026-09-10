@@ -73,7 +73,7 @@ function LobbyPage() {
     if (!target || target.owner_id) return;
 
     if (myCount >= game.max_squares_per_user) {
-      toast.error(`Max ${game.max_squares_per_user} squares per player`);
+      toast.error(`Max ${game.max_squares_per_user} ${game.max_squares_per_user === 1 ? "square" : "squares"} per player`);
       return;
     }
 
