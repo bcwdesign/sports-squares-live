@@ -8,6 +8,8 @@ import { Plus, KeyRound, LogOut, Trophy, UserCog, ShieldCheck } from "lucide-rea
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
 import type { Game } from "@/lib/types";
+import { joinGameByCode } from "@/lib/overlay.functions";
+import { invokeAuthed } from "@/lib/serverFnClient";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
