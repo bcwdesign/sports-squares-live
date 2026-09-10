@@ -318,8 +318,8 @@ function CreateGame() {
           </FieldGroup>
 
           <FieldGroup label="Max squares per player">
-            <div className="grid grid-cols-5 gap-2">
-              {[5, 10, 15, 20, 25].map((n) => (
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+              {[1, 2, 3, 5, 10, 15, 20, 25].map((n) => (
                 <button
                   key={n}
                   type="button"
