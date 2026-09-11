@@ -277,6 +277,6 @@ function AuthenticatedOverlayPage() {
           </button>
         )}
       </div>
-    </>
+    </GameThemeProvider>
   );
 }
