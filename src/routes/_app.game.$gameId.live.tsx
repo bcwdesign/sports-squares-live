@@ -43,6 +43,28 @@ function LivePage() {
   const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
 
+  // Host-editable branding for this game
+  const [brandingOpen, setBrandingOpen] = useState(false);
+  const [brandingDraft, setBrandingDraft] = useState<GameBranding>(() => brandingFromGame(null));
+  const [savingBranding, setSavingBranding] = useState(false);
+
+  const saveBranding = async () => {
+    setSavingBranding(true);
+    const { error } = await supabase
+      .from("games")
+      .update(brandingToGameColumns(brandingDraft))
+      .eq("id", gameId);
+    setSavingBranding(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Branding applied");
+    setBrandingOpen(false);
+  };
+
+
+
   // Fetch the share token for this game and keep it in sync. The `games` table
   // is already subscribed via useGame; we re-poll when the row changes so a
   // rotated token (e.g. host re-issued the link) is picked up automatically.
