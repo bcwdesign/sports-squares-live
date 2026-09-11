@@ -96,21 +96,25 @@ export function BrandingSection({
     }
     if (!user) return;
     setSavingKit(true);
-    const { error } = await supabase.from("brand_kits").upsert(
-      {
-        owner_user_id: user.id,
-        name,
-        company_name: value.companyName.trim() || null,
-        logo_url: value.logoUrl,
-        primary_color: value.primaryColor,
-        secondary_color: value.secondaryColor,
-        background_color: value.backgroundColor,
-        claimed_square_color: value.claimedSquareColor,
-        winning_square_color: value.winningSquareColor,
-        square_style: value.squareStyle,
-      },
-      { onConflict: "owner_user_id,name" },
-    );
+    const fields = {
+      company_name: value.companyName.trim() || null,
+      logo_url: value.logoUrl,
+      primary_color: value.primaryColor,
+      secondary_color: value.secondaryColor,
+      background_color: value.backgroundColor,
+      claimed_square_color: value.claimedSquareColor,
+      winning_square_color: value.winningSquareColor,
+      square_style: value.squareStyle,
+    };
+    // The unique index is case-insensitive, so update an existing kit by name.
+    const existing = kits.find((k) => k.name.toLowerCase() === name.toLowerCase());
+    const { error } = existing
+      ? await supabase
+          .from("brand_kits")
+          .update({ ...fields, name, updated_at: new Date().toISOString() })
+          .eq("id", existing.id)
+      : await supabase.from("brand_kits").insert({ owner_user_id: user.id, name, ...fields });
+
     setSavingKit(false);
     if (error) {
       toast.error(error.message);
