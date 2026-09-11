@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { useLiveScoreAutoSync } from "@/hooks/useLiveScoreAutoSync";
 import { Overlay, fireConfetti } from "@/components/Overlay";
+import { GameThemeProvider } from "@/components/branding/GameThemeProvider";
 import { WinnerCelebration } from "@/components/WinnerCelebration";
 import { CommentatorCard } from "@/components/CommentatorCard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -236,7 +237,7 @@ function AuthenticatedOverlayPage() {
   const isHost = !!user && game.host_id === user.id;
 
   return (
-    <>
+    <GameThemeProvider game={game}>
       <Overlay
         game={game}
         squares={squares}
