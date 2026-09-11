@@ -1,6 +1,7 @@
 // Live preview of how a branded game board will look. Renders from local
 // editor state, so it updates instantly without saving.
 
+import { BrandLogo } from "@/components/branding/BrandLogo";
 import { deriveTheme, themeVars, backgroundLayer, type GameBranding } from "@/lib/branding";
 
 export function BrandingPreview({ branding }: { branding: GameBranding }) {
@@ -23,11 +24,7 @@ export function BrandingPreview({ branding }: { branding: GameBranding }) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {enabled && branding.logoUrl ? (
-              <img
-                src={branding.logoUrl}
-                alt=""
-                className="h-8 w-auto max-w-[96px] object-contain shrink-0"
-              />
+              <BrandLogo branding={branding} className="h-6 w-auto max-w-[96px] object-contain" />
             ) : (
               <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-black text-[10px] text-background shrink-0">
                 CS

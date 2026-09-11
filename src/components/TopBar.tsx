@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/branding/BrandLogo";
 import { Link } from "@tanstack/react-router";
 import type { Game } from "@/lib/types";
 import { brandingFromGame } from "@/lib/branding";
@@ -9,11 +10,7 @@ export function TopBar({ game }: { game: Game }) {
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <Link to="/dashboard" className="flex items-center gap-2 group min-w-0">
           {brand.enabled && brand.logoUrl ? (
-            <img
-              src={brand.logoUrl}
-              alt={brand.companyName ? `${brand.companyName} logo` : "Company logo"}
-              className="h-8 w-auto max-w-[88px] object-contain shrink-0"
-            />
+            <BrandLogo branding={brand} className="h-6 w-auto max-w-[88px] object-contain" />
           ) : (
             <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">
               CS

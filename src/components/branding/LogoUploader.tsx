@@ -72,7 +72,7 @@ export function LogoUploader({
 
       {value ? (
         <div className="flex flex-wrap items-center gap-3">
-          <div className="h-16 w-32 rounded-xl border border-border bg-[color:var(--surface)] flex items-center justify-center p-2">
+          <div className="h-16 w-32 rounded-xl border border-border bg-white/92 flex items-center justify-center p-2">
             <img src={value} alt="Company logo preview" className="max-h-full max-w-full object-contain" />
           </div>
           <div className="flex gap-2">
