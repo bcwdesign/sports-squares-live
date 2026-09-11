@@ -10,6 +10,7 @@ import QRCode from "qrcode";
 import confetti from "canvas-confetti";
 import { Trophy } from "lucide-react";
 import { winningSquareIndex, type Game, type Square } from "@/lib/types";
+import { backgroundLayer, brandingFromGame } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
 export type OverlayProps = {
@@ -71,8 +72,7 @@ export function Overlay({ game, squares, replayKey = 0, rightPanelTop }: Overlay
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage:
-            "radial-gradient(circle at 12% 0%, oklch(0.72 0.22 240 / 0.18), transparent 50%), radial-gradient(circle at 88% 100%, oklch(0.82 0.24 145 / 0.16), transparent 50%)",
+          backgroundImage: backgroundLayer(brandingFromGame(game)),
         }}
       />
 
@@ -111,20 +111,31 @@ function feedConnected(game: Game): boolean {
 }
 
 function TopBranding({ game }: { game: Game }) {
+  const brand = brandingFromGame(game);
   return (
     <div className="relative px-4 md:px-8 pt-4 md:pt-6 pb-3 flex flex-col md:block gap-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-black text-background text-sm md:text-base">
-            CS
-          </div>
-          <div>
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          {brand.enabled && brand.logoUrl ? (
+            <img
+              src={brand.logoUrl}
+              alt={brand.companyName ? `${brand.companyName} logo` : "Company logo"}
+              className="h-9 md:h-12 w-auto max-w-[120px] md:max-w-[180px] object-contain shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-black text-background text-sm md:text-base">
+              CS
+            </div>
+          )}
+          <div className="min-w-0">
             <div className="font-display font-black tracking-tight text-lg md:text-2xl leading-none">
               <span className="text-[color:var(--neon-blue)]">CLUTCH</span>{" "}
               <span className="text-[color:var(--neon-green)]">SQUARES</span>
             </div>
-            <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground mt-1">
-              Live Watch Party
+            <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground mt-1 truncate">
+              {brand.enabled && brand.companyName.trim()
+                ? `Presented by ${brand.companyName.trim()}`
+                : "Live Watch Party"}
             </div>
           </div>
         </div>
@@ -265,7 +276,7 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
                 key={idx}
                 className={cn(
                   "relative rounded md:rounded-md flex items-center justify-center overflow-hidden text-[8px] md:text-[10px] font-mono leading-none p-0.5 md:p-1 border transition-all",
-                  !isClaimed && !isWin && "bg-muted/30 border-border/40",
+                  !isClaimed && !isWin && "bg-[color:var(--game-square,color-mix(in_oklab,var(--muted)_30%,transparent))] border-[color:var(--game-square-border,color-mix(in_oklab,var(--border)_40%,transparent))]",
                   isClaimed && !isWin && "bg-[color:var(--neon-blue)]/20 border-[color:var(--neon-blue)]/50",
                   isWin && "!bg-[color:var(--neon-orange)] !border-[color:var(--neon-orange)] animate-winner-pulse z-10",
                 )}
@@ -274,8 +285,13 @@ function BoardArea({ game, squares, winIdx }: { game: Game; squares: Square[]; w
                   <span
                     className={cn(
                       "truncate w-full text-center font-bold",
-                      isWin ? "text-background text-[9px] md:text-xs" : "text-[color:var(--neon-blue)]",
+                      isWin ? "text-[9px] md:text-xs" : "text-[color:var(--neon-blue)]",
                     )}
+                    style={
+                      isWin
+                        ? { color: "var(--game-square-winning-text, var(--background))" }
+                        : undefined
+                    }
                   >
                     {sq.owner_name.slice(0, 6)}
                   </span>
