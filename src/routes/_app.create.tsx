@@ -12,6 +12,9 @@ import { generateHeyGenCommentatorVideo } from "@/lib/commentator.functions";
 import { COMMENTATORS, COMMENTATOR_NAMES, getCommentatorByName } from "@/lib/commentators";
 import { NflGamePicker } from "@/components/NflGamePicker";
 import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
+import { BrandingSection } from "@/components/branding/BrandingSection";
+import { DEFAULT_BRANDING, brandingToGameColumns, type GameBranding } from "@/lib/branding";
+
 
 
 export const Route = createFileRoute("/_app/create")({
@@ -61,6 +64,11 @@ function CreateGame() {
   const [entryLabel, setEntryLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [apiGame, setApiGame] = useState<NormalizedLiveGame | null>(null);
+
+  // Custom branding (optional; off by default)
+  const [branding, setBranding] = useState<GameBranding>(DEFAULT_BRANDING);
+
+
 
 
   // Prize Mode state (optional, disabled by default)
@@ -132,7 +140,9 @@ function CreateGame() {
         prize_description: prizeEnabled ? (prizeDescription.trim() || null) : null,
         prize_timing: prizeEnabled ? prizeTiming : null,
         requires_age_verification: prizeEnabled && requiresAgeVerification,
+        ...brandingToGameColumns(branding),
       };
+
 
       if (apiGame) {
         Object.assign(insertPayload, {
@@ -525,6 +535,11 @@ function CreateGame() {
               </div>
             )}
           </div>
+
+          {/* Custom Branding section */}
+          <BrandingSection value={branding} onChange={setBranding} />
+
+
 
           <div className="grid grid-cols-2 gap-3 pt-4">
             <Link to="/dashboard">

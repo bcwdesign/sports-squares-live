@@ -22,6 +22,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as ApiTtsElevenlabsRouteImport } from './routes/api/tts/elevenlabs'
+import { Route as ApiPublicBrandLogoRouteImport } from './routes/api/public/brand-logo'
 import { Route as ApiArgosWebhookRouteImport } from './routes/api/argos/webhook'
 import { Route as ApiPublicHooksSyncLiveScoresRouteImport } from './routes/api/public/hooks/sync-live-scores'
 import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
@@ -94,6 +95,11 @@ const ApiTtsElevenlabsRoute = ApiTtsElevenlabsRouteImport.update({
   path: '/api/tts/elevenlabs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBrandLogoRoute = ApiPublicBrandLogoRouteImport.update({
+  id: '/api/public/brand-logo',
+  path: '/api/public/brand-logo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiArgosWebhookRoute = ApiArgosWebhookRouteImport.update({
   id: '/api/argos/webhook',
   path: '/api/argos/webhook',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
   '/api/argos/webhook': typeof ApiArgosWebhookRoute
+  '/api/public/brand-logo': typeof ApiPublicBrandLogoRoute
   '/api/tts/elevenlabs': typeof ApiTtsElevenlabsRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
   '/api/argos/webhook': typeof ApiArgosWebhookRoute
+  '/api/public/brand-logo': typeof ApiPublicBrandLogoRoute
   '/api/tts/elevenlabs': typeof ApiTtsElevenlabsRoute
   '/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/game/$gameId/live': typeof AppGameGameIdLiveRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/join/$inviteCode': typeof JoinInviteCodeRoute
   '/overlay/$token': typeof OverlayTokenRoute
   '/api/argos/webhook': typeof ApiArgosWebhookRoute
+  '/api/public/brand-logo': typeof ApiPublicBrandLogoRoute
   '/api/tts/elevenlabs': typeof ApiTtsElevenlabsRoute
   '/_app/game/$gameId/invite': typeof AppGameGameIdInviteRoute
   '/_app/game/$gameId/live': typeof AppGameGameIdLiveRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/join/$inviteCode'
     | '/overlay/$token'
     | '/api/argos/webhook'
+    | '/api/public/brand-logo'
     | '/api/tts/elevenlabs'
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/join/$inviteCode'
     | '/overlay/$token'
     | '/api/argos/webhook'
+    | '/api/public/brand-logo'
     | '/api/tts/elevenlabs'
     | '/game/$gameId/invite'
     | '/game/$gameId/live'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/join/$inviteCode'
     | '/overlay/$token'
     | '/api/argos/webhook'
+    | '/api/public/brand-logo'
     | '/api/tts/elevenlabs'
     | '/_app/game/$gameId/invite'
     | '/_app/game/$gameId/live'
@@ -272,6 +284,7 @@ export interface RootRouteChildren {
   JoinInviteCodeRoute: typeof JoinInviteCodeRoute
   OverlayTokenRoute: typeof OverlayTokenRoute
   ApiArgosWebhookRoute: typeof ApiArgosWebhookRoute
+  ApiPublicBrandLogoRoute: typeof ApiPublicBrandLogoRoute
   ApiTtsElevenlabsRoute: typeof ApiTtsElevenlabsRoute
   ApiPublicHooksSyncLiveScoresRoute: typeof ApiPublicHooksSyncLiveScoresRoute
 }
@@ -369,6 +382,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTtsElevenlabsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/brand-logo': {
+      id: '/api/public/brand-logo'
+      path: '/api/public/brand-logo'
+      fullPath: '/api/public/brand-logo'
+      preLoaderRoute: typeof ApiPublicBrandLogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/argos/webhook': {
       id: '/api/argos/webhook'
       path: '/api/argos/webhook'
@@ -458,6 +478,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinInviteCodeRoute: JoinInviteCodeRoute,
   OverlayTokenRoute: OverlayTokenRoute,
   ApiArgosWebhookRoute: ApiArgosWebhookRoute,
+  ApiPublicBrandLogoRoute: ApiPublicBrandLogoRoute,
   ApiTtsElevenlabsRoute: ApiTtsElevenlabsRoute,
   ApiPublicHooksSyncLiveScoresRoute: ApiPublicHooksSyncLiveScoresRoute,
 }

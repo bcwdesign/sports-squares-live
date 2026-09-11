@@ -1,18 +1,29 @@
 import { Link } from "@tanstack/react-router";
 import type { Game } from "@/lib/types";
+import { brandingFromGame } from "@/lib/branding";
 
 export function TopBar({ game }: { game: Game }) {
+  const brand = brandingFromGame(game);
   return (
     <div className="sticky top-0 z-30 backdrop-blur-xl bg-background/80 border-b border-border">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <Link to="/dashboard" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">
-            CS
-          </div>
-          <div className="font-display font-bold tracking-tight text-sm sm:text-base hidden sm:block">
+        <Link to="/dashboard" className="flex items-center gap-2 group min-w-0">
+          {brand.enabled && brand.logoUrl ? (
+            <img
+              src={brand.logoUrl}
+              alt={brand.companyName ? `${brand.companyName} logo` : "Company logo"}
+              className="h-8 w-auto max-w-[88px] object-contain shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-bold text-background text-xs">
+              CS
+            </div>
+          )}
+          <div className="font-display font-bold tracking-tight text-sm sm:text-base hidden sm:block truncate">
             <span className="text-[color:var(--neon-blue)]">CLUTCH</span> <span className="text-[color:var(--neon-green)]">SQUARES</span>
           </div>
         </Link>
+
 
         <div className="flex-1 flex items-center justify-center gap-3 text-xs sm:text-sm">
           <TeamBadge abbr={shortTeam(game.away_team)} color="var(--neon-blue)" score={game.away_score} />

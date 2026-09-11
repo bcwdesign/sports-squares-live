@@ -21,7 +21,18 @@ export type Game = {
   quarter: number;
   clock: string;
   created_at: string;
+  // Optional custom branding (see src/lib/branding.ts)
+  branding_enabled?: boolean;
+  branding_company_name?: string | null;
+  branding_logo_url?: string | null;
+  branding_primary?: string | null;
+  branding_secondary?: string | null;
+  branding_background?: string | null;
+  branding_claimed_color?: string | null;
+  branding_winning_color?: string | null;
+  branding_square_style?: string | null;
 };
+
 
 export type Square = {
   id: string;

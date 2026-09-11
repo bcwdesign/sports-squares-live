@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_kits: {
+        Row: {
+          background_color: string
+          claimed_square_color: string | null
+          company_name: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          owner_user_id: string
+          primary_color: string
+          secondary_color: string
+          square_style: string
+          updated_at: string
+          winning_square_color: string | null
+        }
+        Insert: {
+          background_color?: string
+          claimed_square_color?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_user_id: string
+          primary_color?: string
+          secondary_color?: string
+          square_style?: string
+          updated_at?: string
+          winning_square_color?: string | null
+        }
+        Update: {
+          background_color?: string
+          claimed_square_color?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_user_id?: string
+          primary_color?: string
+          secondary_color?: string
+          square_style?: string
+          updated_at?: string
+          winning_square_color?: string | null
+        }
+        Relationships: []
+      }
       game_players: {
         Row: {
           avatar_url: string | null
@@ -55,6 +103,15 @@ export type Database = {
           away_axis: number[]
           away_score: number
           away_team: string
+          branding_background: string | null
+          branding_claimed_color: string | null
+          branding_company_name: string | null
+          branding_enabled: boolean
+          branding_logo_url: string | null
+          branding_primary: string | null
+          branding_secondary: string | null
+          branding_square_style: string
+          branding_winning_color: string | null
           clock: string
           commentator_catchphrases: string | null
           commentator_enabled: boolean
@@ -111,6 +168,15 @@ export type Database = {
           away_axis?: number[]
           away_score?: number
           away_team: string
+          branding_background?: string | null
+          branding_claimed_color?: string | null
+          branding_company_name?: string | null
+          branding_enabled?: boolean
+          branding_logo_url?: string | null
+          branding_primary?: string | null
+          branding_secondary?: string | null
+          branding_square_style?: string
+          branding_winning_color?: string | null
           clock?: string
           commentator_catchphrases?: string | null
           commentator_enabled?: boolean
@@ -167,6 +233,15 @@ export type Database = {
           away_axis?: number[]
           away_score?: number
           away_team?: string
+          branding_background?: string | null
+          branding_claimed_color?: string | null
+          branding_company_name?: string | null
+          branding_enabled?: boolean
+          branding_logo_url?: string | null
+          branding_primary?: string | null
+          branding_secondary?: string | null
+          branding_square_style?: string
+          branding_winning_color?: string | null
           clock?: string
           commentator_catchphrases?: string | null
           commentator_enabled?: boolean

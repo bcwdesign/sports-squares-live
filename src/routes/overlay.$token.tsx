@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import type { Game, Square } from "@/lib/types";
 import { getOverlayByToken } from "@/lib/overlay.functions";
 import { Overlay } from "@/components/Overlay";
+import { GameThemeProvider } from "@/components/branding/GameThemeProvider";
+
 
 export const Route = createFileRoute("/overlay/$token")({
   head: () => ({ meta: [{ title: "Live Watch Party — Clutch Squares" }] }),
@@ -71,5 +73,10 @@ function PublicOverlayPage() {
     );
   }
 
-  return <Overlay game={data.game} squares={data.squares} />;
+  return (
+    <GameThemeProvider game={data.game}>
+      <Overlay game={data.game} squares={data.squares} />
+    </GameThemeProvider>
+  );
+
 }

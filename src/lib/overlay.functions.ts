@@ -17,7 +17,7 @@ export const getOverlayByToken = createServerFn({ method: "POST" })
     const { data: game, error } = await supabaseAdmin
       .from("games")
       .select(
-        "id, name, sport, home_team, away_team, status, home_axis, away_axis, home_score, away_score, quarter, clock, host_id, max_squares_per_user, game_date_time, created_at, commentator_enabled, commentator_name, commentator_personality, commentator_latest_text, commentator_latest_audio_url, commentator_status, commentator_last_spoken_at, heygen_video_status, heygen_video_url, auto_sync_enabled, external_provider, external_game_id, period, game_clock, game_status, score_source, last_score_sync_at",
+        "id, name, sport, home_team, away_team, status, home_axis, away_axis, home_score, away_score, quarter, clock, host_id, max_squares_per_user, game_date_time, created_at, commentator_enabled, commentator_name, commentator_personality, commentator_latest_text, commentator_latest_audio_url, commentator_status, commentator_last_spoken_at, heygen_video_status, heygen_video_url, auto_sync_enabled, external_provider, external_game_id, period, game_clock, game_status, score_source, last_score_sync_at, branding_enabled, branding_company_name, branding_logo_url, branding_primary, branding_secondary, branding_background, branding_claimed_color, branding_winning_color, branding_square_style",
       )
       .eq("share_token", data.token)
       .maybeSingle();

@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789159211424,
+      "tag": "0000_add_game_branding_and_brand_kits",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789159324353,
+      "tag": "0001_brand_logos_storage_policies",
+      "breakpoints": true
+    }
+  ]
+}

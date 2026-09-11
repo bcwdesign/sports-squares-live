@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/TopBar";
+import { GameThemeProvider } from "@/components/branding/GameThemeProvider";
 import { NeonButton } from "@/components/NeonButton";
 import { RecapCard, RECAP_CARD_SIZE, type QuarterResult } from "@/components/RecapCard";
 import { Trophy, Share2, RotateCcw, Image as ImageIcon, Download, X, Mic, Loader2, RefreshCw } from "lucide-react";
@@ -195,6 +196,7 @@ function ResultsPage() {
   };
 
   return (
+    <GameThemeProvider game={game}>
     <div className="min-h-screen">
       <TopBar game={game} />
 
@@ -461,6 +463,7 @@ function ResultsPage() {
         </div>
       )}
     </div>
+    </GameThemeProvider>
   );
 }
 
