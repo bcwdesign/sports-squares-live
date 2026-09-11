@@ -957,7 +957,9 @@ function LivePage() {
         );
       })()}
     </div>
+    </GameThemeProvider>
   );
+
 }
 
 function ScoreInput({
