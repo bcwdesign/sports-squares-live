@@ -117,10 +117,9 @@ function TopBranding({ game }: { game: Game }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {brand.enabled && brand.logoUrl ? (
-            <img
-              src={brand.logoUrl}
-              alt={brand.companyName ? `${brand.companyName} logo` : "Company logo"}
-              className="h-9 md:h-12 w-auto max-w-[120px] md:max-w-[180px] object-contain shrink-0"
+            <BrandLogo
+              branding={brand}
+              className="h-8 md:h-10 w-auto max-w-[120px] md:max-w-[180px] object-contain"
             />
           ) : (
             <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-[image:var(--gradient-neon)] flex items-center justify-center font-mono font-black text-background text-sm md:text-base">
