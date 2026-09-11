@@ -474,7 +474,9 @@ function LivePage() {
   }
 
   return (
+    <GameThemeProvider game={game}>
     <div className={watchMode ? "fixed inset-0 z-50 bg-background overflow-auto" : "min-h-screen"}>
+
       <WinnerCelebration
         winner={celebration?.info ?? null}
         winnerKey={celebration?.key ?? "none"}
@@ -521,6 +523,50 @@ function LivePage() {
         </div>
 
         {isHost && <LiveScoreSyncPanel game={game} />}
+
+        {isHost && (
+          <div className="mb-4">
+            {brandingOpen ? (
+              <div className="space-y-3">
+                <BrandingSection value={brandingDraft} onChange={setBrandingDraft} />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => {
+                      setBrandingDraft(brandingFromGame(game));
+                      setBrandingOpen(false);
+                    }}
+                    className="px-3 py-2 rounded-lg border border-border text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveBranding}
+                    disabled={savingBranding}
+                    className="px-4 py-2 rounded-lg bg-[color:var(--neon-green)] text-background text-[10px] font-mono uppercase tracking-widest font-bold disabled:opacity-60"
+                  >
+                    {savingBranding ? "Saving..." : "Apply branding"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setBrandingDraft(brandingFromGame(game));
+                  setBrandingOpen(true);
+                }}
+                className="w-full px-3 py-2.5 rounded-xl border border-border bg-[color:var(--surface)] flex items-center justify-between gap-3 hover:border-[color:var(--neon-blue)] transition"
+              >
+                <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <Palette className="w-3.5 h-3.5" /> Custom Branding
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--neon-green)]">
+                  {game.branding_enabled ? game.branding_company_name || "On" : "Off"}
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+
 
         {isHost && (
           <div className="mb-4 rounded-xl border border-border bg-[color:var(--surface)] p-3 flex items-center gap-3 flex-wrap">
