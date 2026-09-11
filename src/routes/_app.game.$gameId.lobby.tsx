@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useGame } from "@/hooks/useGame";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/TopBar";
+import { GameThemeProvider } from "@/components/branding/GameThemeProvider";
 import { SquaresGrid } from "@/components/SquaresGrid";
 import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
@@ -142,6 +143,7 @@ function LobbyPage() {
   };
 
   return (
+    <GameThemeProvider game={game}>
     <div className={watchMode ? "fixed inset-0 z-50 bg-background overflow-auto" : "min-h-screen"}>
       <TopBar game={game} />
 
@@ -299,6 +301,7 @@ function LobbyPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </GameThemeProvider>
   );
 }
 
