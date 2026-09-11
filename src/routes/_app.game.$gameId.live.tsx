@@ -11,7 +11,11 @@ import { WinnerCelebration } from "@/components/WinnerCelebration";
 import { LiveScoreSyncPanel } from "@/components/LiveScoreSyncPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
-import { Maximize2, QrCode, RotateCcw, Sparkles, Trophy, Tv, Zap, X, Save, Flag } from "lucide-react";
+import { Maximize2, Palette, QrCode, RotateCcw, Sparkles, Trophy, Tv, Zap, X, Save, Flag } from "lucide-react";
+import { GameThemeProvider } from "@/components/branding/GameThemeProvider";
+import { BrandingSection } from "@/components/branding/BrandingSection";
+import { brandingFromGame, brandingToGameColumns, type GameBranding } from "@/lib/branding";
+
 import { toast } from "sonner";
 import QRCode from "qrcode";
 
