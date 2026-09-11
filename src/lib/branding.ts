@@ -236,8 +236,8 @@ export function deriveTheme(b: GameBranding): DerivedTheme {
   let square: string;
   let squareBorder: string;
   if (b.squareStyle === "tinted") {
-    square = mix(surface, primary, 0.14);
-    squareBorder = mix(surface, primary, 0.3);
+    square = mix(surface, primary, 0.07);
+    squareBorder = mix(surface, primary, 0.22);
   } else if (b.squareStyle === "outline") {
     square = mix(surface, background, 0.4);
     squareBorder = mix(surface, primary, 0.6);
@@ -328,8 +328,8 @@ export function backgroundLayer(b: GameBranding): string {
   }
   const t = deriveTheme(b);
   return [
-    `radial-gradient(circle at 12% 0%, ${withAlpha(t.primary, 0.2)}, transparent 52%)`,
-    `radial-gradient(circle at 88% 100%, ${withAlpha(t.secondary, 0.16)}, transparent 52%)`,
-    `linear-gradient(160deg, ${withAlpha(t.surfaceElevated, 0.5)}, transparent 60%)`,
+    `radial-gradient(circle at 12% 0%, ${withAlpha(t.primary, 0.13)}, transparent 52%)`,
+    `radial-gradient(circle at 88% 100%, ${withAlpha(t.secondary, 0.11)}, transparent 52%)`,
+    `linear-gradient(160deg, ${withAlpha(t.surfaceElevated, 0.35)}, transparent 60%)`,
   ].join(", ");
 }
