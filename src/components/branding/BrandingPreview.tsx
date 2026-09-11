@@ -1,6 +1,7 @@
 // Live preview of how a branded game board will look. Renders from local
 // editor state, so it updates instantly without saving.
 
+import { BrandLogo } from "@/components/branding/BrandLogo";
 import { deriveTheme, themeVars, backgroundLayer, type GameBranding } from "@/lib/branding";
 
 export function BrandingPreview({ branding }: { branding: GameBranding }) {

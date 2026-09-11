@@ -5,6 +5,7 @@
 // This component is purely presentational. All data must be passed in by the
 // parent route. It must remain read-only — no host controls live here.
 
+import { BrandLogo } from "@/components/branding/BrandLogo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import confetti from "canvas-confetti";

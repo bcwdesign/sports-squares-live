@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/branding/BrandLogo";
 import { Link } from "@tanstack/react-router";
 import type { Game } from "@/lib/types";
 import { brandingFromGame } from "@/lib/branding";
