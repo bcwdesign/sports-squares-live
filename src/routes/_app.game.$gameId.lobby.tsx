@@ -66,6 +66,11 @@ function LobbyPage() {
   const myCount = squares.filter((s) => s.owner_id === user?.id).length;
   const filled = squares.filter((s) => s.owner_id).length;
   const host = players.find((p) => p.user_id === game.host_id);
+  // NFL randomized mode: entries are reserved now, positions drawn server-side later.
+  const randomizedMode = isRandomizedNfl(game);
+  const awaitingRandomization = randomizedMode && !game.board_randomized;
+  const reservedEntries = entries.reduce((n, e) => n + e.entry_count, 0);
+  const myEntries = entries.find((e) => e.user_id === user?.id)?.entry_count ?? 0;
 
   const claim = async () => {
     if (selected === null || !user || !profile) return;
@@ -98,15 +103,29 @@ function LobbyPage() {
   const startGame = async () => {
     if (!isHost) return;
     setStarting(true);
+    // Randomized NFL boards get their squares and digits from the server; the
+    // client never shuffles, and a locked board is never reshuffled.
+    if (randomizedMode) {
+      try {
+        await invokeAuthed(randomizeAndLockBoard, { gameId: game.id });
+      } catch {
+        setStarting(false);
+        return toast.error("Couldn't finalize the board");
+      }
+    }
     const { error } = await supabase
       .from("games")
-      .update({
-        status: "live",
-        home_axis: shuffle10(),
-        away_axis: shuffle10(),
-        clock: "12:00",
-        quarter: 1,
-      })
+      .update(
+        randomizedMode
+          ? { status: "live" as const, clock: "12:00", quarter: 1 }
+          : {
+              status: "live" as const,
+              home_axis: shuffle10(),
+              away_axis: shuffle10(),
+              clock: "12:00",
+              quarter: 1,
+            },
+      )
       .eq("id", game.id);
     setStarting(false);
     if (error) return toast.error(error.message);
