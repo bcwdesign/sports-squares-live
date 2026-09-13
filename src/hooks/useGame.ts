@@ -1,12 +1,13 @@
 // Real-time hook: subscribes to a game and its squares/players, returns synced state.
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Game, GamePlayer, Square } from "@/lib/types";
+import type { Game, GameEntry, GamePlayer, Square } from "@/lib/types";
 
 export function useGame(gameId: string | undefined) {
   const [game, setGame] = useState<Game | null>(null);
   const [squares, setSquares] = useState<Square[]>([]);
   const [players, setPlayers] = useState<GamePlayer[]>([]);
+  const [entries, setEntries] = useState<GameEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
