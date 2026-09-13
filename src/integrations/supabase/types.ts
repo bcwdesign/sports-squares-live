@@ -235,6 +235,7 @@ export type Database = {
           game_date_time: string | null
           game_status: string | null
           heygen_avatar_id: string | null
+          heygen_final_requested_at: string | null
           heygen_intro_enabled: boolean
           heygen_reactions_enabled: boolean
           heygen_video_id: string | null
@@ -308,6 +309,7 @@ export type Database = {
           game_date_time?: string | null
           game_status?: string | null
           heygen_avatar_id?: string | null
+          heygen_final_requested_at?: string | null
           heygen_intro_enabled?: boolean
           heygen_reactions_enabled?: boolean
           heygen_video_id?: string | null
@@ -381,6 +383,7 @@ export type Database = {
           game_date_time?: string | null
           game_status?: string | null
           heygen_avatar_id?: string | null
+          heygen_final_requested_at?: string | null
           heygen_intro_enabled?: boolean
           heygen_reactions_enabled?: boolean
           heygen_video_id?: string | null
