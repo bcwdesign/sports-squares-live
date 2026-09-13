@@ -8,6 +8,8 @@ import {
   supabaseAdmin,
   DEFAULT_HEYGEN_AVATAR_ID,
   DEFAULT_HEYGEN_VOICE_ID,
+  requestHeyGenVideo,
+  pollHeyGenVideo,
 } from "./commentator.server";
 import { getCommentatorByName } from "@/lib/commentators";
 
