@@ -44,7 +44,7 @@ export async function finalizeBoard(
 ): Promise<FinalizeResult> {
   const { data, error } = await supabaseAdmin.rpc("finalize_nfl_board", {
     p_game_id: gameId,
-    p_actor: actorId,
+    p_actor: actorId ?? undefined,
     p_source: source,
   });
   if (error) throw new Error(error.message);
