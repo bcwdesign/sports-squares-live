@@ -10,6 +10,8 @@ import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
 import { isRandomizedNfl, shuffle10 } from "@/lib/types";
 import { BoardRandomizationCard } from "@/components/BoardRandomizationCard";
+import { invokeAuthed } from "@/lib/serverFnClient";
+import { randomizeAndLockBoard } from "@/lib/board-randomization.functions";
 import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
