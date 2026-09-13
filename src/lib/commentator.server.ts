@@ -2,7 +2,7 @@
 // guards against any client-side import.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { COMMENTATORS } from "@/lib/commentators";
+import { COMMENTATORS, getCommentatorByName } from "@/lib/commentators";
 
 export const DEFAULT_HEYGEN_AVATAR_ID = COMMENTATORS[0].heygenAvatarId;
 export const DEFAULT_HEYGEN_VOICE_ID = COMMENTATORS[0].heygenVoiceId;
