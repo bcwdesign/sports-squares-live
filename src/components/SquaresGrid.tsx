@@ -43,12 +43,12 @@ export function SquaresGrid({ game, squares, userId, selectedIndex, winningIndex
         )}
         <div className="flex-1 grid grid-cols-10 gap-0.5 sm:gap-1 aspect-square">
           {grid.map((sq, idx) => {
-            const isMine = !!sq?.owner_id && sq.owner_id === userId;
-            const isSelected = selectedIndex === idx;
-            const isWin = winningIndex === idx;
-            const isTaken = !!sq?.owner_id && !isMine;
-            const isOpen = !sq?.owner_id;
-            const locked = game.status !== "lobby";
+            const isMine = !hideOwners && !!sq?.owner_id && sq.owner_id === userId;
+            const isSelected = !hideOwners && selectedIndex === idx;
+            const isWin = !hideOwners && winningIndex === idx;
+            const isTaken = !hideOwners && !!sq?.owner_id && !isMine;
+            const isOpen = hideOwners || !sq?.owner_id;
+            const locked = hideOwners || game.status !== "lobby";
 
             return (
               <button
@@ -76,7 +76,7 @@ export function SquaresGrid({ game, squares, userId, selectedIndex, winningIndex
                 )}
 
               >
-                {sq?.owner_name ? (
+                {!hideOwners && sq?.owner_name ? (
                   <span className="truncate w-full text-center font-bold">{sq.owner_name.slice(0, 4)}</span>
                 ) : (
                   <span className="opacity-30">{idx + 1}</span>
