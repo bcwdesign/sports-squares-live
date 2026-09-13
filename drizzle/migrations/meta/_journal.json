@@ -43,6 +43,13 @@
       "when": 1789317570717,
       "tag": "0005_harden_definer_and_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789320209988,
+      "tag": "0006_add_heygen_final_requested_at",
+      "breakpoints": true
     }
   ]
 }

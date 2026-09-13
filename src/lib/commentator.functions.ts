@@ -8,6 +8,8 @@ import {
   supabaseAdmin,
   DEFAULT_HEYGEN_AVATAR_ID,
   DEFAULT_HEYGEN_VOICE_ID,
+  requestHeyGenVideo,
+  pollHeyGenVideo,
 } from "./commentator.server";
 import { getCommentatorByName } from "@/lib/commentators";
 
@@ -93,6 +95,7 @@ export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
       .object({
         gameId: z.string().uuid(),
         kind: z.enum(["intro", "quarter", "final"]).optional().default("intro"),
+        force: z.boolean().optional(),
       })
       .parse(input),
   )
@@ -100,101 +103,8 @@ export const generateHeyGenCommentatorVideo = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertHost(supabase, data.gameId, userId);
 
-    const apiKey = process.env.HEYGEN_API_KEY;
-    if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
-
-    const { data: game, error } = await supabaseAdmin
-      .from("games")
-      .select(
-        "commentator_intro_script, commentator_latest_text, commentator_name, commentator_personality, heygen_avatar_id, heygen_voice_id, home_team, away_team, home_score, away_score, quarter, home_axis, away_axis",
-      )
-      .eq("id", data.gameId)
-      .maybeSingle();
-    if (error || !game) throw new Error(error?.message || "Game not found");
-
-    const preset =
-      getCommentatorByName(game.commentator_personality) ?? getCommentatorByName(game.commentator_name);
-    const avatarId = game.heygen_avatar_id || preset?.heygenAvatarId || DEFAULT_HEYGEN_AVATAR_ID;
-    const voiceId = game.heygen_voice_id || preset?.heygenVoiceId || DEFAULT_HEYGEN_VOICE_ID;
-    const name = game.commentator_name || preset?.name || "your AI commentator";
-
-    let script: string;
-    let title: string;
-    if (data.kind === "final") {
-      const homeDigit = game.home_score % 10;
-      const awayDigit = game.away_score % 10;
-      const col = (game.home_axis as number[]).indexOf(homeDigit);
-      const row = (game.away_axis as number[]).indexOf(awayDigit);
-      let winnerName: string | null = null;
-      if (col >= 0 && row >= 0) {
-        const { data: sq } = await supabaseAdmin
-          .from("squares")
-          .select("owner_name")
-          .eq("game_id", data.gameId)
-          .eq("row", row)
-          .eq("col", col)
-          .maybeSingle();
-        winnerName = sq?.owner_name ?? null;
-      }
-      const winningTeam =
-        game.home_score === game.away_score
-          ? `${game.home_team} and ${game.away_team} tied it up`
-          : game.home_score > game.away_score
-            ? `${game.home_team} took it`
-            : `${game.away_team} took it`;
-      const winnerLine = winnerName
-        ? `The final square ${awayDigit}-${homeDigit} belongs to ${winnerName}. Congratulations, MVP!`
-        : `The final square ${awayDigit}-${homeDigit} went unclaimed — tough break!`;
-      script = `That's the final buzzer! ${winningTeam}, ${game.away_team} ${game.away_score}, ${game.home_team} ${game.home_score}. ${winnerLine} I'm ${name}, signing off — what a game.`;
-      title = `${game.commentator_name || "Commentator"} Final Recap`;
-    } else if (data.kind === "quarter") {
-      script =
-        game.commentator_latest_text?.trim() ||
-        `End of quarter ${game.quarter}. ${game.away_team} ${game.away_score}, ${game.home_team} ${game.home_score}.`;
-      title = `${game.commentator_name || "Commentator"} Q${game.quarter} Recap`;
-    } else {
-      script = game.commentator_intro_script || `Welcome to the show, I'm ${name}.`;
-      title = `${game.commentator_name || "Commentator"} Intro`;
-    }
-    script = script.slice(0, 1500);
-
-    const payload = {
-      video_inputs: [
-        {
-          character: { type: "avatar", avatar_id: avatarId, avatar_style: "normal" },
-          voice: { type: "text", input_text: script, voice_id: voiceId },
-        },
-      ],
-      dimension: { width: 1280, height: 720 },
-      title,
-    };
-
-    const res = await fetch("https://api.heygen.com/v2/video/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Api-Key": apiKey,
-      },
-      body: JSON.stringify(payload),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      await supabaseAdmin
-        .from("games")
-        .update({ heygen_video_status: `error:${res.status}` })
-        .eq("id", data.gameId);
-      throw new Error(`HeyGen ${res.status}: ${JSON.stringify(json).slice(0, 300)}`);
-    }
-    const videoId: string | undefined = json?.data?.video_id;
-    await supabaseAdmin
-      .from("games")
-      .update({
-        heygen_video_id: videoId ?? null,
-        heygen_video_status: videoId ? "processing" : "unknown",
-      })
-      .eq("id", data.gameId);
-
-    return { ok: true as const, video_id: videoId ?? null };
+    const r = await requestHeyGenVideo(data.gameId, data.kind, { force: data.force });
+    return { ok: true as const, video_id: r.video_id, reason: r.reason };
   });
 
 export const getHeyGenVideoStatus = createServerFn({ method: "POST" })
@@ -204,31 +114,9 @@ export const getHeyGenVideoStatus = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertHost(supabase, data.gameId, userId);
 
-    const apiKey = process.env.HEYGEN_API_KEY;
-    if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
-
-    const { data: game } = await supabaseAdmin
-      .from("games")
-      .select("heygen_video_id")
-      .eq("id", data.gameId)
-      .maybeSingle();
-    if (!game?.heygen_video_id) return { ok: false as const, reason: "no_video" };
-
-    const res = await fetch(`https://api.heygen.com/v1/video_status.get?video_id=${encodeURIComponent(game.heygen_video_id)}`, {
-      headers: { "X-Api-Key": apiKey },
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(`HeyGen status ${res.status}`);
-
-    const status: string | undefined = json?.data?.status;
-    const url: string | undefined = json?.data?.video_url;
-    const updates: { heygen_video_status: string | null; heygen_video_url?: string } = {
-      heygen_video_status: status ?? null,
-    };
-    if (status === "completed" && url) updates.heygen_video_url = url;
-    await supabaseAdmin.from("games").update(updates).eq("id", data.gameId);
-
-    return { ok: true as const, status: status ?? null, url: url ?? null };
+    const r = await pollHeyGenVideo(data.gameId);
+    if (!r.ok) return { ok: false as const, reason: r.reason ?? "no_video" };
+    return { ok: true as const, status: r.status, url: r.url };
   });
 
 // Re-fetch a fresh signed HeyGen video URL. HeyGen serves video files via

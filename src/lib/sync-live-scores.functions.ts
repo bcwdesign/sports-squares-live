@@ -3,7 +3,12 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import { runSync, supabaseAdminForSync, runDueRandomizations } from "./sync-live-scores.server";
+import {
+  runSync,
+  supabaseAdminForSync,
+  runDueRandomizations,
+  runDueFinalRecaps,
+} from "./sync-live-scores.server";
 
 export const syncLiveScoresFn = createServerFn({ method: "POST" }).handler(
   async () => {
@@ -52,6 +57,21 @@ export const syncLiveScoresFn = createServerFn({ method: "POST" }).handler(
     // Same cadence handles NFL boards whose scheduled randomization is due.
     const randomization = await runDueRandomizations();
 
-    return { ok: true as const, scanned: games?.length ?? 0, results, randomization };
+    // ...and final HeyGen recaps for games that finished without a host tab open.
+    let finalRecaps: Awaited<ReturnType<typeof runDueFinalRecaps>> | { error: string };
+    try {
+      finalRecaps = await runDueFinalRecaps();
+    } catch (e) {
+      finalRecaps = { error: e instanceof Error ? e.message : "unknown" };
+      console.error("[final-recap/cron] pass failed:", finalRecaps.error);
+    }
+
+    return {
+      ok: true as const,
+      scanned: games?.length ?? 0,
+      results,
+      randomization,
+      finalRecaps,
+    };
   },
 );
