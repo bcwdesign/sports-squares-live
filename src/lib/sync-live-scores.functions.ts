@@ -3,7 +3,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import { runSync, supabaseAdminForSync } from "./sync-live-scores.server";
+import { runSync, supabaseAdminForSync, runDueRandomizations } from "./sync-live-scores.server";
 
 export const syncLiveScoresFn = createServerFn({ method: "POST" }).handler(
   async () => {
@@ -49,6 +49,9 @@ export const syncLiveScoresFn = createServerFn({ method: "POST" }).handler(
       `[score-sync/cron] scanned=${games?.length ?? 0} updated=${results.filter((r) => r.synced).length} ${new Date().toISOString()}`,
     );
 
-    return { ok: true as const, scanned: games?.length ?? 0, results };
+    // Same cadence handles NFL boards whose scheduled randomization is due.
+    const randomization = await runDueRandomizations();
+
+    return { ok: true as const, scanned: games?.length ?? 0, results, randomization };
   },
 );
