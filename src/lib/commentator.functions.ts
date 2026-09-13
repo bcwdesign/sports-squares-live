@@ -114,31 +114,9 @@ export const getHeyGenVideoStatus = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertHost(supabase, data.gameId, userId);
 
-    const apiKey = process.env.HEYGEN_API_KEY;
-    if (!apiKey) throw new Error("HEYGEN_API_KEY not configured");
-
-    const { data: game } = await supabaseAdmin
-      .from("games")
-      .select("heygen_video_id")
-      .eq("id", data.gameId)
-      .maybeSingle();
-    if (!game?.heygen_video_id) return { ok: false as const, reason: "no_video" };
-
-    const res = await fetch(`https://api.heygen.com/v1/video_status.get?video_id=${encodeURIComponent(game.heygen_video_id)}`, {
-      headers: { "X-Api-Key": apiKey },
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(`HeyGen status ${res.status}`);
-
-    const status: string | undefined = json?.data?.status;
-    const url: string | undefined = json?.data?.video_url;
-    const updates: { heygen_video_status: string | null; heygen_video_url?: string } = {
-      heygen_video_status: status ?? null,
-    };
-    if (status === "completed" && url) updates.heygen_video_url = url;
-    await supabaseAdmin.from("games").update(updates).eq("id", data.gameId);
-
-    return { ok: true as const, status: status ?? null, url: url ?? null };
+    const r = await pollHeyGenVideo(data.gameId);
+    if (!r.ok) return { ok: false as const, reason: r.reason ?? "no_video" };
+    return { ok: true as const, status: r.status, url: r.url };
   });
 
 // Re-fetch a fresh signed HeyGen video URL. HeyGen serves video files via
