@@ -77,6 +77,23 @@ export function useGame(gameId: string | undefined) {
           });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "game_entries", filter: `game_id=eq.${gameId}` },
+        (payload) => {
+          setEntries((prev) => {
+            if (payload.eventType === "DELETE") return prev.filter((e) => e.id !== (payload.old as GameEntry).id);
+            const next = payload.new as GameEntry;
+            const idx = prev.findIndex((e) => e.id === next.id);
+            if (idx >= 0) {
+              const copy = [...prev];
+              copy[idx] = next;
+              return copy;
+            }
+            return [...prev, next];
+          });
+        },
+      )
       .subscribe();
 
     return () => {
@@ -85,5 +102,5 @@ export function useGame(gameId: string | undefined) {
     };
   }, [gameId]);
 
-  return { game, squares, players, loading, error };
+  return { game, squares, players, entries, loading, error };
 }
