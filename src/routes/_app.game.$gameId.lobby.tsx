@@ -210,10 +210,24 @@ function LobbyPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <Pill label="Squares" value={`${filled}/100`} color="var(--neon-blue)" />
-            <Pill label="Yours" value={`${myCount}/${game.max_squares_per_user}`} color="var(--neon-green)" />
+            <Pill label="Squares" value={awaitingRandomization ? `${reservedEntries}/100` : `${filled}/100`} color="var(--neon-blue)" />
+            <Pill label="Yours" value={`${awaitingRandomization ? myEntries : myCount}/${game.max_squares_per_user}`} color="var(--neon-green)" />
             <Pill label="Players" value={`${players.length}`} color="var(--neon-orange)" />
           </div>
+
+          {randomizedMode && (
+            <div className="mb-4">
+              <BoardRandomizationCard
+                game={game}
+                entries={entries}
+                squares={squares}
+                userId={user?.id ?? null}
+                displayName={profile?.display_name ?? null}
+                isHost={isHost}
+              />
+            </div>
+          )}
+
 
           {/* Grid */}
           <div className="rounded-2xl border border-border bg-[color:var(--surface)] p-2 sm:p-4 shadow-[var(--shadow-card)]">
@@ -222,9 +236,10 @@ function LobbyPage() {
               squares={squares}
               userId={user?.id ?? null}
               selectedIndex={selected}
-              allowClickTaken={isHost}
+              allowClickTaken={isHost && !randomizedMode}
+              hideOwners={awaitingRandomization}
               onSelect={(i) => {
-                if (game.status !== "lobby") return;
+                if (game.status !== "lobby" || randomizedMode) return;
                 const row = Math.floor(i / 10);
                 const col = i % 10;
                 const sq = squares.find((s) => s.row === row && s.col === col);
@@ -279,10 +294,18 @@ function LobbyPage() {
           <NeonButton
             variant="blue"
             className="flex-1"
-            disabled={selected === null || claiming}
+            disabled={randomizedMode || selected === null || claiming}
             onClick={claim}
           >
-            {claiming ? "..." : selected !== null ? `Claim Square` : "Tap a square"}
+            {randomizedMode
+              ? awaitingRandomization
+                ? `${myEntries} ${myEntries === 1 ? "entry" : "entries"} reserved`
+                : "Squares assigned"
+              : claiming
+                ? "..."
+                : selected !== null
+                  ? `Claim Square`
+                  : "Tap a square"}
           </NeonButton>
           {isHost ? (
             <NeonButton variant="green" onClick={startGame} disabled={starting} className="!px-4">
