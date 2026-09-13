@@ -106,6 +106,7 @@ function CreateGame() {
     setHomeTeam(d.home);
     setAwayTeam(d.away);
     setDateTime("");
+    if (next !== "NFL") setAssignmentMode("manual");
     if (!nameEdited) setName(d.name);
   };
 
@@ -136,6 +137,9 @@ function CreateGame() {
         game_date_time: dateTime ? new Date(dateTime).toISOString() : null,
         invite_code: inviteCode,
         max_squares_per_user: maxSquares,
+        assignment_mode: sport === "NFL" ? assignmentMode : "manual",
+        randomization_minutes_before_kickoff:
+          sport === "NFL" && assignmentMode === "randomized" ? randomizeMinutes : 10,
         entry_amount_label: entryLabel.trim() || null,
         commentator_enabled: commentatorEnabled,
         prize_enabled: prizeEnabled,
