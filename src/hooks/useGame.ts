@@ -17,16 +17,18 @@ export function useGame(gameId: string | undefined) {
     setLoading(true);
 
     const load = async () => {
-      const [g, sq, pl] = await Promise.all([
+      const [g, sq, pl, en] = await Promise.all([
         supabase.from("games").select("*").eq("id", gameId).maybeSingle(),
         supabase.from("squares").select("*").eq("game_id", gameId),
         supabase.from("game_players").select("*").eq("game_id", gameId).order("joined_at"),
+        supabase.from("game_entries").select("*").eq("game_id", gameId),
       ]);
       if (!active) return;
       if (g.error) setError(g.error.message);
       if (g.data) setGame(g.data as Game);
       if (sq.data) setSquares(sq.data as Square[]);
       if (pl.data) setPlayers(pl.data as GamePlayer[]);
+      if (en.data) setEntries(en.data as GameEntry[]);
       setLoading(false);
     };
     load();
