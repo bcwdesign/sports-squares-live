@@ -602,6 +602,11 @@ function LivePage() {
                 Host Controls
               </span>
             </div>
+            {game.board_randomized && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[color:var(--neon-green)] text-[11px] font-mono uppercase tracking-widest">
+                Board randomized &amp; locked
+              </span>
+            )}
             <button
               onClick={runDemoSequence}
               disabled={demoRunning || resetting}

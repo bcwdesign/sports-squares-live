@@ -21,6 +21,15 @@ export type Game = {
   quarter: number;
   clock: string;
   created_at: string;
+  // NFL pre-game randomization (see board-randomization.functions.ts)
+  assignment_mode?: string | null;
+  randomization_minutes_before_kickoff?: number | null;
+  scheduled_randomization_at?: string | null;
+  board_randomized?: boolean | null;
+  board_locked?: boolean | null;
+  randomized_at?: string | null;
+  randomized_by?: string | null;
+  randomization_version?: number | null;
   // Optional custom branding (see src/lib/branding.ts)
   branding_enabled?: boolean;
   branding_company_name?: string | null;
@@ -51,6 +60,19 @@ export type GamePlayer = {
   avatar_url: string | null;
   joined_at: string;
 };
+
+export type GameEntry = {
+  id: string;
+  game_id: string;
+  user_id: string;
+  display_name: string;
+  entry_count: number;
+};
+
+/** True when this game reserves entries now and assigns positions later. */
+export function isRandomizedNfl(game: Pick<Game, "sport" | "assignment_mode">) {
+  return game.sport?.toUpperCase() === "NFL" && game.assignment_mode === "randomized";
+}
 
 export type Message = {
   id: string;

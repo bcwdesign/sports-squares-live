@@ -61,6 +61,9 @@ function CreateGame() {
   const [awayTeam, setAwayTeam] = useState("Mavericks");
   const [dateTime, setDateTime] = useState("");
   const [maxSquares, setMaxSquares] = useState(10);
+  // NFL-only square assignment mode
+  const [assignmentMode, setAssignmentMode] = useState<"manual" | "randomized">("manual");
+  const [randomizeMinutes, setRandomizeMinutes] = useState(10);
   const [entryLabel, setEntryLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [apiGame, setApiGame] = useState<NormalizedLiveGame | null>(null);
@@ -103,6 +106,7 @@ function CreateGame() {
     setHomeTeam(d.home);
     setAwayTeam(d.away);
     setDateTime("");
+    if (next !== "NFL") setAssignmentMode("manual");
     if (!nameEdited) setName(d.name);
   };
 
@@ -133,6 +137,9 @@ function CreateGame() {
         game_date_time: dateTime ? new Date(dateTime).toISOString() : null,
         invite_code: inviteCode,
         max_squares_per_user: maxSquares,
+        assignment_mode: sport === "NFL" ? assignmentMode : "manual",
+        randomization_minutes_before_kickoff:
+          sport === "NFL" && assignmentMode === "randomized" ? randomizeMinutes : 10,
         entry_amount_label: entryLabel.trim() || null,
         commentator_enabled: commentatorEnabled,
         prize_enabled: prizeEnabled,
@@ -345,6 +352,65 @@ function CreateGame() {
               ))}
             </div>
           </FieldGroup>
+
+          {sport === "NFL" && (
+            <div className="rounded-2xl border border-border bg-[color:var(--surface)]/60 p-4 space-y-4">
+              <div>
+                <div className="font-display font-bold">Square Assignment</div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  NFL only. Decide whether players pick their own squares or the board is randomly
+                  assigned shortly before kickoff.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {([
+                  { key: "manual", title: "Manual Selection", desc: "Players pick their own squares." },
+                  { key: "randomized", title: "Randomized Before Kickoff", desc: "Players reserve entries; positions and numbers are drawn later." },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setAssignmentMode(opt.key)}
+                    aria-pressed={assignmentMode === opt.key}
+                    className={`text-left px-4 py-3 rounded-xl border transition ${
+                      assignmentMode === opt.key
+                        ? "border-[color:var(--neon-green)] bg-[color:var(--neon-green)]/10"
+                        : "border-border bg-[color:var(--surface)] hover:border-[color:var(--neon-green)]/60"
+                    }`}
+                  >
+                    <div className="font-display font-bold text-sm">{opt.title}</div>
+                    <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                  </button>
+                ))}
+              </div>
+
+              {assignmentMode === "randomized" && (
+                <FieldGroup label="Randomization time">
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {[60, 30, 15, 10, 5, 0].map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setRandomizeMinutes(m)}
+                        className={`py-2.5 rounded-xl border text-xs font-display font-bold transition ${
+                          randomizeMinutes === m
+                            ? "bg-[color:var(--neon-green)] border-[color:var(--neon-green)] text-background"
+                            : "bg-[color:var(--surface)] border-border hover:border-[color:var(--neon-green)]/60"
+                        }`}
+                      >
+                        {m === 0 ? "At kickoff" : `${m} min`}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {dateTime
+                      ? `Board randomizes ${randomizeMinutes === 0 ? "at kickoff" : `${randomizeMinutes} minutes before kickoff`}.`
+                      : "Set a kickoff time so the board can randomize automatically, or randomize it yourself from the lobby."}
+                  </p>
+                </FieldGroup>
+              )}
+            </div>
+          )}
 
           <FieldGroup label="Entry / payout label (optional, tracking only)">
             <Input value={entryLabel} onChange={setEntryLabel} placeholder="$20 buy-in · $500/quarter" maxLength={60} />

@@ -8,7 +8,10 @@ import { SquaresGrid } from "@/components/SquaresGrid";
 import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
-import { shuffle10 } from "@/lib/types";
+import { isRandomizedNfl, shuffle10 } from "@/lib/types";
+import { BoardRandomizationCard } from "@/components/BoardRandomizationCard";
+import { invokeAuthed } from "@/lib/serverFnClient";
+import { randomizeAndLockBoard } from "@/lib/board-randomization.functions";
 import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
@@ -37,7 +40,7 @@ export const Route = createFileRoute("/_app/game/$gameId/lobby")({
 
 function LobbyPage() {
   const { gameId } = Route.useParams();
-  const { game, squares, players, loading } = useGame(gameId);
+  const { game, squares, players, entries, loading } = useGame(gameId);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<number | null>(null);
@@ -65,6 +68,11 @@ function LobbyPage() {
   const myCount = squares.filter((s) => s.owner_id === user?.id).length;
   const filled = squares.filter((s) => s.owner_id).length;
   const host = players.find((p) => p.user_id === game.host_id);
+  // NFL randomized mode: entries are reserved now, positions drawn server-side later.
+  const randomizedMode = isRandomizedNfl(game);
+  const awaitingRandomization = randomizedMode && !game.board_randomized;
+  const reservedEntries = entries.reduce((n, e) => n + e.entry_count, 0);
+  const myEntries = entries.find((e) => e.user_id === user?.id)?.entry_count ?? 0;
 
   const claim = async () => {
     if (selected === null || !user || !profile) return;
@@ -97,15 +105,29 @@ function LobbyPage() {
   const startGame = async () => {
     if (!isHost) return;
     setStarting(true);
+    // Randomized NFL boards get their squares and digits from the server; the
+    // client never shuffles, and a locked board is never reshuffled.
+    if (randomizedMode) {
+      try {
+        await invokeAuthed(randomizeAndLockBoard, { gameId: game.id });
+      } catch {
+        setStarting(false);
+        return toast.error("Couldn't finalize the board");
+      }
+    }
     const { error } = await supabase
       .from("games")
-      .update({
-        status: "live",
-        home_axis: shuffle10(),
-        away_axis: shuffle10(),
-        clock: "12:00",
-        quarter: 1,
-      })
+      .update(
+        randomizedMode
+          ? { status: "live" as const, clock: "12:00", quarter: 1 }
+          : {
+              status: "live" as const,
+              home_axis: shuffle10(),
+              away_axis: shuffle10(),
+              clock: "12:00",
+              quarter: 1,
+            },
+      )
       .eq("id", game.id);
     setStarting(false);
     if (error) return toast.error(error.message);
@@ -188,10 +210,24 @@ function LobbyPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <Pill label="Squares" value={`${filled}/100`} color="var(--neon-blue)" />
-            <Pill label="Yours" value={`${myCount}/${game.max_squares_per_user}`} color="var(--neon-green)" />
+            <Pill label="Squares" value={awaitingRandomization ? `${reservedEntries}/100` : `${filled}/100`} color="var(--neon-blue)" />
+            <Pill label="Yours" value={`${awaitingRandomization ? myEntries : myCount}/${game.max_squares_per_user}`} color="var(--neon-green)" />
             <Pill label="Players" value={`${players.length}`} color="var(--neon-orange)" />
           </div>
+
+          {randomizedMode && (
+            <div className="mb-4">
+              <BoardRandomizationCard
+                game={game}
+                entries={entries}
+                squares={squares}
+                userId={user?.id ?? null}
+                displayName={profile?.display_name ?? null}
+                isHost={isHost}
+              />
+            </div>
+          )}
+
 
           {/* Grid */}
           <div className="rounded-2xl border border-border bg-[color:var(--surface)] p-2 sm:p-4 shadow-[var(--shadow-card)]">
@@ -200,9 +236,10 @@ function LobbyPage() {
               squares={squares}
               userId={user?.id ?? null}
               selectedIndex={selected}
-              allowClickTaken={isHost}
+              allowClickTaken={isHost && !randomizedMode}
+              hideOwners={awaitingRandomization}
               onSelect={(i) => {
-                if (game.status !== "lobby") return;
+                if (game.status !== "lobby" || randomizedMode) return;
                 const row = Math.floor(i / 10);
                 const col = i % 10;
                 const sq = squares.find((s) => s.row === row && s.col === col);
@@ -257,10 +294,18 @@ function LobbyPage() {
           <NeonButton
             variant="blue"
             className="flex-1"
-            disabled={selected === null || claiming}
+            disabled={randomizedMode || selected === null || claiming}
             onClick={claim}
           >
-            {claiming ? "..." : selected !== null ? `Claim Square` : "Tap a square"}
+            {randomizedMode
+              ? awaitingRandomization
+                ? `${myEntries} ${myEntries === 1 ? "entry" : "entries"} reserved`
+                : "Squares assigned"
+              : claiming
+                ? "..."
+                : selected !== null
+                  ? `Claim Square`
+                  : "Tap a square"}
           </NeonButton>
           {isHost ? (
             <NeonButton variant="green" onClick={startGame} disabled={starting} className="!px-4">
