@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      board_randomizations: {
+        Row: {
+          away_axis: number[]
+          board_state_hash: string | null
+          claimed_count: number
+          external_game_id: string | null
+          game_id: string
+          home_axis: number[]
+          id: string
+          kickoff_at: string | null
+          player_count: number
+          randomization_version: number
+          randomized_at: string
+          randomized_by: string | null
+          scheduled_randomization_at: string | null
+          trigger_source: string
+        }
+        Insert: {
+          away_axis: number[]
+          board_state_hash?: string | null
+          claimed_count?: number
+          external_game_id?: string | null
+          game_id: string
+          home_axis: number[]
+          id?: string
+          kickoff_at?: string | null
+          player_count?: number
+          randomization_version?: number
+          randomized_at?: string
+          randomized_by?: string | null
+          scheduled_randomization_at?: string | null
+          trigger_source?: string
+        }
+        Update: {
+          away_axis?: number[]
+          board_state_hash?: string | null
+          claimed_count?: number
+          external_game_id?: string | null
+          game_id?: string
+          home_axis?: number[]
+          id?: string
+          kickoff_at?: string | null
+          player_count?: number
+          randomization_version?: number
+          randomized_at?: string
+          randomized_by?: string | null
+          scheduled_randomization_at?: string | null
+          trigger_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_randomizations_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_kits: {
         Row: {
           background_color: string
@@ -62,6 +121,44 @@ export type Database = {
         }
         Relationships: []
       }
+      game_entries: {
+        Row: {
+          created_at: string
+          display_name: string
+          entry_count: number
+          game_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          entry_count?: number
+          game_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          entry_count?: number
+          game_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_entries_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_players: {
         Row: {
           avatar_url: string | null
@@ -99,10 +196,13 @@ export type Database = {
       }
       games: {
         Row: {
+          assignment_mode: string
           auto_sync_enabled: boolean
           away_axis: number[]
           away_score: number
           away_team: string
+          board_locked: boolean
+          board_randomized: boolean
           branding_background: string | null
           branding_claimed_color: string | null
           branding_company_name: string | null
@@ -157,17 +257,25 @@ export type Database = {
           prize_timing: string | null
           prize_type: string | null
           quarter: number
+          randomization_minutes_before_kickoff: number
+          randomization_version: number
+          randomized_at: string | null
+          randomized_by: string | null
           requires_age_verification: boolean
+          scheduled_randomization_at: string | null
           score_source: string
           share_token: string
           sport: string
           status: Database["public"]["Enums"]["game_status"]
         }
         Insert: {
+          assignment_mode?: string
           auto_sync_enabled?: boolean
           away_axis?: number[]
           away_score?: number
           away_team: string
+          board_locked?: boolean
+          board_randomized?: boolean
           branding_background?: string | null
           branding_claimed_color?: string | null
           branding_company_name?: string | null
@@ -222,17 +330,25 @@ export type Database = {
           prize_timing?: string | null
           prize_type?: string | null
           quarter?: number
+          randomization_minutes_before_kickoff?: number
+          randomization_version?: number
+          randomized_at?: string | null
+          randomized_by?: string | null
           requires_age_verification?: boolean
+          scheduled_randomization_at?: string | null
           score_source?: string
           share_token?: string
           sport?: string
           status?: Database["public"]["Enums"]["game_status"]
         }
         Update: {
+          assignment_mode?: string
           auto_sync_enabled?: boolean
           away_axis?: number[]
           away_score?: number
           away_team?: string
+          board_locked?: boolean
+          board_randomized?: boolean
           branding_background?: string | null
           branding_claimed_color?: string | null
           branding_company_name?: string | null
@@ -287,7 +403,12 @@ export type Database = {
           prize_timing?: string | null
           prize_type?: string | null
           quarter?: number
+          randomization_minutes_before_kickoff?: number
+          randomization_version?: number
+          randomized_at?: string | null
+          randomized_by?: string | null
           requires_age_verification?: boolean
+          scheduled_randomization_at?: string | null
           score_source?: string
           share_token?: string
           sport?: string
@@ -649,7 +770,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      finalize_nfl_board: {
+        Args: { p_actor?: string; p_game_id: string; p_source?: string }
+        Returns: Json
+      }
+      reset_nfl_board: {
+        Args: { p_actor?: string; p_game_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "user" | "host"
