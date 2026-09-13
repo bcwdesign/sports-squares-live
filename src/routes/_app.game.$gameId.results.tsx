@@ -46,7 +46,8 @@ function ResultsPage() {
     if (!gameId || retryingRecap) return;
     setRetryingRecap(true);
     try {
-      await generateRecap({ data: { gameId, kind: "final" } });
+      // force: the background job already claimed the one-shot final recap.
+      await generateRecap({ data: { gameId, kind: "final", force: true } });
       toast.success("Re-rendering final recap…");
       if (recapPollRef.current) window.clearInterval(recapPollRef.current);
       let ticks = 0;
