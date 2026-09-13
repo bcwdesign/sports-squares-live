@@ -8,7 +8,8 @@ import { SquaresGrid } from "@/components/SquaresGrid";
 import { ChatPanel } from "@/components/ChatPanel";
 import { NeonButton } from "@/components/NeonButton";
 import { supabase } from "@/integrations/supabase/client";
-import { shuffle10 } from "@/lib/types";
+import { isRandomizedNfl, shuffle10 } from "@/lib/types";
+import { BoardRandomizationCard } from "@/components/BoardRandomizationCard";
 import { Maximize2, Lock, Play, Share2, Users, Crown, Hourglass, Tv } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { toast } from "sonner";
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/_app/game/$gameId/lobby")({
 
 function LobbyPage() {
   const { gameId } = Route.useParams();
-  const { game, squares, players, loading } = useGame(gameId);
+  const { game, squares, players, entries, loading } = useGame(gameId);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<number | null>(null);
