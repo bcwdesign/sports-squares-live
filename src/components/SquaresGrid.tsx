@@ -11,9 +11,11 @@ type Props = {
   showAxes?: boolean;
   /** When true, taken squares are clickable (e.g. for host to clear them). */
   allowClickTaken?: boolean;
+  /** Hide owner names/positions (NFL randomized mode before the board locks). */
+  hideOwners?: boolean;
 };
 
-export function SquaresGrid({ game, squares, userId, selectedIndex, winningIndex, onSelect, showAxes, allowClickTaken }: Props) {
+export function SquaresGrid({ game, squares, userId, selectedIndex, winningIndex, onSelect, showAxes, allowClickTaken, hideOwners }: Props) {
   const showDigits = (game.status !== "lobby") && showAxes;
   // Build a 100-length array indexed by row*10+col
   const grid: (Square | null)[] = Array(100).fill(null);
