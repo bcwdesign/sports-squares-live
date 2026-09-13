@@ -264,6 +264,7 @@ export async function runDueFinalRecaps(): Promise<{
     .eq("status", "completed")
     .not("heygen_video_id", "is", null)
     .is("heygen_video_url", null)
+    .gte("created_at", cutoff)
     .limit(10);
 
   for (const g of pending ?? []) {
