@@ -36,6 +36,13 @@
       "when": 1789299476694,
       "tag": "0004_realtime_game_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789317570717,
+      "tag": "0005_harden_definer_and_policies",
+      "breakpoints": true
     }
   ]
 }
