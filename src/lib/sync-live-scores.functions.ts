@@ -3,7 +3,12 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import { runSync, supabaseAdminForSync, runDueRandomizations } from "./sync-live-scores.server";
+import {
+  runSync,
+  supabaseAdminForSync,
+  runDueRandomizations,
+  runDueFinalRecaps,
+} from "./sync-live-scores.server";
 
 export const syncLiveScoresFn = createServerFn({ method: "POST" }).handler(
   async () => {
