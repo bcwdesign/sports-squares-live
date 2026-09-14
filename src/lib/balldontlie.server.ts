@@ -259,7 +259,7 @@ async function doSync(gameId: string, source: string): Promise<SyncResult> {
   const { data: g, error: gErr } = await supabaseAdmin
     .from("games")
     .select(
-      "id, sport, external_provider, external_game_id, period, home_score, away_score, home_team, away_team, external_home_team_id, external_away_team_id, external_home_team_name, external_away_team_name",
+      "id, sport, external_provider, external_game_id, period, game_clock, home_score, away_score, home_team, away_team, external_home_team_id, external_away_team_id, external_home_team_name, external_away_team_name",
     )
     .eq("id", gameId)
     .maybeSingle();
