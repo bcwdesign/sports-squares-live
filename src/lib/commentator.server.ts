@@ -258,14 +258,17 @@ export async function runDueFinalRecaps(): Promise<{
     }
   }
 
+  // Keep checking in-flight renders by *when the recap was requested*, not when
+  // the board was created — a game created days earlier can finish today.
+  const pollCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const { data: pending } = await supabaseAdmin
     .from("games")
     .select("id")
     .eq("status", "completed")
     .not("heygen_video_id", "is", null)
     .is("heygen_video_url", null)
-    .gte("created_at", cutoff)
-    .limit(10);
+    .or(`heygen_final_requested_at.gte.${pollCutoff},heygen_final_requested_at.is.null`)
+    .limit(25);
 
   for (const g of pending ?? []) {
     try {
