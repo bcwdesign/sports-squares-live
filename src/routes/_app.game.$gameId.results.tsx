@@ -42,6 +42,40 @@ function ResultsPage() {
     if (recapPollRef.current) window.clearInterval(recapPollRef.current);
   }, []);
 
+  // While the final recap is still rendering, check on it from this page too so
+  // the video appears without a manual refresh. Realtime pushes the row update
+  // once the URL lands, so we only need to nudge the status fetch.
+  const g0 = game as (typeof game & {
+    commentator_enabled?: boolean | null;
+    heygen_video_id?: string | null;
+    heygen_video_url?: string | null;
+    heygen_video_status?: string | null;
+  }) | null;
+  const recapPending =
+    !!g0?.commentator_enabled && !!g0?.heygen_video_id && !g0?.heygen_video_url &&
+    !/error|failed/i.test(g0?.heygen_video_status ?? "");
+
+  useEffect(() => {
+    if (!gameId || !recapPending) return;
+    let ticks = 0;
+    let stopped = false;
+    const id = window.setInterval(async () => {
+      ticks++;
+      if (ticks > 30) {
+        window.clearInterval(id);
+        return;
+      }
+      try {
+        const r = (await pollRecap({ data: { gameId } })) as { url?: string | null };
+        if (r?.url && !stopped) window.clearInterval(id);
+      } catch {/* keep polling */}
+    }, 20000);
+    return () => {
+      stopped = true;
+      window.clearInterval(id);
+    };
+  }, [gameId, recapPending, pollRecap]);
+
   const retryRecapVideo = async () => {
     if (!gameId || retryingRecap) return;
     setRetryingRecap(true);
