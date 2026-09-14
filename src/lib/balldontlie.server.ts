@@ -327,6 +327,41 @@ async function doSync(gameId: string, source: string): Promise<SyncResult> {
   const finalHomeScore = swap ? match.away_score : match.home_score;
   const finalAwayScore = swap ? match.home_score : match.away_score;
 
+  // ---- Anti-flap guard -----------------------------------------------------
+  // The feed sometimes replays a stale snapshot (lower total, or a clock that
+  // moves backwards inside the same quarter). Skip it once; if the identical
+  // values come back on the next poll, treat it as a real correction and write.
+  const signature = `${finalHomeScore}-${finalAwayScore}-${match.period ?? "?"}-${match.game_clock ?? "?"}`;
+  const storedTotal = (g.home_score ?? 0) + (g.away_score ?? 0);
+  const incomingTotal = finalHomeScore + finalAwayScore;
+  const storedRemaining = clockSeconds(g.game_clock);
+  const incomingRemaining = clockSeconds(match.game_clock);
+  const samePeriod = typeof match.period === "number" && match.period === g.period;
+  const periodAdvanced = typeof match.period === "number" && match.period > (g.period ?? 0);
+
+  const regressed =
+    !completed &&
+    !periodAdvanced &&
+    (incomingTotal < storedTotal ||
+      (samePeriod &&
+        storedRemaining !== null &&
+        incomingRemaining !== null &&
+        incomingRemaining > storedRemaining));
+
+  if (regressed && pendingRegression.get(gameId) !== signature) {
+    pendingRegression.set(gameId, signature);
+    await supabaseAdmin
+      .from("games")
+      .update({ last_score_sync_at: new Date().toISOString(), last_score_sync_error: null })
+      .eq("id", gameId);
+    console.log(
+      `[score-sync] ignored-regression game=${gameId} src=${source} stored=${g.home_score}-${g.away_score} P${g.period ?? "?"} ${g.game_clock ?? ""} incoming=${signature}`,
+    );
+    lastSyncByGame.set(gameId, Date.now());
+    return { synced: false, reason: "Ignored a backwards update from the score feed." };
+  }
+  pendingRegression.delete(gameId);
+
   const { error: updErr } = await supabaseAdmin
     .from("games")
     .update({
