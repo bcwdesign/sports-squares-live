@@ -9,36 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as DocsRouteImport } from './routes/docs'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as OverlayTokenRouteImport } from './routes/overlay.$token'
-import { Route as JoinInviteCodeRouteImport } from './routes/join.$inviteCode'
-import { Route as AppVenueRouteImport } from './routes/_app.venue'
-import { Route as AppProfileRouteImport } from './routes/_app.profile'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
-import { Route as AppCreateRouteImport } from './routes/_app.create'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DocsRouteImport } from './routes/docs'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
-import { Route as ApiTtsElevenlabsRouteImport } from './routes/api/tts/elevenlabs'
-import { Route as ApiPublicBrandLogoRouteImport } from './routes/api/public/brand-logo'
+import { Route as AppCreateRouteImport } from './routes/_app.create'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
+import { Route as AppVenueRouteImport } from './routes/_app.venue'
+import { Route as JoinInviteCodeRouteImport } from './routes/join.$inviteCode'
+import { Route as OverlayTokenRouteImport } from './routes/overlay.$token'
 import { Route as ApiArgosWebhookRouteImport } from './routes/api/argos/webhook'
-import { Route as ApiPublicHooksSyncLiveScoresRouteImport } from './routes/api/public/hooks/sync-live-scores'
-import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
-import { Route as AppGameGameIdOverlayRouteImport } from './routes/_app.game.$gameId.overlay'
-import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$gameId.lobby'
-import { Route as AppGameGameIdLiveRouteImport } from './routes/_app.game.$gameId.live'
+import { Route as ApiPublicBrandLogoRouteImport } from './routes/api/public/brand-logo'
+import { Route as ApiTtsElevenlabsRouteImport } from './routes/api/tts/elevenlabs'
 import { Route as AppGameGameIdInviteRouteImport } from './routes/_app.game.$gameId.invite'
+import { Route as AppGameGameIdLiveRouteImport } from './routes/_app.game.$gameId.live'
+import { Route as AppGameGameIdLobbyRouteImport } from './routes/_app.game.$gameId.lobby'
+import { Route as AppGameGameIdOverlayRouteImport } from './routes/_app.game.$gameId.overlay'
+import { Route as AppGameGameIdResultsRouteImport } from './routes/_app.game.$gameId.results'
+import { Route as ApiPublicHooksSyncLiveScoresRouteImport } from './routes/api/public/hooks/sync-live-scores'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocsRoute = DocsRouteImport.update({
-  id: '/docs',
-  path: '/docs',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -46,38 +45,19 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OverlayTokenRoute = OverlayTokenRouteImport.update({
-  id: '/overlay/$token',
-  path: '/overlay/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const JoinInviteCodeRoute = JoinInviteCodeRouteImport.update({
-  id: '/join/$inviteCode',
-  path: '/join/$inviteCode',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppVenueRoute = AppVenueRouteImport.update({
-  id: '/venue',
-  path: '/venue',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProfileRoute = AppProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCreateRoute = AppCreateRouteImport.update({
@@ -85,19 +65,29 @@ const AppCreateRoute = AppCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminRoute = AppAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const ApiTtsElevenlabsRoute = ApiTtsElevenlabsRouteImport.update({
-  id: '/api/tts/elevenlabs',
-  path: '/api/tts/elevenlabs',
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVenueRoute = AppVenueRouteImport.update({
+  id: '/venue',
+  path: '/venue',
+  getParentRoute: () => AppRoute,
+} as any)
+const JoinInviteCodeRoute = JoinInviteCodeRouteImport.update({
+  id: '/join/$inviteCode',
+  path: '/join/$inviteCode',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicBrandLogoRoute = ApiPublicBrandLogoRouteImport.update({
-  id: '/api/public/brand-logo',
-  path: '/api/public/brand-logo',
+const OverlayTokenRoute = OverlayTokenRouteImport.update({
+  id: '/overlay/$token',
+  path: '/overlay/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiArgosWebhookRoute = ApiArgosWebhookRouteImport.update({
@@ -105,25 +95,19 @@ const ApiArgosWebhookRoute = ApiArgosWebhookRouteImport.update({
   path: '/api/argos/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksSyncLiveScoresRoute =
-  ApiPublicHooksSyncLiveScoresRouteImport.update({
-    id: '/api/public/hooks/sync-live-scores',
-    path: '/api/public/hooks/sync-live-scores',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AppGameGameIdResultsRoute = AppGameGameIdResultsRouteImport.update({
-  id: '/game/$gameId/results',
-  path: '/game/$gameId/results',
-  getParentRoute: () => AppRoute,
+const ApiPublicBrandLogoRoute = ApiPublicBrandLogoRouteImport.update({
+  id: '/api/public/brand-logo',
+  path: '/api/public/brand-logo',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppGameGameIdOverlayRoute = AppGameGameIdOverlayRouteImport.update({
-  id: '/game/$gameId/overlay',
-  path: '/game/$gameId/overlay',
-  getParentRoute: () => AppRoute,
+const ApiTtsElevenlabsRoute = ApiTtsElevenlabsRouteImport.update({
+  id: '/api/tts/elevenlabs',
+  path: '/api/tts/elevenlabs',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppGameGameIdLobbyRoute = AppGameGameIdLobbyRouteImport.update({
-  id: '/game/$gameId/lobby',
-  path: '/game/$gameId/lobby',
+const AppGameGameIdInviteRoute = AppGameGameIdInviteRouteImport.update({
+  id: '/game/$gameId/invite',
+  path: '/game/$gameId/invite',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGameGameIdLiveRoute = AppGameGameIdLiveRouteImport.update({
@@ -131,11 +115,27 @@ const AppGameGameIdLiveRoute = AppGameGameIdLiveRouteImport.update({
   path: '/game/$gameId/live',
   getParentRoute: () => AppRoute,
 } as any)
-const AppGameGameIdInviteRoute = AppGameGameIdInviteRouteImport.update({
-  id: '/game/$gameId/invite',
-  path: '/game/$gameId/invite',
+const AppGameGameIdLobbyRoute = AppGameGameIdLobbyRouteImport.update({
+  id: '/game/$gameId/lobby',
+  path: '/game/$gameId/lobby',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGameGameIdOverlayRoute = AppGameGameIdOverlayRouteImport.update({
+  id: '/game/$gameId/overlay',
+  path: '/game/$gameId/overlay',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGameGameIdResultsRoute = AppGameGameIdResultsRouteImport.update({
+  id: '/game/$gameId/results',
+  path: '/game/$gameId/results',
+  getParentRoute: () => AppRoute,
+} as any)
+const ApiPublicHooksSyncLiveScoresRoute =
+  ApiPublicHooksSyncLiveScoresRouteImport.update({
+    id: '/api/public/hooks/sync-live-scores',
+    path: '/api/public/hooks/sync-live-scores',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -291,25 +291,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/docs': {
-      id: '/docs'
-      path: '/docs'
-      fullPath: '/docs'
-      preLoaderRoute: typeof DocsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -319,46 +305,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/overlay/$token': {
-      id: '/overlay/$token'
-      path: '/overlay/$token'
-      fullPath: '/overlay/$token'
-      preLoaderRoute: typeof OverlayTokenRouteImport
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/join/$inviteCode': {
-      id: '/join/$inviteCode'
-      path: '/join/$inviteCode'
-      fullPath: '/join/$inviteCode'
-      preLoaderRoute: typeof JoinInviteCodeRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/venue': {
-      id: '/_app/venue'
-      path: '/venue'
-      fullPath: '/venue'
-      preLoaderRoute: typeof AppVenueRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/profile': {
-      id: '/_app/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AppProfileRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/create': {
@@ -368,25 +340,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCreateRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/admin': {
-      id: '/_app/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AppAdminRouteImport
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/tts/elevenlabs': {
-      id: '/api/tts/elevenlabs'
-      path: '/api/tts/elevenlabs'
-      fullPath: '/api/tts/elevenlabs'
-      preLoaderRoute: typeof ApiTtsElevenlabsRouteImport
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/venue': {
+      id: '/_app/venue'
+      path: '/venue'
+      fullPath: '/venue'
+      preLoaderRoute: typeof AppVenueRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/join/$inviteCode': {
+      id: '/join/$inviteCode'
+      path: '/join/$inviteCode'
+      fullPath: '/join/$inviteCode'
+      preLoaderRoute: typeof JoinInviteCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/brand-logo': {
-      id: '/api/public/brand-logo'
-      path: '/api/public/brand-logo'
-      fullPath: '/api/public/brand-logo'
-      preLoaderRoute: typeof ApiPublicBrandLogoRouteImport
+    '/overlay/$token': {
+      id: '/overlay/$token'
+      path: '/overlay/$token'
+      fullPath: '/overlay/$token'
+      preLoaderRoute: typeof OverlayTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/argos/webhook': {
@@ -396,32 +382,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiArgosWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/sync-live-scores': {
-      id: '/api/public/hooks/sync-live-scores'
-      path: '/api/public/hooks/sync-live-scores'
-      fullPath: '/api/public/hooks/sync-live-scores'
-      preLoaderRoute: typeof ApiPublicHooksSyncLiveScoresRouteImport
+    '/api/public/brand-logo': {
+      id: '/api/public/brand-logo'
+      path: '/api/public/brand-logo'
+      fullPath: '/api/public/brand-logo'
+      preLoaderRoute: typeof ApiPublicBrandLogoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/game/$gameId/results': {
-      id: '/_app/game/$gameId/results'
-      path: '/game/$gameId/results'
-      fullPath: '/game/$gameId/results'
-      preLoaderRoute: typeof AppGameGameIdResultsRouteImport
-      parentRoute: typeof AppRoute
+    '/api/tts/elevenlabs': {
+      id: '/api/tts/elevenlabs'
+      path: '/api/tts/elevenlabs'
+      fullPath: '/api/tts/elevenlabs'
+      preLoaderRoute: typeof ApiTtsElevenlabsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/game/$gameId/overlay': {
-      id: '/_app/game/$gameId/overlay'
-      path: '/game/$gameId/overlay'
-      fullPath: '/game/$gameId/overlay'
-      preLoaderRoute: typeof AppGameGameIdOverlayRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/game/$gameId/lobby': {
-      id: '/_app/game/$gameId/lobby'
-      path: '/game/$gameId/lobby'
-      fullPath: '/game/$gameId/lobby'
-      preLoaderRoute: typeof AppGameGameIdLobbyRouteImport
+    '/_app/game/$gameId/invite': {
+      id: '/_app/game/$gameId/invite'
+      path: '/game/$gameId/invite'
+      fullPath: '/game/$gameId/invite'
+      preLoaderRoute: typeof AppGameGameIdInviteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/game/$gameId/live': {
@@ -431,12 +410,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGameGameIdLiveRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/game/$gameId/invite': {
-      id: '/_app/game/$gameId/invite'
-      path: '/game/$gameId/invite'
-      fullPath: '/game/$gameId/invite'
-      preLoaderRoute: typeof AppGameGameIdInviteRouteImport
+    '/_app/game/$gameId/lobby': {
+      id: '/_app/game/$gameId/lobby'
+      path: '/game/$gameId/lobby'
+      fullPath: '/game/$gameId/lobby'
+      preLoaderRoute: typeof AppGameGameIdLobbyRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/overlay': {
+      id: '/_app/game/$gameId/overlay'
+      path: '/game/$gameId/overlay'
+      fullPath: '/game/$gameId/overlay'
+      preLoaderRoute: typeof AppGameGameIdOverlayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/game/$gameId/results': {
+      id: '/_app/game/$gameId/results'
+      path: '/game/$gameId/results'
+      fullPath: '/game/$gameId/results'
+      preLoaderRoute: typeof AppGameGameIdResultsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/api/public/hooks/sync-live-scores': {
+      id: '/api/public/hooks/sync-live-scores'
+      path: '/api/public/hooks/sync-live-scores'
+      fullPath: '/api/public/hooks/sync-live-scores'
+      preLoaderRoute: typeof ApiPublicHooksSyncLiveScoresRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
