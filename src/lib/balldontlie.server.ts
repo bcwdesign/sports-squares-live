@@ -18,6 +18,19 @@ const MIN_SYNC_INTERVAL_MS = 5_000;
 // Prevents duplicate overlapping syncs for the same game within one worker.
 const inFlight = new Set<string>();
 
+// Anti-flap: the provider intermittently replays a stale, lower score before
+// correcting itself. We hold a backwards-looking update for one cycle and only
+// write it if the very same values come back again.
+const pendingRegression = new Map<string, string>();
+
+/** "9:05" -> seconds remaining. Null when unparseable. */
+function clockSeconds(clock: string | null | undefined): number | null {
+  if (!clock) return null;
+  const m = /(\d{1,2}):(\d{2})/.exec(clock);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
 type ErrorCode = "no_key" | "rate_limited" | "unavailable" | "no_live_games" | "unauthorized";
 
 type FetchResult<T> = { ok: true; data: T } | { ok: false; error: string; code: ErrorCode };
