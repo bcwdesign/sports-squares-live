@@ -9,6 +9,7 @@ import { NeonButton } from "@/components/NeonButton";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { WinnerCelebration } from "@/components/WinnerCelebration";
 import { LiveScoreSyncPanel } from "@/components/LiveScoreSyncPanel";
+import { ScoreFreshness } from "@/components/ScoreFreshness";
 import { supabase } from "@/integrations/supabase/client";
 import { winningSquareIndex } from "@/lib/types";
 import { Maximize2, Palette, QrCode, RotateCcw, Sparkles, Trophy, Tv, Zap, X, Save, Flag } from "lucide-react";
@@ -781,6 +782,7 @@ function LivePage() {
             <div className="font-mono font-bold text-2xl text-[color:var(--neon-orange)] tabular-nums">
               {game.home_score % 10}-{game.away_score % 10}
             </div>
+            <ScoreFreshness lastSyncAt={game.last_score_sync_at} className="mt-0.5 block" />
           </div>
         </div>
 

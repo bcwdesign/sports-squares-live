@@ -21,6 +21,8 @@ export type Game = {
   quarter: number;
   clock: string;
   created_at: string;
+  /** When the live score feed last reported for this game. */
+  last_score_sync_at?: string | null;
   // NFL pre-game randomization (see board-randomization.functions.ts)
   assignment_mode?: string | null;
   randomization_minutes_before_kickoff?: number | null;

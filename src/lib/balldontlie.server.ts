@@ -18,6 +18,19 @@ const MIN_SYNC_INTERVAL_MS = 5_000;
 // Prevents duplicate overlapping syncs for the same game within one worker.
 const inFlight = new Set<string>();
 
+// Anti-flap: the provider intermittently replays a stale, lower score before
+// correcting itself. We hold a backwards-looking update for one cycle and only
+// write it if the very same values come back again.
+const pendingRegression = new Map<string, string>();
+
+/** "9:05" -> seconds remaining. Null when unparseable. */
+function clockSeconds(clock: string | null | undefined): number | null {
+  if (!clock) return null;
+  const m = /(\d{1,2}):(\d{2})/.exec(clock);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
 type ErrorCode = "no_key" | "rate_limited" | "unavailable" | "no_live_games" | "unauthorized";
 
 type FetchResult<T> = { ok: true; data: T } | { ok: false; error: string; code: ErrorCode };
@@ -246,7 +259,7 @@ async function doSync(gameId: string, source: string): Promise<SyncResult> {
   const { data: g, error: gErr } = await supabaseAdmin
     .from("games")
     .select(
-      "id, sport, external_provider, external_game_id, period, home_score, away_score, home_team, away_team, external_home_team_id, external_away_team_id, external_home_team_name, external_away_team_name",
+      "id, sport, external_provider, external_game_id, period, game_clock, home_score, away_score, home_team, away_team, external_home_team_id, external_away_team_id, external_home_team_name, external_away_team_name",
     )
     .eq("id", gameId)
     .maybeSingle();
@@ -313,6 +326,41 @@ async function doSync(gameId: string, source: string): Promise<SyncResult> {
 
   const finalHomeScore = swap ? match.away_score : match.home_score;
   const finalAwayScore = swap ? match.home_score : match.away_score;
+
+  // ---- Anti-flap guard -----------------------------------------------------
+  // The feed sometimes replays a stale snapshot (lower total, or a clock that
+  // moves backwards inside the same quarter). Skip it once; if the identical
+  // values come back on the next poll, treat it as a real correction and write.
+  const signature = `${finalHomeScore}-${finalAwayScore}-${match.period ?? "?"}-${match.game_clock ?? "?"}`;
+  const storedTotal = (g.home_score ?? 0) + (g.away_score ?? 0);
+  const incomingTotal = finalHomeScore + finalAwayScore;
+  const storedRemaining = clockSeconds(g.game_clock);
+  const incomingRemaining = clockSeconds(match.game_clock);
+  const samePeriod = typeof match.period === "number" && match.period === g.period;
+  const periodAdvanced = typeof match.period === "number" && match.period > (g.period ?? 0);
+
+  const regressed =
+    !completed &&
+    !periodAdvanced &&
+    (incomingTotal < storedTotal ||
+      (samePeriod &&
+        storedRemaining !== null &&
+        incomingRemaining !== null &&
+        incomingRemaining > storedRemaining));
+
+  if (regressed && pendingRegression.get(gameId) !== signature) {
+    pendingRegression.set(gameId, signature);
+    await supabaseAdmin
+      .from("games")
+      .update({ last_score_sync_at: new Date().toISOString(), last_score_sync_error: null })
+      .eq("id", gameId);
+    console.log(
+      `[score-sync] ignored-regression game=${gameId} src=${source} stored=${g.home_score}-${g.away_score} P${g.period ?? "?"} ${g.game_clock ?? ""} incoming=${signature}`,
+    );
+    lastSyncByGame.set(gameId, Date.now());
+    return { synced: false, reason: "Ignored a backwards update from the score feed." };
+  }
+  pendingRegression.delete(gameId);
 
   const { error: updErr } = await supabaseAdmin
     .from("games")

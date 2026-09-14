@@ -6,6 +6,7 @@
 // parent route. It must remain read-only — no host controls live here.
 
 import { BrandLogo } from "@/components/branding/BrandLogo";
+import { ScoreFreshness } from "@/components/ScoreFreshness";
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import confetti from "canvas-confetti";
@@ -148,9 +149,12 @@ function TopBranding({ game }: { game: Game }) {
           <div className="hidden sm:flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             <span>{game.sport}</span>
             {feedConnected(game) && (
-              <span className="px-2 py-0.5 rounded-full border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[10px] text-[color:var(--neon-green)]">
-                Auto Feed
-              </span>
+              <>
+                <span className="px-2 py-0.5 rounded-full border border-[color:var(--neon-green)]/40 bg-[color:var(--neon-green)]/10 text-[10px] text-[color:var(--neon-green)]">
+                  Auto Feed
+                </span>
+                <ScoreFreshness lastSyncAt={game.last_score_sync_at} />
+              </>
             )}
           </div>
         </div>
