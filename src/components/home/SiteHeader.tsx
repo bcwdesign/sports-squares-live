@@ -42,10 +42,10 @@ export function SiteHeader() {
 
         <nav className="hidden lg:flex items-center gap-8" aria-label="Main">
           {NAV.map((item) =>
-            item.route ? (
+            item.kind === "route" ? (
               <Link
                 key={item.label}
-                to={item.href}
+                to={item.to}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {item.label}
@@ -89,8 +89,8 @@ export function SiteHeader() {
         <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-xl">
           <nav className="px-4 py-4 flex flex-col gap-1" aria-label="Mobile">
             {NAV.map((item) =>
-              item.route ? (
-                <Link key={item.label} to={item.href} onClick={() => setOpen(false)} className="py-3 text-base text-foreground">
+              item.kind === "route" ? (
+                <Link key={item.label} to={item.to} onClick={() => setOpen(false)} className="py-3 text-base text-foreground">
                   {item.label}
                 </Link>
               ) : (
