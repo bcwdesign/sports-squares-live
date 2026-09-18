@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { winningSquareIndex } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toPng } from "html-to-image";
-import { useServerFn } from "@tanstack/react-start";
 import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus, refreshHeyGenVideoUrl } from "@/lib/commentator.functions";
 import { startArgosVerification, getPrizeClaim } from "@/lib/argos.functions";
 import { invokeAuthed } from "@/lib/serverFnClient";
@@ -35,8 +34,6 @@ function ResultsPage() {
   const recapRef = useRef<HTMLDivElement | null>(null);
   const [retryingRecap, setRetryingRecap] = useState(false);
   const recapPollRef = useRef<number | null>(null);
-  const generateRecap = useServerFn(generateHeyGenCommentatorVideo);
-  const pollRecap = useServerFn(getHeyGenVideoStatus);
 
   useEffect(() => () => {
     if (recapPollRef.current) window.clearInterval(recapPollRef.current);
@@ -66,7 +63,7 @@ function ResultsPage() {
         return;
       }
       try {
-        const r = (await pollRecap({ data: { gameId } })) as { url?: string | null };
+        const r = (await invokeAuthed(getHeyGenVideoStatus, { gameId })) as { url?: string | null };
         if (r?.url && !stopped) window.clearInterval(id);
       } catch {/* keep polling */}
     }, 20000);
@@ -74,21 +71,21 @@ function ResultsPage() {
       stopped = true;
       window.clearInterval(id);
     };
-  }, [gameId, recapPending, pollRecap]);
+  }, [gameId, recapPending]);
 
   const retryRecapVideo = async () => {
     if (!gameId || retryingRecap) return;
     setRetryingRecap(true);
     try {
       // force: the background job already claimed the one-shot final recap.
-      await generateRecap({ data: { gameId, kind: "final", force: true } });
+      await invokeAuthed(generateHeyGenCommentatorVideo, { gameId, kind: "final", force: true });
       toast.success("Re-rendering final recap…");
       if (recapPollRef.current) window.clearInterval(recapPollRef.current);
       let ticks = 0;
       recapPollRef.current = window.setInterval(async () => {
         ticks++;
         try {
-          const r = (await pollRecap({ data: { gameId } })) as { url?: string | null; status?: string | null };
+          const r = (await invokeAuthed(getHeyGenVideoStatus, { gameId })) as { url?: string | null; status?: string | null };
           const done = !!r?.url || ticks >= 24 || (typeof r?.status === "string" && /error|failed/i.test(r.status));
           if (done) {
             if (recapPollRef.current) window.clearInterval(recapPollRef.current);
