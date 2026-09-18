@@ -4,12 +4,16 @@ import { Menu, X } from "lucide-react";
 import { Wordmark } from "./Wordmark";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "For Companies", href: "/companies", route: true },
-  { label: "For Groups", href: "/groups", route: true },
-  { label: "FAQ", href: "#faq" },
-] as const;
+type NavItem =
+  | { label: string; kind: "anchor"; href: string }
+  | { label: string; kind: "route"; to: "/companies" | "/groups" };
+
+const NAV: NavItem[] = [
+  { label: "How It Works", kind: "anchor", href: "/#how-it-works" },
+  { label: "For Companies", kind: "route", to: "/companies" },
+  { label: "For Groups", kind: "route", to: "/groups" },
+  { label: "FAQ", kind: "anchor", href: "/#faq" },
+];
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
