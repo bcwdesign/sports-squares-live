@@ -236,8 +236,10 @@ export async function runDueFinalRecaps(): Promise<{
   if (!process.env.HEYGEN_API_KEY) return { requested, polled, completed, errors };
 
   // Only games that finished recently — never backfill historic boards, which
-  // would bill a HeyGen render per old game the first time this runs.
-  const cutoff = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  // would bill a HeyGen render per old game the first time this runs. A board
+  // can be created days before kickoff, so recency is judged by the last score
+  // activity as well as creation time.
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data: due } = await supabaseAdmin
     .from("games")
     .select("id")
@@ -245,7 +247,7 @@ export async function runDueFinalRecaps(): Promise<{
     .eq("commentator_enabled", true)
     .eq("heygen_reactions_enabled", true)
     .is("heygen_final_requested_at", null)
-    .gte("created_at", cutoff)
+    .or(`last_score_sync_at.gte.${cutoff},created_at.gte.${cutoff}`)
     .limit(5);
 
   for (const g of due ?? []) {
