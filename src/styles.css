@@ -8,6 +8,11 @@
 html {
   background-color: #1f2024;
   color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }
 
 @theme inline {
