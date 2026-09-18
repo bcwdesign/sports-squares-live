@@ -12,8 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CompaniesRouteImport } from './routes/companies'
 import { Route as DocsRouteImport } from './routes/docs'
+import { Route as GroupsRouteImport } from './routes/groups'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppCreateRouteImport } from './routes/_app.create'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
@@ -45,14 +49,34 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompaniesRoute = CompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GroupsRoute = GroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppAdminRoute = AppAdminRouteImport.update({
@@ -140,8 +164,12 @@ const ApiPublicHooksSyncLiveScoresRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/companies': typeof CompaniesRoute
   '/docs': typeof DocsRoute
+  '/groups': typeof GroupsRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AppAdminRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
@@ -162,8 +190,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/companies': typeof CompaniesRoute
   '/docs': typeof DocsRoute
+  '/groups': typeof GroupsRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AppAdminRoute
   '/create': typeof AppCreateRoute
   '/dashboard': typeof AppDashboardRoute
@@ -186,8 +218,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/companies': typeof CompaniesRoute
   '/docs': typeof DocsRoute
+  '/groups': typeof GroupsRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/_app/admin': typeof AppAdminRoute
   '/_app/create': typeof AppCreateRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -210,8 +246,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/companies'
     | '/docs'
+    | '/groups'
+    | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/admin'
     | '/create'
     | '/dashboard'
@@ -232,8 +272,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/companies'
     | '/docs'
+    | '/groups'
+    | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/admin'
     | '/create'
     | '/dashboard'
@@ -255,8 +299,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
+    | '/companies'
     | '/docs'
+    | '/groups'
+    | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/_app/admin'
     | '/_app/create'
     | '/_app/dashboard'
@@ -279,8 +327,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CompaniesRoute: typeof CompaniesRoute
   DocsRoute: typeof DocsRoute
+  GroupsRoute: typeof GroupsRoute
+  PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   JoinInviteCodeRoute: typeof JoinInviteCodeRoute
   OverlayTokenRoute: typeof OverlayTokenRoute
   ApiArgosWebhookRoute: typeof ApiArgosWebhookRoute
@@ -312,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/companies': {
+      id: '/companies'
+      path: '/companies'
+      fullPath: '/companies'
+      preLoaderRoute: typeof CompaniesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs': {
       id: '/docs'
       path: '/docs'
@@ -319,11 +378,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/groups': {
+      id: '/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof GroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/admin': {
@@ -473,8 +553,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  CompaniesRoute: CompaniesRoute,
   DocsRoute: DocsRoute,
+  GroupsRoute: GroupsRoute,
+  PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   JoinInviteCodeRoute: JoinInviteCodeRoute,
   OverlayTokenRoute: OverlayTokenRoute,
   ApiArgosWebhookRoute: ApiArgosWebhookRoute,
