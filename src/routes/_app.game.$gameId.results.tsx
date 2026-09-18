@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { winningSquareIndex } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toPng } from "html-to-image";
-import { useServerFn } from "@tanstack/react-start";
 import { generateHeyGenCommentatorVideo, getHeyGenVideoStatus, refreshHeyGenVideoUrl } from "@/lib/commentator.functions";
 import { startArgosVerification, getPrizeClaim } from "@/lib/argos.functions";
 import { invokeAuthed } from "@/lib/serverFnClient";
