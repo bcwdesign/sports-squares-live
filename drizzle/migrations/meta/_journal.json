@@ -50,6 +50,13 @@
       "when": 1789320209988,
       "tag": "0006_add_heygen_final_requested_at",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792624040119,
+      "tag": "0007_profiles_same_game_visibility",
+      "breakpoints": true
     }
   ]
 }
