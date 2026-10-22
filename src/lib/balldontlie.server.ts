@@ -5,7 +5,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { LiveGameState, NormalizedLiveGame, SportKey } from "./balldontlie.types";
-import { normalizeNflGame } from "./balldontlie.normalize";
+import { normalizeNbaScheduleGame, normalizeNflGame } from "./balldontlie.normalize";
 
 const NBA_BASE = "https://api.balldontlie.io/v1";
 const NFL_BASE = "https://api.balldontlie.io/nfl/v1";
@@ -200,6 +200,42 @@ export async function fetchUpcomingNflSchedule(daysAhead = 14): Promise<FetchRes
 
   if (collected.length === 0) {
     return { ok: false, code: "no_live_games", error: "No NFL games scheduled in the next two weeks." };
+  }
+  return { ok: true, data: collected };
+}
+
+/** Upcoming/current NBA games: today plus the next `daysAhead` days. */
+export async function fetchUpcomingNbaSchedule(daysAhead = 14): Promise<FetchResult<NormalizedLiveGame[]>> {
+  const apiKey = nbaKey();
+  if (!apiKey) {
+    return { ok: false, code: "no_key", error: "The NBA score feed is not configured on the server." };
+  }
+  const params = new URLSearchParams();
+  const today = new Date();
+  for (let i = 0; i <= daysAhead; i++) {
+    params.append("dates[]", isoDate(new Date(today.getTime() + i * 86_400_000)));
+  }
+  params.set("per_page", "100");
+
+  const collected: NormalizedLiveGame[] = [];
+  let cursor: string | null = null;
+  for (let page = 0; page < 5; page++) {
+    const url = `${NBA_BASE}/games?${params.toString()}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+    const res = await callProvider(url, apiKey);
+    if (!res.ok) return res;
+    const root = res.data as { data?: unknown[]; meta?: { next_cursor?: unknown } } | null;
+    const list = Array.isArray(root?.data) ? root!.data! : [];
+    for (const item of list) {
+      const g = normalizeNbaScheduleGame(item);
+      if (g) collected.push(g);
+    }
+    const next = root?.meta?.next_cursor;
+    cursor = next === undefined || next === null || next === "" ? null : String(next);
+    if (!cursor) break;
+  }
+  collected.sort((a, b) => (a.start_time ?? "").localeCompare(b.start_time ?? ""));
+  if (collected.length === 0) {
+    return { ok: false, code: "no_live_games", error: "No NBA games scheduled in the next two weeks." };
   }
   return { ok: true, data: collected };
 }
