@@ -34,6 +34,7 @@ function Dashboard() {
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [visiblePast, setVisiblePast] = useState(10);
+  const [sportFilter, setSportFilter] = useState<"ALL" | "NBA" | "NFL">("ALL");
   const { isSuperAdmin, canHost } = useUserRoles();
 
   useEffect(() => {
@@ -92,8 +93,12 @@ function Dashboard() {
     }
   };
 
-  const active = games.filter((g) => g.status !== "completed");
-  const past = games
+  const shown =
+    sportFilter === "ALL"
+      ? games
+      : games.filter((g) => ((g.sport ?? "NBA").toUpperCase() === "NFL" ? "NFL" : "NBA") === sportFilter);
+  const active = shown.filter((g) => g.status !== "completed");
+  const past = shown
     .filter((g) => g.status === "completed")
     .sort((a, b) => (b.game_date_time ?? b.created_at ?? "").localeCompare(a.game_date_time ?? a.created_at ?? ""));
 
@@ -192,12 +197,39 @@ function Dashboard() {
           </div>
         )}
 
+        <div className="flex gap-2 mb-6" role="group" aria-label="Filter by sport">
+          {(["ALL", "NBA", "NFL"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              aria-pressed={sportFilter === s}
+              onClick={() => {
+                setSportFilter(s);
+                setVisiblePast(10);
+              }}
+              className={`rounded-full border px-4 py-1.5 text-xs font-mono uppercase tracking-widest transition ${
+                sportFilter === s
+                  ? "border-[color:var(--neon-blue)] bg-[color:var(--neon-blue)]/15 text-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {s === "ALL" ? "All" : s}
+            </button>
+          ))}
+        </div>
+
         {/* Active games */}
         <Section title="Active Games" count={active.length}>
           {loading ? (
             <Skeleton />
           ) : active.length === 0 ? (
-            <Empty text="No active games. Create one or join with a code." />
+            <Empty
+              text={
+                sportFilter === "ALL"
+                  ? "No active games. Create one or join with a code."
+                  : `No active ${sportFilter} games.`
+              }
+            />
           ) : (
             <div className="space-y-2">
               {active.map((g) => <GameCard key={g.id} game={g} hostId={user?.id} />)}
