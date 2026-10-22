@@ -33,6 +33,7 @@ function Dashboard() {
   const [showJoin, setShowJoin] = useState(false);
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
+  const [visiblePast, setVisiblePast] = useState(10);
   const { isSuperAdmin, canHost } = useUserRoles();
 
   useEffect(() => {
@@ -92,7 +93,9 @@ function Dashboard() {
   };
 
   const active = games.filter((g) => g.status !== "completed");
-  const past = games.filter((g) => g.status === "completed");
+  const past = games
+    .filter((g) => g.status === "completed")
+    .sort((a, b) => (b.game_date_time ?? b.created_at ?? "").localeCompare(a.game_date_time ?? a.created_at ?? ""));
 
   return (
     <div className="min-h-screen">
@@ -206,8 +209,17 @@ function Dashboard() {
         {past.length > 0 && (
           <Section title="Past Games" count={past.length}>
             <div className="space-y-2">
-              {past.map((g) => <GameCard key={g.id} game={g} hostId={user?.id} />)}
+              {past.slice(0, visiblePast).map((g) => <GameCard key={g.id} game={g} hostId={user?.id} />)}
             </div>
+            {past.length > visiblePast && (
+              <button
+                type="button"
+                onClick={() => setVisiblePast((n) => n + 10)}
+                className="mt-3 w-full rounded-md border border-border bg-[color:var(--surface)] px-3 py-2 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground transition"
+              >
+                Show more ({past.length - visiblePast} left)
+              </button>
+            )}
           </Section>
         )}
       </main>
