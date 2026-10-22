@@ -4,14 +4,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, RefreshCw, Tv } from "lucide-react";
-import { fetchUpcomingNflGames } from "@/lib/balldontlie.functions";
-import type { NormalizedLiveGame } from "@/lib/balldontlie.types";
+import { fetchUpcomingNbaGames, fetchUpcomingNflGames } from "@/lib/balldontlie.functions";
+import type { NormalizedLiveGame, SportKey } from "@/lib/balldontlie.types";
 import { LIVE_STATE_LABEL } from "@/lib/balldontlie.types";
 import { invokeAuthed } from "@/lib/serverFnClient";
 
 type Props = {
   selectedId: string | null;
   onSelect: (game: NormalizedLiveGame) => void;
+  sport?: SportKey;
 };
 
 function kickoffLabel(iso: string | null) {
@@ -34,7 +35,7 @@ function dayKey(iso: string | null) {
   return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 }
 
-export function NflGamePicker({ selectedId, onSelect }: Props) {
+export function NflGamePicker({ selectedId, onSelect, sport = "NFL" }: Props) {
   const [games, setGames] = useState<NormalizedLiveGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +44,9 @@ export function NflGamePicker({ selectedId, onSelect }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const res = await invokeAuthed(fetchUpcomingNflGames, { daysAhead: 14 });
+      const res = sport === "NBA"
+          ? await invokeAuthed(fetchUpcomingNbaGames, { daysAhead: 14 })
+          : await invokeAuthed(fetchUpcomingNflGames, { daysAhead: 14 });
       if (res.error) {
         setError(res.error);
         setGames([]);
@@ -51,11 +54,11 @@ export function NflGamePicker({ selectedId, onSelect }: Props) {
         setGames(res.games);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't load the NFL schedule.");
+      setError(e instanceof Error ? e.message : `Couldn't load the ${sport} schedule.`);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sport]);
 
   useEffect(() => {
     void load();
@@ -73,16 +76,16 @@ export function NflGamePicker({ selectedId, onSelect }: Props) {
     <div className="rounded-2xl border border-border bg-[color:var(--surface)]/60 p-4">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div>
-          <div className="font-display font-bold">Pick an NFL Game</div>
+          <div className="font-display font-bold">Pick an {sport} Game</div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Teams, kickoff and live scoring fill in automatically.
+            Teams, start time and live scoring fill in automatically.
           </p>
         </div>
         <button
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          aria-label="Reload NFL schedule"
+          aria-label={`Reload ${sport} schedule`}
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground hover:border-foreground/40 transition disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
@@ -92,7 +95,7 @@ export function NflGamePicker({ selectedId, onSelect }: Props) {
       {loading && (
         <div className="flex items-center justify-center py-10 text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          <span className="font-mono text-xs uppercase tracking-widest">Loading NFL games...</span>
+          <span className="font-mono text-xs uppercase tracking-widest">Loading {sport} games...</span>
         </div>
       )}
 
@@ -115,7 +118,7 @@ export function NflGamePicker({ selectedId, onSelect }: Props) {
 
       {!loading && !error && groups.length === 0 && (
         <div className="py-8 text-center text-sm text-muted-foreground">
-          No NFL games in the next two weeks.
+          No {sport} games in the next two weeks.
         </div>
       )}
 
@@ -151,7 +154,7 @@ export function NflGamePicker({ selectedId, onSelect }: Props) {
                               {g.away_team_name} at {g.home_team_name}
                             </div>
                             <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
-                              {g.postseason ? "Postseason" : g.week ? `Week ${g.week}` : "NFL"} ·{" "}
+                              {g.postseason ? "Postseason" : g.week ? `Week ${g.week}` : sport} ·{" "}
                               {kickoffLabel(g.start_time)} · {LIVE_STATE_LABEL[g.status_state]}
                             </div>
                           </div>

@@ -274,8 +274,10 @@ function CreateGame() {
             </div>
           </FieldGroup>
 
-          {sport === "NFL" && (
+          {(
             <NflGamePicker
+              key={sport}
+              sport={sport}
               selectedId={apiGame?.external_game_id ?? null}
               onSelect={selectApiGame}
             />
