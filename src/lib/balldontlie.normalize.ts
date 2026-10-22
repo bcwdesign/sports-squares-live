@@ -124,3 +124,47 @@ export function normalizeNflGame(item: unknown): NormalizedLiveGame | null {
     venue: typeof obj.venue === "string" ? obj.venue : null,
   };
 }
+
+/**
+ * NBA schedule item from /v1/games. For scheduled games BALLDONTLIE puts the
+ * tip-off ISO timestamp in `status`; live games show "1st Qtr" etc.
+ */
+export function normalizeNbaScheduleGame(item: unknown): NormalizedLiveGame | null {
+  if (!item || typeof item !== "object") return null;
+  const obj = item as Record<string, unknown>;
+  const home = (obj.home_team ?? null) as Record<string, unknown> | null;
+  const away = (obj.visitor_team ?? null) as Record<string, unknown> | null;
+  if (!home || !away || obj.id === undefined || obj.id === null) return null;
+
+  const statusText = typeof obj.status === "string" ? obj.status : "";
+  const statusIsDate = /^\d{4}-\d{2}-\d{2}T/.test(statusText);
+  const period = num(obj.period);
+  const t = statusText.toLowerCase();
+  const state: LiveGameState = t.includes("final")
+    ? "final"
+    : statusIsDate || (period ?? 0) === 0
+      ? "scheduled"
+      : "in_progress";
+  const start =
+    typeof obj.datetime === "string" ? obj.datetime : statusIsDate ? statusText : typeof obj.date === "string" ? obj.date : null;
+  const clock = typeof obj.time === "string" && obj.time.trim() ? obj.time.trim() : null;
+
+  return {
+    sport: "NBA",
+    external_game_id: String(obj.id),
+    home_team_id: home.id !== undefined && home.id !== null ? String(home.id) : "",
+    home_team_name: String(home.full_name ?? home.name ?? ""),
+    home_team_abbreviation: String(home.abbreviation ?? ""),
+    away_team_id: away.id !== undefined && away.id !== null ? String(away.id) : "",
+    away_team_name: String(away.full_name ?? away.name ?? ""),
+    away_team_abbreviation: String(away.abbreviation ?? ""),
+    home_score: num(obj.home_team_score) ?? 0,
+    away_score: num(obj.visitor_team_score) ?? 0,
+    period: state === "scheduled" ? null : period,
+    game_clock: state === "in_progress" ? clock : null,
+    game_status: statusIsDate ? "Scheduled" : statusText || null,
+    status_state: state,
+    start_time: start,
+    postseason: obj.postseason === true,
+  };
+}
